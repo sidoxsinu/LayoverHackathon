@@ -22,6 +22,7 @@ This file is the **single source of truth** for where the project stands right n
 | `time.ts` (core math) | ✅ Done | nextOccurrence, schedule, demoSchedule, phaseFor, fmt |
 | `useNow` hook | ✅ Done | Derives from Date.now(), visibilitychange sync |
 | `alarm.ts` (audio arm + fire) | ✅ Done | WAV primary, oscillator fallback, vibration, wake lock |
+| Auth screen UI | ✅ Done | Dedicated first screen for Sign in with Google / Guest |
 | Setup screen UI | ✅ Done | Time/duration toggle, gate, walk, vibe, live safe-time preview |
 | Demo Mode (triple-tap) | ✅ Done | Triple-tap wordmark or START DEMO; 60s countdown |
 | Vercel deploy + HTTPS | ⬜ Not started | Next step |
@@ -83,6 +84,8 @@ This file is the **single source of truth** for where the project stands right n
 | 2 | Next.js build error: `unstable Date.now() in Client Component` | `useState(Date.now())` called during prerender | Changed to `useState(0)` with `setNow(Date.now())` in useEffect | Yes |
 | 3 | Viewport metadata warning | Next.js 16 moved `viewport` out of `metadata` export | Added separate `export const viewport = {...}` | Yes |
 | 4 | Supabase Save duplicates | Clicking safe travels twice re-queued layovers | added `layoverId` via `crypto.randomUUID()` to `AppState` | Yes |
+| 5 | Type error on `npm run build` | Added `layoverId` to state but `Omit` in `START` payload didn't exclude it | Added `layoverId` to `Omit` list in `page.tsx` | Yes |
+| 6 | Type error on `npm run build` for `logId` | `logId` missing from `SavedState` | Added `logId?: string` to `storage.ts` and mapped it in `page.tsx` | Yes |
 
 ---
 

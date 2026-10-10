@@ -77,11 +77,11 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         if (!res.ok) throw new Error('API failed');
         const data = await res.json();
         if (!active) return;
-        setAirportName(data.airport || 'TINKERSPACE CALICUT');
+        setAirportName(data.airport || 'UNKNOWN LOCATION');
         setCustomMissions(data.missions || []);
       } catch (e) {
         if (!active) return;
-        setAirportName('TINKERSPACE CALICUT');
+        setAirportName('UNKNOWN LOCATION');
       }
     };
 
@@ -92,11 +92,12 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         },
         () => {
           if (!active) return;
-          setAirportName('TINKERSPACE CALICUT');
-        }
+          setAirportName('LOCATION ACCESS DENIED');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
-      setAirportName('TINKERSPACE CALICUT');
+      setAirportName('LOCATION UNSUPPORTED');
     }
 
     return () => { active = false; };

@@ -13,8 +13,10 @@ import SafeTravels from '@/components/SafeTravels';
 import DebugOverlay from '@/components/DebugOverlay';
 import GlobalMuteButton from '@/components/GlobalMuteButton';
 import { SetupHeader } from '@/components/SetupHeader';
+import AuthScreen from '@/components/AuthScreen';
+import { useUser } from '@/hooks/useUser';
 
-type Screen = 'setup' | 'quest' | 'alarm' | 'safe';
+type Screen = 'auth' | 'setup' | 'quest' | 'alarm' | 'safe';
 
 interface LogEntry {
   logId: string;
@@ -58,10 +60,11 @@ type Action =
   | { type: 'SET_BATTERY'; value: number }
   | { type: 'SET_STAT'; key: keyof AppState['stats']; value: number }
   | { type: 'WORDMARK_TAP' }
+  | { type: 'SKIP_AUTH' }
   | { type: 'RESTORE'; payload: AppState };
 
 const DEFAULT_STATE: AppState = {
-  screen: 'setup',
+  screen: 'auth',
   departureMs: 0,
   returnByMs: 0,
   airportName: 'TBA',
@@ -136,6 +139,9 @@ function reducer(state: AppState, action: Action): AppState {
 
     case 'SAFE_RETURN':
       return { ...state, screen: 'safe' };
+
+    case 'SKIP_AUTH':
+      return { ...state, screen: 'setup' };
 
     case 'NEW_LAYOVER':
       clear();
@@ -216,6 +222,7 @@ function reducer(state: AppState, action: Action): AppState {
 }
 
 export default function Home() {
+  const { user, loading: userLoading } = useUser();
   const [state, dispatch] = useReducer(reducer, DEFAULT_STATE);
   const now = useNow(500);
   const realBattery = useBattery();
@@ -241,7 +248,7 @@ export default function Home() {
         ? (pickMission({ minsLeft: Math.max(0, Math.floor((saved.returnByMs - Date.now()) / 60000)), stats: saved.stats, recent: saved.recent, customPool: saved.customMissions || [] }) )
         : null,
       recent: saved.recent,
-      log: saved.log,
+      log: saved.log.map((l: any) => ({ ...l, logId: l.logId || crypto.randomUUID() })),
       xp: saved.xp,
       demo: saved.demo,
       startedMs: saved.startedMs,
@@ -255,6 +262,9 @@ export default function Home() {
     } else {
       alarmFiredRef.current = false;
       warningFiredRef.current = false;
+      if (restored.screen === 'auth') {
+        restored.screen = 'setup'; // Don't persist auth screen loop
+      }
     }
     dispatch({ type: 'RESTORE', payload: restored });
   }, []);
@@ -403,6 +413,14 @@ export default function Home() {
     : 0;
 
   const missionsCompleted = state.log.filter((e) => e.status === 'completed').length;
+
+  if (userLoading) {
+    return <div className="min-h-[100dvh] bg-ink flex items-center justify-center font-mono text-muted tracking-widest text-sm uppercase">CONNECTING...</div>;
+  }
+
+  if (!user || state.screen === 'auth') {
+    return <AuthScreen onSkip={() => dispatch({ type: 'SKIP_AUTH' })} />;
+  }
 
   if (state.screen === 'alarm') {
     return (

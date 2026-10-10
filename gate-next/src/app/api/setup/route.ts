@@ -8,21 +8,54 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing lat/lon' }, { status: 400 });
     }
 
+    // 1. Precise Reverse Geocoding via Nominatim
+    let preciseLocation = `LAT ${lat.toFixed(4)}, LON ${lon.toFixed(4)}`;
+    let shortName = 'UNKNOWN LOCATION';
+    
+    try {
+      const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`, {
+        headers: { 'User-Agent': 'GATE-Hackathon-App' }
+      });
+      if (geoRes.ok) {
+        const geoData = await geoRes.json();
+        if (geoData.address) {
+          const { amenity, aeroway, road, neighbourhood, suburb, city, town, village, state, country } = geoData.address;
+          const parts = [amenity || aeroway, road, neighbourhood || suburb, city || town || village, state, country].filter(Boolean);
+          if (parts.length > 0) {
+            preciseLocation = parts.join(', ');
+          } else if (geoData.display_name) {
+            preciseLocation = geoData.display_name;
+          }
+          
+          const primaryLoc = amenity || aeroway || neighbourhood || suburb || city || town || village;
+          if (primaryLoc) {
+            shortName = primaryLoc.toUpperCase();
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Reverse geocoding failed', e);
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.warn('GEMINI_API_KEY missing, returning fallback');
       return NextResponse.json({
-        airport: 'TINKERSPACE CALICUT',
+        airport: shortName,
         missions: []
       });
     }
 
     const prompt = `
-You are an expert on global geography and airports. The user is at location Latitude: ${lat}, Longitude: ${lon}.
-Identify the city, area, or nearest airport for this location.
-Provide the location name (e.g. "Kochi (COK)", "Dubai (DXB)", "San Francisco (SFO)") in short uppercase/title format.
-Generate 5 absurd but legal and achievable layover or waiting missions specific to this location or general transit/airports. 
-Examples of absurd tasks: 'Find a plug point near gate C and guard it with your life', 'Count how many people are wearing neck pillows', 'Take a selfie with the most expensive item in the duty-free shop'.
+You are an expert on global geography and local environments. The user is currently at this precise location: 
+"${preciseLocation}" (Coordinates: ${lat}, ${lon}).
+
+If this is an airport or transit hub, identify it by its official name and IATA code (e.g. "Kochi (COK)", "Dubai (DXB)"). 
+If it is a local area, neighborhood, or specific business, identify it precisely using the reverse-geocode data provided above (e.g. "Tinkerspace, Kochi", "Civic Center, San Francisco").
+
+Provide the location name in short uppercase/title format.
+Generate 5 absurd but legal and achievable layover or waiting missions specific to this exact local context or general waiting activities. 
+Examples of absurd tasks: 'Find a plug point near the entrance and guard it with your life', 'Count how many people are wearing neck pillows', 'Take a selfie with the most expensive item in the nearest shop'.
 Make sure they are safe, legal, and require no purchase.
 Output exactly and only a JSON object in this format:
 {
