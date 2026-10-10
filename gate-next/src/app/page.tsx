@@ -375,6 +375,7 @@ export default function Home() {
         onComplete={() => dispatch({ type: 'MISSION_COMPLETE' })}
         onSkip={() => dispatch({ type: 'MISSION_SKIP' })}
         onSafeReturn={() => dispatch({ type: 'SAFE_RETURN' })}
+        onStatChange={(key, value) => dispatch({ type: 'SET_STAT', key, value })}
       />
     );
   }

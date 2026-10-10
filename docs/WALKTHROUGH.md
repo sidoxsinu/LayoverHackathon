@@ -122,6 +122,12 @@ This file is the **single source of truth** for where the project stands right n
 **What doesn't yet:** Geolocation might prompt for permission. Vercel deployment pending.
 **Immediate next step:** Deploy to Vercel.
 
+## [22:35] — Energy Renaming & Adjustable StatBar
+**What was done:** Renamed 'sanity' to 'energy' across all TS/TSX files and state interfaces. Updated the `StatBar` component to accept an `onChange` prop and passed it down to `StatRow`, making the individual stat blocks clickable (setting the value to `(index + 1) * 10`). Wired this up in `page.tsx` via a new `SET_STAT` action.
+**What works:** Clicking any block on the stat bars correctly updates the state in increments of 10. `sanity` is gone, `energy` is the new stat.
+**What doesn't yet:** Same deployment pending status.
+**Immediate next step:** Deploy to Vercel and test.
+
 
 ---
 
