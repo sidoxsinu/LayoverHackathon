@@ -24,6 +24,7 @@ interface LogEntry {
 interface Props {
   returnByMs: number;
   departureMs: number;
+  airportName: string;
   gate: string;
   stats: Stats;
   mission: Mission | null;
@@ -40,6 +41,7 @@ interface Props {
 export default function QuestScreen({
   returnByMs,
   departureMs,
+  airportName,
   gate,
   stats,
   mission,
@@ -116,6 +118,16 @@ export default function QuestScreen({
               DEMO
             </span>
           )}
+          <span
+            style={{
+              fontFamily: 'var(--font-plex), monospace',
+              fontSize: '12px',
+              color: '#8C887C',
+              textTransform: 'uppercase',
+            }}
+          >
+            {airportName}
+          </span>
           <span
             style={{
               fontFamily: 'var(--font-plex), monospace',

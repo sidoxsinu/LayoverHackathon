@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { nextOccurrence, schedule, fmtDuration, BUFFER_MIN, MARGIN_MIN } from '@/lib/time';
 import { startStats } from '@/lib/missions';
 import { arm } from '@/lib/alarm';
@@ -11,6 +11,8 @@ interface Props {
   onStart: (data: {
     departureMs: number;
     returnByMs: number;
+    airportName: string;
+    customMissions: any[];
     gate: string;
     walkMin: number;
     vibe: string;
@@ -58,6 +60,46 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
   const [walkMin, setWalkMin] = useState(10);
   const [vibe, setVibe] = useState('tired');
   const [error, setError] = useState('');
+  const [airportName, setAirportName] = useState('LOCATING...');
+  const [customMissions, setCustomMissions] = useState<any[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchAirport = async (lat: number, lon: number) => {
+      try {
+        const res = await fetch('/api/setup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lat, lon })
+        });
+        if (!res.ok) throw new Error('API failed');
+        const data = await res.json();
+        if (!active) return;
+        setAirportName(data.airport || 'UNKNOWN AIRPORT');
+        setCustomMissions(data.missions || []);
+      } catch (e) {
+        if (!active) return;
+        setAirportName('UNKNOWN AIRPORT');
+      }
+    };
+
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          fetchAirport(pos.coords.latitude, pos.coords.longitude);
+        },
+        () => {
+          if (!active) return;
+          setAirportName('UNKNOWN AIRPORT');
+        }
+      );
+    } else {
+      setAirportName('UNKNOWN AIRPORT');
+    }
+
+    return () => { active = false; };
+  }, []);
 
   const now = useNow(1000);
 
@@ -94,6 +136,8 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
     onStart({
       departureMs,
       returnByMs,
+      airportName,
+      customMissions,
       gate: gate || 'TBA',
       walkMin,
       vibe,
@@ -259,6 +303,13 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
           )}
         </Row>
 
+        <Row>
+          <Label>LOCATION (AUTO)</Label>
+          <div style={{ fontFamily: 'var(--font-plex), monospace', fontSize: '14px', color: '#8C887C', textTransform: 'uppercase' }}>
+            {airportName}
+          </div>
+        </Row>
+
         {/* Safe time preview */}
         {departureMs > 0 && (
           <Row>
@@ -285,6 +336,17 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
             </div>
           </Row>
         )}
+
+        {/* Airport */}
+        <Row>
+          <Label>AIRPORT</Label>
+          <input
+            type="text"
+            value={airportName}
+            readOnly
+            style={{ ...inputStyle, color: '#8C887C', backgroundColor: '#181816' }}
+          />
+        </Row>
 
         {/* Gate */}
         <Row>

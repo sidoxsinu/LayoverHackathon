@@ -3,7 +3,9 @@ const KEY = 'gate.v2';
 export interface SavedState {
   departureMs: number;
   returnByMs: number;
+  airportName?: string;
   gate: string;
+  customMissions?: any[];
   vibe: string;
   walkMin: number;
   stats: { hunger: number; sanity: number; battery: number };

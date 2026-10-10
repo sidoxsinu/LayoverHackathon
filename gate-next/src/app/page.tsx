@@ -25,7 +25,9 @@ interface AppState {
   screen: Screen;
   departureMs: number;
   returnByMs: number;
+  airportName: string;
   gate: string;
+  customMissions: Mission[];
   vibe: string;
   walkMin: number;
   stats: Stats;
@@ -50,14 +52,15 @@ type Action =
   | { type: 'DRAIN_STATS' }
   | { type: 'SET_BATTERY'; value: number }
   | { type: 'WORDMARK_TAP' }
-  | { type: 'RESTORE'; payload: AppState }
-  | { type: 'SET_MISSION'; payload: any };
+  | { type: 'RESTORE'; payload: AppState };
 
 const DEFAULT_STATE: AppState = {
   screen: 'setup',
   departureMs: 0,
   returnByMs: 0,
+  airportName: 'TBA',
   gate: 'TBA',
+  customMissions: [],
   vibe: 'tired',
   walkMin: 10,
   stats: { hunger: 70, sanity: 70, battery: 70 },
@@ -74,9 +77,9 @@ function clamp(v: number): number {
   return Math.max(0, Math.min(100, v));
 }
 
-function nextMission(state: Pick<AppState, 'returnByMs' | 'stats' | 'recent'>, now: number): Mission {
+function nextMission(state: Pick<AppState, 'returnByMs' | 'stats' | 'recent' | 'customMissions'>, now: number): Mission {
   const minsLeft = Math.max(0, Math.floor((state.returnByMs - now) / 60000));
-  return pickMission({ minsLeft, stats: state.stats, recent: state.recent });
+  return pickMission({ minsLeft, stats: state.stats, recent: state.recent, customPool: state.customMissions });
 }
 
 function reducer(state: AppState, action: Action): AppState {
@@ -90,7 +93,7 @@ function reducer(state: AppState, action: Action): AppState {
         ...DEFAULT_STATE,
         ...action.payload,
         screen: 'quest',
-        mission: null,
+        mission: nextMission({ returnByMs: action.payload.returnByMs, stats: action.payload.stats, recent: [], customMissions: action.payload.customMissions }, now),
         recent: [],
         demo: false,
         startedMs: now,
@@ -100,11 +103,13 @@ function reducer(state: AppState, action: Action): AppState {
     case 'START_DEMO': {
       const demoStats = startStats('tired');
       const now = Date.now();
-      const m = nextMission({ returnByMs: action.payload.returnByMs, stats: demoStats, recent: [] }, now);
+      const m = nextMission({ returnByMs: action.payload.returnByMs, stats: demoStats, recent: [], customMissions: [] }, now);
       return {
         ...DEFAULT_STATE,
         ...action.payload,
+        airportName: 'DEMO AIRPORT (DMO)',
         gate: 'B14',
+        customMissions: [],
         vibe: 'tired',
         stats: demoStats,
         screen: 'quest',
@@ -136,13 +141,6 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, stats: newStats };
     }
 
-    case 'SET_MISSION':
-      return {
-        ...state,
-        mission: action.payload,
-        recent: action.payload ? [action.payload.id, ...state.recent].slice(0, 3) : state.recent,
-      };
-
     case 'SET_BATTERY':
       return { ...state, stats: { ...state.stats, battery: action.value } };
 
@@ -165,7 +163,7 @@ function reducer(state: AppState, action: Action): AppState {
         stats: boostedStats,
         xp: newXp,
         log: newLog,
-        mission: null,
+        mission: nextMission({ returnByMs: state.returnByMs, stats: boostedStats, recent: newRecent, customMissions: state.customMissions }, now),
         recent: newRecent,
       };
     }
@@ -182,7 +180,7 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         log: newLog,
-        mission: null,
+        mission: nextMission({ returnByMs: state.returnByMs, stats: state.stats, recent: newRecent, customMissions: state.customMissions }, now),
         recent: newRecent,
       };
     }
@@ -216,12 +214,14 @@ export default function Home() {
       screen: saved.screen as Screen,
       departureMs: saved.departureMs,
       returnByMs: saved.returnByMs,
+      airportName: saved.airportName || 'TBA',
       gate: saved.gate,
+      customMissions: saved.customMissions || [],
       vibe: saved.vibe,
       walkMin: saved.walkMin,
       stats: saved.stats,
       mission: saved.missionId
-        ? (pickMission({ minsLeft: Math.max(0, Math.floor((saved.returnByMs - Date.now()) / 60000)), stats: saved.stats, recent: saved.recent }) )
+        ? (pickMission({ minsLeft: Math.max(0, Math.floor((saved.returnByMs - Date.now()) / 60000)), stats: saved.stats, recent: saved.recent, customPool: saved.customMissions || [] }) )
         : null,
       recent: saved.recent,
       log: saved.log,
@@ -247,40 +247,6 @@ export default function Home() {
   }, [realBattery, state.screen]);
 
   
-  // AI Mission Fetch
-  useEffect(() => {
-    if (state.screen === 'quest' && state.mission === null) {
-      let active = true;
-      const minsLeft = Math.max(0, Math.floor((state.returnByMs - Date.now()) / 60000));
-      
-      fetch('/api/mission', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stats: state.stats, minsLeft })
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error('API failed');
-          return res.json();
-        })
-        .then((data) => {
-          if (!active) return;
-          if (data && data.id && data.text) {
-            dispatch({ type: 'SET_MISSION', payload: data });
-          } else {
-            throw new Error('Invalid response');
-          }
-        })
-        .catch((err) => {
-          if (!active) return;
-          console.warn('AI mission failed, using local fallback:', err);
-          const fallback = nextMission({ returnByMs: state.returnByMs, stats: state.stats, recent: state.recent }, Date.now());
-          dispatch({ type: 'SET_MISSION', payload: fallback });
-        });
-
-      return () => { active = false; };
-    }
-  }, [state.screen, state.mission, state.stats, state.returnByMs, state.recent]);
-
   // Alarm latch
 
   useEffect(() => {
@@ -312,7 +278,9 @@ export default function Home() {
     const toSave: Partial<SavedState> = {
       departureMs: state.departureMs,
       returnByMs: state.returnByMs,
+      airportName: state.airportName,
       gate: state.gate,
+      customMissions: state.customMissions,
       vibe: state.vibe,
       walkMin: state.walkMin,
       stats: state.stats,
@@ -391,6 +359,7 @@ export default function Home() {
       <QuestScreen
         returnByMs={state.returnByMs}
         departureMs={state.departureMs}
+        airportName={state.airportName}
         gate={state.gate}
         stats={currentStats}
         mission={state.mission}
@@ -415,6 +384,8 @@ export default function Home() {
           payload: {
             departureMs: data.departureMs,
             returnByMs: data.returnByMs,
+            airportName: data.airportName,
+            customMissions: data.customMissions,
             gate: data.gate,
             walkMin: data.walkMin,
             vibe: data.vibe,

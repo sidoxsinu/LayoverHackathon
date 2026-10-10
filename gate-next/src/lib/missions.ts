@@ -46,13 +46,16 @@ export function pickMission({
   minsLeft,
   stats,
   recent = [],
+  customPool = [],
 }: {
   minsLeft: number;
   stats: Stats;
   recent?: string[];
+  customPool?: Mission[];
 }): Mission {
   // 1. Find all missions that fit the time window
-  const fits = MISSIONS.filter(
+  const allMissions = [...customPool, ...MISSIONS];
+  const fits = allMissions.filter(
     (m) =>
       minsLeft >= m.when[0] &&
       minsLeft <= m.when[1] &&
