@@ -204,7 +204,7 @@ export default function QuestScreen({
       )}
 
       {/* Countdown */}
-      <Countdown msLeft={msLeft} phase={phase} />
+      <Countdown targetDate={returnByMs} phase={phase} />
 
       {/* Stats */}
       <StatBar stats={stats} realBattery={realBattery} onChange={onStatChange} />

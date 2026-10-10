@@ -495,7 +495,7 @@ export function VaporCountdown({
         gridTemplateColumns: "repeat(3, auto)",
         columnGap: "0.45em",
         rowGap: "0.5rem",
-        fontSize: "clamp(2.5rem, 9vw, 4.5rem)",
+        fontSize: "clamp(4rem, 15vw, 6rem)",
         fontFamily: "var(--font-plex), monospace",
         color: color || "#F2A900",
       }}

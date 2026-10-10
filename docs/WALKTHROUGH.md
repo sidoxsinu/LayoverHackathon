@@ -194,6 +194,12 @@ This file is the **single source of truth** for where the project stands right n
 2. Connected `VaporCountdown` to `Countdown.tsx` preserving exact airport signage colors (`#F2A900` amber and `#C8201A` red), layout borders, and background tokens without modifying any other screens or elements.
 3. Added the `--color-ns-muted` variable to Tailwind v4 `globals.css`.
 
+## [23:55] — Vapor Countdown Animation Fix & Resizing
+**What was done:**
+1. Modified `Countdown.tsx` to accept the stable `returnByMs` timestamp instead of a constantly updating `msLeft` delta.
+2. Increased the font size of the timer digits significantly (`clamp(4rem, 15vw, 6rem)`) inside `countdown-vapor-digits.tsx`.
+**Why:** The `msLeft` prop was causing the absolute `targetDate` calculated in `Countdown` to jitter by a few milliseconds on every React render (due to discrepancies with `Date.now()`). This constantly changed the `targetKey` in `VaporCountdown`, forcing its internal animation loop to reset and sleep, which made the timer look static except for rare flickers. Now the stable key allows the sublimation animation to play beautifully every second.
+
 ---
 
 ## Architecture Decisions Log

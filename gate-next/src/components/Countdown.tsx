@@ -3,12 +3,11 @@
 import { VaporCountdown } from '@/components/ui/countdown-vapor-digits';
 
 interface Props {
-  msLeft: number;
+  targetDate: number;
   phase: 'free' | 'headsup' | 'urgent' | 'alarm';
 }
 
-export default function Countdown({ msLeft, phase }: Props) {
-  const targetDate = Date.now() + msLeft;
+export default function Countdown({ targetDate, phase }: Props) {
   const color = phase === 'alarm' ? '#C8201A' : phase === 'urgent' ? '#F2A900' : '#F2A900';
 
   return (
