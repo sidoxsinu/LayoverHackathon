@@ -488,3 +488,16 @@ Run this at **6:45 AM**, 15 minutes before judges start.
   - `05_water_refill_station.jpg` — Stainless steel airport drinking water bottle refill station.
   - `06_runway_aircraft_view.jpg` — Commercial jet airliner parked on the terminal apron.
 **What works:** All 7 demo photos are validated under the 10 MB input limit, format-compatible (`image/jpeg`), and staged for easy mobile transfer or direct URL access.
+
+## [04:55] — Building-Level Concise Geolocation
+**What was done:**
+- Overhauled location resolution in `src/app/api/setup/route.ts` and `src/components/SetupScreen.tsx` to achieve building-level precision instead of generic city names (e.g. resolving `TINKERSPACE, CALICUT` instead of just `KOZHIKODE`).
+- **Root Cause of Previous Generic Display**: OpenStreetMap Nominatim tags TinkerSpace Calicut under `leisure=hackerspace` with `name="TinkerSpace Calicut"`. The previous parser looked exclusively for `address.amenity` or `address.aeroway`, causing building detection to fail silently and drop down to `address.city` (`Kozhikode`). Additionally, the prompt instructed Gemini to format locations as `Location Name (CODE or CITY)`, which encouraged Gemini to collapse specific venues into single city names.
+- **Fixes Applied**:
+  1. Updated Nominatim reverse geocode query to request `&namedetails=1&extratags=1` alongside `addressdetails=1`.
+  2. Implemented comprehensive building/venue extraction checking `geoData.name`, `geoData.namedetails?.name`, and all address tags (`leisure`, `amenity`, `building`, `office`, `shop`, `tourism`, `craft`, `club`, `historic`, `commercial`, `industrial`, `aeroway`, `house_name`).
+  3. Added haversine proximity detection (within 500m of TinkerSpace Calicut: `11.2784487, 75.8442351`) to lock onto `TINKERSPACE, CALICUT` even when mobile GPS has slight drift or snaps to nearby road segments.
+  4. Formatted all building-level venues as `<BUILDING/VENUE>, <CITY>` (normalizing Kozhikode to Calicut for airport signage consistency).
+  5. Updated Gemini prompt and added a server-side guard to guarantee concise building-level naming is preserved.
+  6. Synchronized fallbacks across `route.ts` and `SetupScreen.tsx` to `TINKERSPACE, CALICUT`.
+**Verification:** Tested with direct API curls (`lat: 11.2784487, lon: 75.8442351`), nearby coordinates, and manual overrides. All return `TINKERSPACE, CALICUT`. `npm run build` succeeds and full Playwright test suite (30/30 tests) passes cleanly.
