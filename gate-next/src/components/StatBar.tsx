@@ -2,22 +2,23 @@
 
 interface Stats {
   hunger: number;
-  sanity: number;
+  energy: number;
   battery: number;
 }
 
 interface Props {
   stats: Stats;
   realBattery: number | null;
+  onChange?: (key: keyof Stats, value: number) => void;
 }
 
 const STAT_DEFS = [
   { key: 'hunger' as const,  label: 'HUNGER',  unit: 'FOOD'   },
-  { key: 'sanity' as const,  label: 'SANITY',  unit: 'MIND'   },
+  { key: 'energy' as const,  label: 'ENERGY',  unit: 'ENERGY'   },
   { key: 'battery' as const, label: 'BATTERY', unit: 'PWR'    },
 ];
 
-function StatRow({ label, value, low }: { label: string; value: number; low: boolean }) {
+function StatRow({ label, value, low, onChange }: { label: string; value: number; low: boolean; onChange?: (value: number) => void }) {
   const blocks = 10;
   const filled = Math.round((value / 100) * blocks);
 
@@ -48,9 +49,11 @@ function StatRow({ label, value, low }: { label: string; value: number; low: boo
         {Array.from({ length: blocks }).map((_, i) => (
           <div
             key={i}
+            onClick={() => onChange && onChange((i + 1) * 10)}
             style={{
               flex: 1,
               height: '14px',
+              cursor: onChange ? 'pointer' : 'default',
               backgroundColor: i < filled
                 ? value < 25
                   ? '#C8201A'
@@ -78,7 +81,7 @@ function StatRow({ label, value, low }: { label: string; value: number; low: boo
   );
 }
 
-export default function StatBar({ stats, realBattery }: Props) {
+export default function StatBar({ stats, realBattery, onChange }: Props) {
   const displayStats = {
     ...stats,
     battery: realBattery !== null ? realBattery : stats.battery,
@@ -98,6 +101,7 @@ export default function StatBar({ stats, realBattery }: Props) {
           label={label}
           value={displayStats[key]}
           low={displayStats[key] < 25}
+          onChange={onChange ? (v) => onChange(key, v) : undefined}
         />
       ))}
     </div>

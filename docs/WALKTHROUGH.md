@@ -116,6 +116,12 @@ This file is the **single source of truth** for where the project stands right n
 **What doesn't yet:** Not tested on a real phone; audio/wake lock/vibration need HTTPS to verify; Vercel deploy pending.
 **Immediate next step:** Deploy to Vercel and test alarm on a real phone.
 
+## [22:30] — AI Geolocation Integration
+**What was done:** Switched from repetitive AI calls in `page.tsx` to a single fetch in `SetupScreen.tsx`. It requests `navigator.geolocation`, hits `/api/setup`, and generates 5 airport-specific missions via Gemini API + returns the nearest airport name. Merges these with default absurd missions in `pickMission()`.
+**What works:** Location fetching, single AI generation, graceful fallback to `UNKNOWN AIRPORT` + defaults if AI or location fails, uneditable location display in UI.
+**What doesn't yet:** Geolocation might prompt for permission. Vercel deployment pending.
+**Immediate next step:** Deploy to Vercel.
+
 
 ---
 

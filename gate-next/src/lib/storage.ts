@@ -8,7 +8,7 @@ export interface SavedState {
   customMissions?: any[];
   vibe: string;
   walkMin: number;
-  stats: { hunger: number; sanity: number; battery: number };
+  stats: { hunger: number; energy: number; battery: number };
   log: { id: string; text: string; status: 'completed' | 'skipped'; xp: number; ts: number }[];
   xp: number;
   screen: string;

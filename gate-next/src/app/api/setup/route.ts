@@ -28,11 +28,11 @@ Output exactly and only a JSON object in this format:
 {
   "airport": "Airport Name (CODE)",
   "missions": [
-    { "id": "M-AI-1", "text": "...", "need": "sanity", "boost": 30 },
+    { "id": "M-AI-1", "text": "...", "need": "energy", "boost": 30 },
     ...
   ]
 }
-"need" must be one of: "hunger", "sanity", "battery".
+"need" must be one of: "hunger", "energy", "battery".
     `.trim();
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {

@@ -16,7 +16,7 @@ interface Props {
     gate: string;
     walkMin: number;
     vibe: string;
-    stats: { hunger: number; sanity: number; battery: number };
+    stats: { hunger: number; energy: number; battery: number };
     startedMs: number;
   }) => void;
   onDemo: () => void;

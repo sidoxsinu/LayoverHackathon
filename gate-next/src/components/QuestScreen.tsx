@@ -9,7 +9,7 @@ import { phaseFor } from '@/lib/time';
 
 interface Stats {
   hunger: number;
-  sanity: number;
+  energy: number;
   battery: number;
 }
 
@@ -36,6 +36,7 @@ interface Props {
   onComplete: () => void;
   onSkip: () => void;
   onSafeReturn: () => void;
+  onStatChange?: (key: keyof Stats, value: number) => void;
 }
 
 export default function QuestScreen({
@@ -53,6 +54,7 @@ export default function QuestScreen({
   onComplete,
   onSkip,
   onSafeReturn,
+  onStatChange,
 }: Props) {
   const msLeft = returnByMs - now;
   const phase = phaseFor(msLeft, demo);
@@ -203,7 +205,7 @@ export default function QuestScreen({
       <Countdown msLeft={msLeft} phase={phase} />
 
       {/* Stats */}
-      <StatBar stats={stats} realBattery={realBattery} />
+      <StatBar stats={stats} realBattery={realBattery} onChange={onStatChange} />
 
       {/* Missions */}
       <div style={{ flex: 1, overflowY: 'auto', paddingTop: '4px' }}>

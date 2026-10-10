@@ -51,6 +51,7 @@ type Action =
   | { type: 'MISSION_SKIP' }
   | { type: 'DRAIN_STATS' }
   | { type: 'SET_BATTERY'; value: number }
+  | { type: 'SET_STAT'; key: keyof AppState['stats']; value: number }
   | { type: 'WORDMARK_TAP' }
   | { type: 'RESTORE'; payload: AppState };
 
@@ -63,7 +64,7 @@ const DEFAULT_STATE: AppState = {
   customMissions: [],
   vibe: 'tired',
   walkMin: 10,
-  stats: { hunger: 70, sanity: 70, battery: 70 },
+  stats: { hunger: 70, energy: 70, battery: 70 },
   mission: null,
   recent: [],
   log: [],
@@ -135,7 +136,7 @@ function reducer(state: AppState, action: Action): AppState {
     case 'DRAIN_STATS': {
       const newStats = {
         hunger: clamp(state.stats.hunger - DRAIN_30S.hunger),
-        sanity: clamp(state.stats.sanity - DRAIN_30S.sanity),
+        energy: clamp(state.stats.energy - DRAIN_30S.energy),
         battery: clamp(state.stats.battery - DRAIN_30S.battery),
       };
       return { ...state, stats: newStats };
@@ -143,6 +144,9 @@ function reducer(state: AppState, action: Action): AppState {
 
     case 'SET_BATTERY':
       return { ...state, stats: { ...state.stats, battery: action.value } };
+
+    case 'SET_STAT':
+      return { ...state, stats: { ...state.stats, [action.key]: clamp(action.value) } };
 
     case 'MISSION_COMPLETE': {
       if (!state.mission) return state;
@@ -338,7 +342,7 @@ export default function Home() {
   if (state.screen === 'quest' && state.startedMs) {
     const elapsedMins = (now - state.startedMs) / 60000;
     currentStats.hunger = Math.max(0, Math.floor(state.stats.hunger - (elapsedMins * 0.3)));
-    currentStats.sanity = Math.max(0, Math.floor(state.stats.sanity - (elapsedMins * 0.5)));
+    currentStats.energy = Math.max(0, Math.floor(state.stats.energy - (elapsedMins * 0.5)));
     currentStats.battery = state.stats.battery;
   }
 
