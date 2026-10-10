@@ -10,6 +10,8 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { createBrowserClient } from '@/lib/supabase';
 import { Trip, fetchUserTrips, formatTripDateTime, clearTripsCache } from '@/lib/trips';
+import ThemeDropdown from './ui/ThemeDropdown';
+import ThemeTimePicker from './ui/ThemeTimePicker';
 
 type InputMode = 'time' | 'duration';
 
@@ -479,10 +481,9 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         {user && upcomingTrips.length > 0 && (
           <Row>
             <Label>SELECT TRIP</Label>
-            <select
+            <ThemeDropdown
               value={selectedTripId}
-              onChange={(e) => {
-                const val = e.target.value;
+              onChange={(val) => {
                 if (!val) {
                   setSelectedTripId('');
                   setSelectedTripName(null);
@@ -493,31 +494,21 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
                   if (t) applyTrip(t);
                 }
               }}
-              style={{
-                width: '100%',
-                height: '48px',
-                backgroundColor: '#101010',
-                color: '#E6E1D3',
-                border: '1px solid #34322C',
-                borderRadius: '2px',
-                padding: '0 12px',
-                fontFamily: 'var(--font-plex), monospace',
-                fontSize: '14px',
-                outline: 'none',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-              }}
-            >
-              <option value="">MANUAL ENTRY</option>
-              {upcomingTrips.map((t) => {
-                const { dateStr, timeStr } = formatTripDateTime(t.departure_at);
-                return (
-                  <option key={t.id} value={t.id}>
-                    {dateStr} {timeStr} / {t.name}
-                  </option>
-                );
-              })}
-            </select>
+              placeholder="MANUAL ENTRY"
+              options={[
+                { value: '', label: 'MANUAL ENTRY', sublabel: 'ENTER DEPARTURE DETAILS MANUALLY' },
+                ...upcomingTrips.map((t) => {
+                  const { dateStr, timeStr } = formatTripDateTime(t.departure_at);
+                  const details = [t.location, t.flight_no, t.gate ? `GATE ${t.gate}` : ''].filter(Boolean).join(' · ');
+                  return {
+                    value: t.id,
+                    badge: `${dateStr} ${timeStr}`,
+                    label: t.name,
+                    sublabel: details || undefined,
+                  };
+                }),
+              ]}
+            />
             {selectedTripName && (
               <div
                 style={{
@@ -561,11 +552,9 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
             </button>
           </div>
           {inputMode === 'time' ? (
-            <input
-              type="time"
+            <ThemeTimePicker
               value={timeValue}
-              onChange={(e) => setTimeValue(e.target.value)}
-              style={inputStyle}
+              onChange={(val) => setTimeValue(val)}
             />
           ) : (
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

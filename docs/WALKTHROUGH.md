@@ -304,6 +304,13 @@ This file is the **single source of truth** for where the project stands right n
 - Removed duplicate `<GlobalMuteButton />` instances rendered at the bottom of the screens in [page.tsx](file:///Users/sinanm/Documents/TinkerHub/LayoverHackathon/gate-next/src/app/page.tsx).
 - Preserved the primary header audio toggle button positioned at the top of each screen (`AuthScreen`, `SetupScreen`, `QuestScreen`, `GateAlarm`, `SafeTravels`, and `Trips`) without any modifications.
 
+## [03:26] — Theme-Matching Dropdown Menu & Clock Time Selection
+**What was done:**
+- Created [ThemeDropdown.tsx](file:///Users/sinanm/Documents/TinkerHub/LayoverHackathon/gate-next/src/components/ui/ThemeDropdown.tsx): Custom airport departure-board styled dropdown menu replacing generic native `<select>`. Features 48px square trigger with amber chevron, dark `#181816` popup panel with 1px borders, `#F2A900` amber highlight for active items, outside-click and Escape key handling.
+- Created [ThemeTimePicker.tsx](file:///Users/sinanm/Documents/TinkerHub/LayoverHackathon/gate-next/src/components/ui/ThemeTimePicker.tsx): Custom flight departure clock time picker replacing browser-native `<input type="time">`. Features 48px trigger with clock icon and amber digits, full modal takeover displaying giant digital clock display, dual tabs for `HOURS (00–23)` and `MINUTES (00–59)`, quick flight traveler presets (`NOW`, `+30M`, `+1H`, `+2H`, `+4H`), and precision `+1/-1 MIN` steppers.
+- Integrated into [SetupScreen.tsx](file:///Users/sinanm/Documents/TinkerHub/LayoverHackathon/gate-next/src/components/SetupScreen.tsx) and [trips/page.tsx](file:///Users/sinanm/Documents/TinkerHub/LayoverHackathon/gate-next/src/app/trips/page.tsx).
+
+
 
 
 

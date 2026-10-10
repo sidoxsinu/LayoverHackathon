@@ -14,6 +14,7 @@ import {
   clearTripsCache,
 } from '@/lib/trips';
 import GlobalMuteButton from '@/components/GlobalMuteButton';
+import ThemeTimePicker from '@/components/ui/ThemeTimePicker';
 
 import { useNow } from '@/hooks/useNow';
 
@@ -1217,25 +1218,12 @@ export default function TripsPage() {
                     colorScheme: 'dark',
                   }}
                 />
-                <input
-                  type="time"
-                  value={formTime}
-                  onChange={(e) => setFormTime(e.target.value)}
-                  required
-                  style={{
-                    width: '120px',
-                    height: '48px',
-                    backgroundColor: '#181816',
-                    border: '1px solid #34322C',
-                    borderRadius: '2px',
-                    padding: '0 12px',
-                    fontFamily: 'var(--font-plex), monospace',
-                    fontSize: '16px',
-                    color: '#E6E1D3',
-                    outline: 'none',
-                    colorScheme: 'dark',
-                  }}
-                />
+                <div style={{ width: '160px' }}>
+                  <ThemeTimePicker
+                    value={formTime}
+                    onChange={(val) => setFormTime(val)}
+                  />
+                </div>
               </div>
               <div
                 style={{
