@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { fmtDuration } from '@/lib/time';
 import GlobalMuteButton from './GlobalMuteButton';
-import { getRankInfo } from '@/lib/rank';
+import { getRank } from '@/lib/rank';
 import { useUser } from '@/hooks/useUser';
 import { queueLayoverForSave } from '@/lib/sync';
 import { load } from '@/lib/storage';
@@ -92,7 +92,7 @@ function SafeTravelsPhotoThumb({
 
 export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLayover }: Props) {
   const router = useRouter();
-  const { rank } = getRankInfo(xp);
+  const rank = getRank(xp);
   const { user, isConfigured, loading } = useUser();
   const [saveStatus, setSaveStatus] = useState<'SAVING' | 'SAVED' | 'QUEUED' | 'SIGN_IN'>('SIGN_IN');
   const [savedState, setSavedState] = useState(() => load());
