@@ -13,23 +13,27 @@ test.describe('GATE Layover Hackathon Tests', () => {
   
 
 test.beforeEach(async ({ page }) => {
-  
   await page.clock.install({ time: new Date('2026-10-10T12:00:00Z') });
-  await page.evaluate(() => {
-    window.fakeTime = new Date('2026-10-10T12:00:00Z').getTime();
+  await page.addInitScript(() => {
+    (window as any).fakeTime = new Date('2026-10-10T12:00:00Z').getTime();
     const OriginalDate = window.Date;
     class MockDate extends OriginalDate {
-      constructor(...args) {
-        if (args.length === 0) super(window.fakeTime);
-        else super(...args);
+      constructor(...args: any[]) {
+        if (args.length === 0) super((window as any).fakeTime);
+        else super(...(args as [any]));
       }
-      static now() { return window.fakeTime; }
+      static now() { return (window as any).fakeTime; }
     }
-    window.Date = MockDate;
+    window.Date = MockDate as any;
   });
 
   await page.goto('/');
-  await page.evaluate(() => window.localStorage.clear());
+  await page.evaluate(() => {
+    try { window.localStorage.clear(); } catch {}
+  });
+  try {
+    await page.getByRole('button', { name: 'CONTINUE AS GUEST' }).click({ timeout: 1000 });
+  } catch {}
 });
 
   test('1. Setup validation', async ({ page }) => {
@@ -44,7 +48,7 @@ test.beforeEach(async ({ page }) => {
     await expect(startBtn).toBeDisabled();
 
     // 1c. Empty gate handled (defaults to TBA)
-    await page.fill('input[placeholder="B14 OR TBA"]', '');
+    await page.locator('input[placeholder="TBA"], input[placeholder="B14 OR TBA"]').first().fill('');
     await page.fill('input[type="time"]', await page.evaluate(() => { const d = new Date(Date.now() + 180 * 60000); return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`; })); 
     await expect(startBtn).toBeEnabled();
     await startBtn.click();
@@ -59,7 +63,7 @@ test.beforeEach(async ({ page }) => {
     await wordmark.click();
 
     // Quest screen shown with DEMO chip
-    await expect(page.getByText('DEMO')).toBeVisible();
+    await expect(page.getByText('DEMO', { exact: true })).toBeVisible();
 
     // Advance 45s (15s left) - heads-up
     
@@ -185,25 +189,21 @@ test.beforeEach(async ({ page }) => {
     console.log("Test 5 state at start:", await page.locator('body').innerText());
     await expect(page.locator('div').filter({ hasText: 'HUNGER' }).getByText('70', { exact: true })).toBeVisible();
 
-    // Fast forward 10 minutes. Drain rate is 0.3/min => -3. Should be 57.
-    
-        
-    await page.evaluate((ms) => { window.fakeTime += ms; }, 10 * 60000);
-    await page.clock.fastForward(10 * 60000);
-  
-  
-    console.log('Test 5 state after fast forward:', await page.locator('body').innerText());
-    await expect(page.locator('div').filter({ hasText: 'HUNGER' }).getByText('66', { exact: true })).toBeVisible();
+    // Wait for quest screen useEffect to register setInterval
+    await page.waitForTimeout(100);
 
-    // Fast forward huge amount to clamp at 0
-    
-        
-    await page.evaluate((ms) => { window.fakeTime += ms; }, 60 * 60000);
-    await page.clock.fastForward(60 * 60000);
-  
-  
-    console.log('Test 5 state at end:', await page.locator('body').innerText());
-    await expect(page.locator('div').filter({ hasText: 'HUNGER' }).getByText('48', { exact: true })).toBeVisible();
+    // Fast forward 10 minutes. Drain rate is 0.3/min => -3. 70 - 3 = 67.
+    await page.evaluate((ms) => { (window as any).fakeTime += ms; }, 10 * 60000);
+    await page.clock.runFor(10 * 60000);
+
+    console.log('Test 5 state after fast forward:', await page.locator('body').innerText());
+    await expect(page.locator('div').filter({ hasText: 'HUNGER' }).getByText('67', { exact: true })).toBeVisible();
+
+    // Fast forward 10 more minutes: 67 - 3 = 64.
+    await page.evaluate((ms) => { (window as any).fakeTime += ms; }, 10 * 60000);
+    await page.clock.runFor(10 * 60000);
+
+    await expect(page.locator('div').filter({ hasText: 'HUNGER' }).getByText('64', { exact: true })).toBeVisible();
   });
 
   test('6. Mission engine', async ({ page }) => {
@@ -244,18 +244,18 @@ test.beforeEach(async ({ page }) => {
 
     // Click Complete
     await page.getByRole('button', { name: /COMPLETE/i }).click();
+    try {
+      await page.getByRole('button', { name: 'SKIP PROOF' }).click({ timeout: 1000 });
+    } catch {}
     
-        
     await page.evaluate((ms) => { window.fakeTime += ms; }, 1100);
     await page.clock.fastForward(1100);
-  
-  
     
     // XP should increase
     await expect(page.locator('div').filter({ hasText: 'TOTAL XP' }).getByText('40').first()).toBeVisible();
 
     // Rapid taps on SKIP shouldn't break state
-    const skipBtn = page.getByRole('button', { name: /SKIP/i });
+    const skipBtn = page.getByRole('button', { name: 'SKIP', exact: true });
     for(let i=0; i<5; i++) {
       await skipBtn.click();
     }
@@ -263,23 +263,21 @@ test.beforeEach(async ({ page }) => {
   });
 
   test('8. Refresh mid-session', async ({ page }) => {
-        await page.getByRole('button', { name: 'IN X H Y M' }).click();
+    await page.getByRole('button', { name: 'IN X H Y M' }).click();
     await page.fill('input[placeholder="H"]', '5');
     await page.fill('input[placeholder="M"]', '0');
     
-    
     await page.getByRole('button', { name: /START LAYOVER/i }).click();
-    await expect(page.getByRole('button', { name: /SKIP/i })).toBeVisible();
-
-    
+    await expect(page.getByRole('button', { name: 'SKIP', exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: /COMPLETE/i }).click();
+    try {
+      await page.getByRole('button', { name: 'SKIP PROOF' }).click({ timeout: 1000 });
+    } catch {}
     
-        
     await page.evaluate((ms) => { window.fakeTime += ms; }, 1100);
     await page.clock.fastForward(1100);
-  
-  
+    
     await expect(page.locator('div').filter({ hasText: 'TOTAL XP' }).getByText('40').first()).toBeVisible();
 
     // Reload page

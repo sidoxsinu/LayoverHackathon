@@ -33,6 +33,8 @@ This file is the **single source of truth** for where the project stands right n
 | Persistence (localStorage) | ✅ Done | Save on state change, restore on mount, straight-to-alarm if returnBy passed |
 | Safe Travels screen | ✅ Done | Rotated stamp, survived time, missions, XP, rank |
 | Layover Passport card | ✅ Done | Replaced with /passport route and Supabase integration |
+| Rank System Single Source of Truth | ✅ Done | `src/lib/rank.ts` canonical ranks, `rankProgress`, 10-block progress bar, 12 unit tests |
+| Trip Memories & Framed Photo Lightbox | ✅ Done | Physical-feeling paper frames, deterministic alternating rotation, full-screen lightbox, canvas export |
 | Trips (F7 saved departures) | ✅ Done | /trips departure board table, Setup integration, offline cache, RLS |
 | Migration 0002_trips.sql | ✅ Done | Written to supabase/migrations/0002_trips.sql (manual run in SQL Editor) |
 | Mission log (collapsible) | ✅ Done | Collapsible DONE/SKIP list with XP per entry |
@@ -109,12 +111,58 @@ This file is the **single source of truth** for where the project stands right n
 | 8 | Type mismatch on `LogEntry.proofCheckedAt` | `proofCheckedAt` was missing in `MissionLog.tsx` type definition | Unified `LogEntry` interface with `proofCheckedAt?: string` and `logId?: string` | Yes |
 | 9 | Null-safety warning on `layovers.find()` in `passport/page.tsx` | Photo viewer state `viewingPhoto.path` accessed without null guard | Added null-safe optional chaining | Yes |
 | 10 | React error: `Render order of hooks changed` on sign-in | `useEffect` for pending proof upload retry was placed after conditional early returns (`userLoading`, `screen === 'auth'`) in `page.tsx` | Moved `useEffect` to top of `Home` component before any conditional early returns | Yes |
+| 11 | Rank title mismatch (160 XP displayed "NAVIGATOR" instead of "Concourse Runner") | `src/lib/rank.ts` defined 150-299 XP tier as "NAVIGATOR" instead of PRD specification "Concourse Runner" | Unified `lib/rank.ts` as single source of truth (`RANKS`, `getRank`, `getNextRank`, `rankProgress`), eliminated duplicate tables, added 12 unit tests | Yes |
+| 12 | Playwright test selector `input[type="time"]` failed | Custom `ThemeTimePicker` airport modal hid the standard `<input type="time">` | Added visually-hidden native `<input type="time">` synced with picker `value` & `onChange` for test/accessibility support | Yes |
 
 ---
 
 ## Build Log
 
 > Add one entry per completed milestone. Include timestamp and what works/doesn't.
+
+---
+
+## [04:20] — /passport Rework, Rank System Single Source of Truth & Trip Memories
+**What was done:**
+1. **Rank System Single Source of Truth (`src/lib/rank.ts`)**:
+   - Fixed bug where 160 XP returned "NAVIGATOR" instead of "Concourse Runner". Canonical tiers:
+     - Gate Rookie (0 XP)
+     - Terminal Nomad (50 XP)
+     - Concourse Runner (150 XP)
+     - Gate Guardian (300 XP)
+     - Transit Legend (500 XP, max tier)
+   - Exported `RANKS`, `getRank(xp)`, `getNextRank(xp)`, `rankProgress(xp)` returning `{ current, next, xpIntoRank, xpForNext, xpToNext, pct }`.
+   - Complete input hardening against `NaN`, negatives, `undefined`, and `null`.
+   - Never stores rank title in DB or state; derived strictly from total XP at render time.
+   - Added unit test suite (`tests/rank.spec.ts`) testing all 12 boundary and edge cases.
+2. **Passport Page UI Rework (`src/app/passport/page.tsx`)**:
+   - Sticky header: `[← RETURN]` (left, 48px target) and `PASSPORT` (right) with safe-area top insets.
+   - Summary card: Total XP, rotated -4° outlined rank stamp, and 10-block segmented flat rank progress bar (`StatBar` style) with caption `"{X} XP TO {NEXT}"` or `"MAX RANK"`.
+   - Stat tiles grid: `MISSIONS TOTAL`, `PHOTOS`, `LONGEST LAYOVER` (`"1 H 20 MIN"` or `"0 MIN"` / `"SKIPPED"`).
+   - Layover cards: Clean 2-row layout (Row 1: date left, trip name or `"NO TRIP"` right; Row 2: Location left, Gate right). Duration formatted (`"< 1 MIN"`, `"2 MIN"`, `"1 H 20 MIN"`, `"0 MIN"`/`"SKIPPED"`). 0-mission layovers render in muted style with `+0` XP. Card border `line` (`paper` on focus/selected). Photo count indicator (`"X PHOTOS"`). Thin mono date rules between different dates.
+   - Empty state: Plain text `"NO LAYOVERS YET. COMPLETE ONE TO GET YOUR FIRST STAMP."`.
+   - Offline caching: Cached in `gate.passport.cache.{userId}` with graceful offline fallback.
+3. **Trip Memories Sheet & Physical-Feeling Framed Photos**:
+   - Tapping any past layover card opens a full-screen sheet (`bg-panel`, 100dvh, safe-area aware) with `[ CLOSE ]` top right (48px target).
+   - Boarding-pass strip header with LOCATION, GATE, DATE, dashed tear-line, and `+{xp} XP`.
+   - 2-column grid of "frames":
+     - Paper-colored mat (`bg-paper`, 8px padding) with 1px `line` border, square corners, zero drop shadows.
+     - Deterministic alternating rotation (`-1.5deg` / `1deg`) based on index for physical realism without layout shifts.
+     - Top-left corner tag: `"No. 01"`, `"No. 02"`, etc. in Barlow Condensed.
+     - Category code badge (`FOOD`, `MOVE`, `REST`, `PLUG`, `PREP`) in amber.
+     - 4:5 photo container with lazy loading (`loading="lazy"`, `decoding="async"`) and flat panel skeleton. Plain text fallback `"PHOTO UNAVAILABLE OFFLINE"` on network failure.
+     - Mono caption strip: truncated mission title, capture time (`"14:32"`), and proof status label (`"PROOF SAVED, NOT CHECKED"`, `"CHECKING"`, `"VERIFIED"`, `"NOT ACCEPTED"`). Never claims `"VERIFIED"` unless status is strictly `'verified'`.
+     - Guest mode: Plain text `"NO PHOTOS FROM THIS LAYOVER."` and muted line `"GUEST PHOTOS ARE NOT SAVED"`.
+4. **Full-Screen Lightbox & HTML5 Canvas "SAVE FRAME" PNG Export**:
+   - Tapping any framed photo opens a full-screen viewer on ink background with `1 / N` counter, keyboard navigation (`ArrowLeft`, `ArrowRight`, `Escape`), and 48px touch targets.
+   - Lightbox includes `DELETE PHOTO` with confirmation popup calling `deleteProof` to update Supabase Storage and database.
+   - Added `SAVE FRAME` button: renders the complete framed physical mat, corner tag, category badge, photo, caption, and rotated rank stamp directly onto an HTML5 canvas (zero external libraries) and triggers a PNG download.
+5. **Testing & Regression Suite**:
+   - `tests/rank.spec.ts`: 12 unit tests passing.
+   - `tests/passport.spec.ts`: 6 E2E tests at 390x844 passing.
+   - `tests/main.spec.ts`: All 10 core flow and ladder tests passing.
+   - Banned UI audit (`verify-proofs.mjs`): 42 checks passing (0 emojis, 0 gradients, 0 box shadows, 0 blur, 0 rounded corners > 2px, 0 em dashes).
+**What works:** Clean build, 28/28 Playwright tests pass, 42/42 verification checks pass, mobile responsive at 390px, alarm path 100% untouched.
 
 ---
 

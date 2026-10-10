@@ -69,6 +69,14 @@ export default function ThemeTimePicker({ value, onChange, label }: Props) {
 
   return (
     <>
+      <input
+        type="time"
+        tabIndex={-1}
+        aria-hidden="true"
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ position: 'absolute', opacity: 0, width: '1px', height: '1px', pointerEvents: 'none' }}
+      />
       {/* Trigger Field */}
       <div
         onClick={handleOpen}
