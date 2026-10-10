@@ -93,6 +93,7 @@ function reducer(state: AppState, action: Action): AppState {
         mission: m,
         recent: [m.id],
         demo: false,
+        startedMs: now,
       };
     }
 
@@ -323,7 +324,17 @@ export default function Home() {
     );
   }
 
+
+  let currentStats = { ...state.stats };
+  if (state.screen === 'quest' && state.startedMs) {
+    const elapsedMins = (now - state.startedMs) / 60000;
+    currentStats.hunger = Math.max(0, Math.floor(state.stats.hunger - (elapsedMins * 0.3)));
+    currentStats.sanity = Math.max(0, Math.floor(state.stats.sanity - (elapsedMins * 0.5)));
+    currentStats.battery = state.stats.battery;
+  }
+
   if (state.screen === 'safe') {
+
     return (
       <SafeTravels
         survivedMs={survivedMs}
@@ -340,7 +351,7 @@ export default function Home() {
         returnByMs={state.returnByMs}
         departureMs={state.departureMs}
         gate={state.gate}
-        stats={state.stats}
+        stats={currentStats}
         mission={state.mission}
         log={state.log}
         xp={state.xp}
