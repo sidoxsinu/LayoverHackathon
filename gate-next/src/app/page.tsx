@@ -12,7 +12,6 @@ import GateAlarm from '@/components/GateAlarm';
 import SafeTravels from '@/components/SafeTravels';
 import DebugOverlay from '@/components/DebugOverlay';
 import GlobalMuteButton from '@/components/GlobalMuteButton';
-import { SetupHeader } from '@/components/SetupHeader';
 import AuthScreen from '@/components/AuthScreen';
 import { useUser } from '@/hooks/useUser';
 
@@ -45,6 +44,8 @@ interface AppState {
   startedMs: number;
   wordmarkTaps: number;
   layoverId: string;
+  tripId?: string | null;
+  tripName?: string | null;
 }
 
 type Action =
@@ -81,6 +82,8 @@ const DEFAULT_STATE: AppState = {
   startedMs: 0,
   wordmarkTaps: 0,
   layoverId: '',
+  tripId: null,
+  tripName: null,
 };
 
 function clamp(v: number): number {
@@ -125,7 +128,7 @@ function reducer(state: AppState, action: Action): AppState {
         ...DEFAULT_STATE,
         ...action.payload,
         airportName: 'DEMO LOCATION (DMO)',
-        gate: 'B14',
+        gate: 'TBA',
         customMissions: [],
         vibe: 'tired',
         stats: demoStats,
@@ -134,6 +137,8 @@ function reducer(state: AppState, action: Action): AppState {
         recent: m ? [m.id] : [],
         demo: true,
         layoverId: crypto.randomUUID(),
+        tripId: null,
+        tripName: null,
       };
     }
 
@@ -294,6 +299,8 @@ export default function Home() {
       startedMs: saved.startedMs,
       wordmarkTaps: 0,
       layoverId: saved.layoverId || crypto.randomUUID(),
+      tripId: saved.tripId || null,
+      tripName: saved.tripName || null,
     };
 
     // If time already passed and was in quest, go straight to alarm
@@ -390,6 +397,8 @@ export default function Home() {
       demo: state.demo,
       startedMs: state.startedMs,
       layoverId: state.layoverId,
+      tripId: state.tripId ?? null,
+      tripName: state.tripName ?? null,
     };
     save(toSave);
   }, [state]);
@@ -494,7 +503,6 @@ export default function Home() {
 
     return (
       <>
-      <SetupHeader />
       <SafeTravels
         survivedMs={survivedMs}
         missionsCompleted={missionsCompleted}
@@ -536,7 +544,6 @@ export default function Home() {
   // Setup screen
   return (
     <>
-    <SetupHeader />
     <SetupScreen
       onStart={async (data) => {
         await arm();
@@ -552,6 +559,8 @@ export default function Home() {
             vibe: data.vibe,
             stats: data.stats,
             startedMs: data.startedMs,
+            tripId: data.tripId || null,
+            tripName: data.tripName || null,
           },
         });
       }}

@@ -23,9 +23,9 @@ This file is the **single source of truth** for where the project stands right n
 | `useNow` hook | ✅ Done | Derives from Date.now(), visibilitychange sync |
 | `alarm.ts` (audio arm + fire) | ✅ Done | MP3 primary (/alarm.mp3), oscillator fallback, vibration, wake lock |
 | Auth screen UI | ✅ Done | Dedicated first screen, Guest mode restored, Presentation pass complete |
-| Setup screen UI | ✅ Done | Time/duration toggle, gate, walk, vibe, live safe-time preview |
+| Setup screen UI | ✅ Done | Time/duration toggle, gate, walk, vibe, trip selector, live safe-time preview |
 | Demo Mode (triple-tap) | ✅ Done | Triple-tap wordmark or START DEMO; 60s countdown |
-| Vercel deploy + HTTPS | ⬜ Not started | Next step |
+| Vercel deploy + HTTPS | ✅ Done | Deployed on https://gate-next-cyan.vercel.app |
 | Quest screen (countdown) | ✅ Done | RETURN TO GATE IN strip, amber mono digits |
 | Stat bars (drain loop) | ✅ Done | 10-block segmented, 30s drain interval, blink <25 |
 | Mission card + engine | ✅ Done | pickMission, paper card, COMPLETE flash, SKIP |
@@ -33,6 +33,8 @@ This file is the **single source of truth** for where the project stands right n
 | Persistence (localStorage) | ✅ Done | Save on state change, restore on mount, straight-to-alarm if returnBy passed |
 | Safe Travels screen | ✅ Done | Rotated stamp, survived time, missions, XP, rank |
 | Layover Passport card | ✅ Done | Replaced with /passport route and Supabase integration |
+| Trips (F7 saved departures) | ✅ Done | /trips departure board table, Setup integration, offline cache, RLS |
+| Migration 0002_trips.sql | ✅ Done | Written to supabase/migrations/0002_trips.sql (manual run in SQL Editor) |
 | Mission log (collapsible) | ✅ Done | Collapsible DONE/SKIP list with XP per entry |
 | Battery API hook | ✅ Done | useBattery.ts — null on iOS/Firefox, manual stat fallback |
 | AI missions (Gemini proxy) | ✅ Done | /api/setup hits Gemini for custom missions based on precise location |
@@ -41,6 +43,7 @@ This file is the **single source of truth** for where the project stands right n
 | Supabase Auth + Postgres | ✅ Done | Google sign in mandatory for passport, idempotent offline queueing, RLS enabled |
 | App Flow Audit | ✅ Done | Conforms to strict PRD state machine; warning.mp3 duplication fixed; Nominatim limits respected |
 | Gate arrival completion | ✅ Done | Replaces mission slot with "ENJOY YOUR JOURNEY" airport signage card; prevents further tasks; allows direct safe return |
+
 
 **Status legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⚠️ Done with caveats · ❌ Broken
 
@@ -53,6 +56,8 @@ This file is the **single source of truth** for where the project stands right n
 - **useNow returns 0 on initial server render** — harmless (client hydration is instant), but means stats calculations use 0 briefly on hydration.
 - **MissionCard generates a random M-XX code on each render** — should be stored in mission state to be stable. Cosmetic only.
 - **Offline Save Queueing** — `SafeTravels` pushes to a local queue. If the user never connects to the internet and closes the tab, the layover is lost until they return to the app online.
+- **Device Time Zone limitation** — Trip departure dates and times use native inputs locked to the device's local timezone. Labeled clearly: "TIMES USE YOUR DEVICE TIME ZONE".
+- **50-trip cap per user** — A database trigger hard-caps trips to 50 per user to prevent abuse.
 
 ---
 
@@ -74,6 +79,9 @@ This file is the **single source of truth** for where the project stands right n
 | `components/MissionCard.tsx` | Random M-XX mission number generated on render | Cosmetic; mission ID not stored in state | Yes — store mission number |
 | `components/SafeTravels.tsx` | Rank thresholds (50/150/300/500 XP) | Quick mapping; not playtested | Yes |
 | `lib/sync.ts` | Online check uses `navigator.onLine` | Simple check for demo purposes | Yes — should verify actual fetch success |
+| `supabase/migrations/0002_trips.sql` | 50 trips cap per user trigger | Protection against DB spam during hackathon | Acceptable behavior |
+| `src/app/trips/page.tsx` | Native date/time pickers use device local timezone | Timezone lookup library would add dependencies and complexity | Acceptable behavior |
+
 
 ---
 
@@ -267,6 +275,16 @@ This file is the **single source of truth** for where the project stands right n
 - Zero changes to component state, volume/mute toggle logic, or global audio behavior.
 - Added accessible `aria-label` and `title` attributes.
 
+## [02:30] — Trips Management & Sample Data Purge
+**What was done:**
+1. **Sample Data Removed**: Purged all fake, sample, or seeded departure board rows and tokens (`SAMPLE`, `B14`, `C07`, `A02`) from the codebase, UI, and components.
+2. **Auth Screen**: Redesigned to signage minimalism: live clock and sound toggle top bar, centered GATE wordmark and tagline, pinned Google and Guest buttons, and high-visibility 16px footnote: "Guests can run layovers. Sign in to save trips and your Passport."
+3. **Database Migration `0002_trips.sql`**: Created trips table with client-generated UUID primary key, 50-trip limit trigger, updated_at trigger, full RLS CRUD isolation, plus `trip_id` and `trip_name` in `layovers` with cross-user injection security check.
+4. **`/trips` Route**: Implemented departure-board table matching airport signage standards. Shows upcoming trips sorted ascending (DEPARTS / TRIP / STATUS), dimmed past trips toggle, USE / EDIT / DELETE actions with airport-styled confirmation popup, and full-screen ADD/EDIT form with device timezone notification and validation.
+5. **Offline & Caching**: Added localStorage caching (`gate.trips.v1.{userId}`) with offline read banner "OFFLINE, SHOWING SAVED TRIPS" and clear write error messaging. Cache cleared on sign-out.
+6. **Setup Screen Integration**: Added square 48px TRIP dropdown for signed-in users with upcoming trips. Auto-preselects nearest flight within 24h. Auto-fills departure, gate, walk min. Fields remain editable without modifying saved trip. "TRIPS UNAVAILABLE" graceful fallback when unmigrated.
+7. **Alarm Path Isolation**: Confirmed trips data never touches the alarm audio or countdown loop.
+
 ---
 
 ## Architecture Decisions Log
@@ -281,6 +299,9 @@ This file is the **single source of truth** for where the project stands right n
 | Tailwind v4 with `@theme` in CSS, no config file | v4 changed the config API; using v3-style config with the v4 Vite plugin silently ignores custom tokens | Less documentation online for v4 patterns yet |
 | Deploy to Vercel at hour 1.5 (not end of night) | Wake Lock and audio need HTTPS; late discovery kills demo reliability | Adds deploy friction early, but saves pain later |
 | Stats drain on real time intervals, not on mission events only | Makes the game feel alive; creates urgency that missions need to address | Drain rates are magic numbers that need tuning |
+| Trips require authentication (Google sign-in) | Multi-tenant trips must be securely tied to a user across sessions/devices; guest mode is single-session and local only | Guests cannot save trips table entries |
+| No offline write queue for trips | Silently queueing departures risks silent failure or stale data at the airport; failing fast with a visible error line ensures reliability | User must have network to create or edit trips |
+| Device time zone for trip departures | Date/time pickers operate in device local time; avoiding complex IANA timezone lookups keeps time math simple and robust | Users must enter departure time matching their device clock |
 
 ---
 
@@ -295,7 +316,7 @@ Run this at **6:45 AM**, 15 minutes before judges start.
 - [ ] Auto-lock: Never (or longest available)
 - [ ] Power bank plugged in
 - [ ] Demo Mode triggered: triple-tap wordmark → "DEMO" chip appears
-- [ ] Gate pre-filled: **B14**, Walk: **2 min**, Vibe: **Tired**
+- [ ] Gate pre-filled: **A12**, Walk: **2 min**, Vibe: **Tired**
 - [ ] **Do NOT press START** until the pitch begins
 
 ### Alarm verification (do 3 times)
@@ -312,3 +333,4 @@ Run this at **6:45 AM**, 15 minutes before judges start.
 - [ ] Phone propped and visible
 - [ ] Laptop open to repo/README (not code editor)
 - [ ] `npm run preview` or Vercel URL confirmed working
+

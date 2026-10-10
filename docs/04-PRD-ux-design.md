@@ -1,88 +1,191 @@
 # GATE — UX & Design (v2)
 
-> A tired, anxious traveler in a loud airport must understand this in 5 seconds. Bigger, darker, clearer.
+> Airport signage, departure boards, boarding passes, luggage tags. Flat, dense, typographic, confident.
 
-## Colors
-| Token | Hex | Use |
+## Design System Tokens
+
+### Palette
+| Token | Hex | Usage |
 |---|---|---|
-| bg | #0A0A0F | Page |
-| surface / elevated / border | #13131F / #1C1C2E / #2A2A40 | Cards, inputs, dividers |
-| safe | #22C55E | > 3 h |
-| caution | #EAB308 | 1–3 h |
-| warning | #F97316 | 15 min–1 h, urgent stage |
-| danger | #EF4444 | < 15 min |
-| alarm | #DC2626 ↔ #7F1D1D | Alarm pulse |
-| text | #F8FAFC · #94A3B8 · #64748B | Primary, secondary, muted |
+| ink | #101010 | Base background |
+| panel | #181816 | Cards, header bars, form surfaces |
+| line | #34322C | 1px solid borders and dividers |
+| paper | #E6E1D3 | Primary text, high-contrast labels, action buttons |
+| amber | #F2A900 | Flight times, urgent warnings, active badges |
+| signal green | #3F9B5B | Completed state, safe indicators |
+| alarm red | #C8201A | Active alarm background, error banners, dangerous status |
+| alarm dark | #7A120E | Alarm hard-step alternating color |
+| muted text | #8C887C | Subtitles, secondary metadata, table headers |
 
-## Type
-JetBrains Mono 800 for countdown (`text-6xl`); Inter 400/600/700/900 for everything else. Minimum 16 px, touch targets ≥ 48 px.
+### Typography
+- **Headings, Labels, Countdown**: "Barlow Condensed" (uppercase, tight tracking).
+- **Numbers, Times, Gate**: "IBM Plex Mono".
+- Minimum text size: 16px. Minimum touch target: 48px height.
+- Zero rounded corners above 2px (fully square or max 2px).
+- Zero gradients, drop shadows, glows, blurs, or emojis anywhere.
 
-## Layout
-Portrait, `max-w-sm` centered, `min-h-dvh`, `pb-[env(safe-area-inset-bottom)]`. One primary action per screen at the bottom.
+### Layout
+- Mobile portrait first: `max-w-sm` (390px), `100dvh`, safe-area insets aware (`env(safe-area-inset-bottom)`).
+- Borders: 1px solid `#34322C`. Dividers are rules, never drop shadows or nested boxes.
 
-## Screen 1: Setup
-```
-   ✈️  GATE
-   Layover survival mode
- ┌──────────────────────┐
- │ Departs  [18:45] [in X h] │
- │ Gate     [ B14 ]          │
- │ Walk     [2][5][10*][15]  │
- │ Vibe  [⚡Wired][😴Tired][🍔Hungry] │
- └──────────────────────┘
-   SAFE TIME  4h 22m
- [      START SURVIVAL →     ]
-```
-Subtle dot-grid background (`radial-gradient`). Triple-tap wordmark = Demo Mode (tiny "DEMO" chip appears).
+---
 
-## Screen 2: Quest
+## Screen 1: Auth Screen (No Sample Data)
 ```
- GATE B14                  XP 80
- RETURN TO GATE IN
-   03:42:17        (color-coded)
- ▓▓▓▓▓▓▓▓░░░░ progress
- 🔋 ▓▓▓▓▓▓▓░ 78%
- 🍔 ▓▓▓░░░░░ 35%  ← pulses < 25
- 🧠 ▓▓▓▓▓░░░ 62%
- ┌ MISSION ─────────────┐
- │ 🍽️ HUNGER · ~45 min   │
- │ Find a sit-down…      │
- │ [✅ Complete]  [Skip] │
- └──────────────────────┘
- Log ▾  ✅ Terminal loop  ⏭️ Souvenir
+┌──────────────────────────────────────┐
+│ 18:45              [SOUND ON / OFF]  │
+│ 11 OCT                               │
+├──────────────────────────────────────┤
+│                                      │
+│                GATE                  │
+│     LAYOVER SURVIVAL COMPANION       │
+│                                      │
+├──────────────────────────────────────┤
+│ [ SIGN IN WITH GOOGLE (48px)       ] │
+│ [ CONTINUE AS GUEST   (48px)       ] │
+│                                      │
+│ Guests can run layovers.             │
+│ Sign in to save trips and your       │
+│ Passport.                            │
+└──────────────────────────────────────┘
 ```
-Heads-up banner slides in at the top (yellow). Urgent stage tints the whole screen orange and swaps the mission card for "Walk to gate now".
+- **Top bar**: Left = live clock in mono (HH:MM) with date in muted text below. Right = 48px square sound toggle button.
+- **Center**: Wordmark "GATE" in heavy condensed type, paper color, vertically centered in free space with tagline below.
+- **Bottom**: Action buttons pinned to bottom with safe-area padding.
+- **Footnote**: 16px minimum text size, wraps naturally, never clipped.
 
-## Screen 3: Alarm
-```
-        🚨
-   GET TO YOUR
-      GATE
-       B14
- Departs in 37 min.
- Walk now.
- [  I'M AT THE GATE ✅  ]
-```
-`animate-alarm` background, white text, `text-5xl font-black`, gate `text-7xl`. No animation on mount, no back/close, text from real timestamps.
+---
 
-## Screen 4: Safe Travels + Passport
-Dark, calm, ✈️ drifting up. Card (rounded, border-dashed, stamp-style):
+## Screen 2: Setup Screen (Trip Integration)
 ```
- LAYOVER PASSPORT
- Survived  3h 12m
- Missions  4   XP 160
- Rank      Gate Guardian
- "Made it with 0 panic."
+┌──────────────────────────────────────┐
+│ [TRIPS]    [PASSPORT]     [SIGN OUT] │
+├──────────────────────────────────────┤
+│ GATE                                 │
+│ SETUP DEPARTURE                      │
+│                                      │
+│ TRIP SELECTOR (Signed-in)            │
+│ [ 11 OCT 18:45 / FLIGHT TO TOKYO   ▾]│
+│ FROM TRIP: FLIGHT TO TOKYO           │
+│ TRIP LOCATION: DOH TERMINAL 1        │
+│                                      │
+│ DEPARTURE TIME                       │
+│ [ 18:45 ]                            │
+│                                      │
+│ GATE                                 │
+│ [ TBA ]                              │
+│                                      │
+│ WALK TO GATE                         │
+│ [ 2 MIN ] [ 5 MIN ] [ 10 MIN*] [15]  │
+│                                      │
+│ VIBE                                 │
+│ [ WIRED ] [ TIRED ] [ HUNGRY ]       │
+├──────────────────────────────────────┤
+│ SAFE TIME: 4H 22M                    │
+│ [ START SURVIVAL (48px)            ] │
+└──────────────────────────────────────┘
 ```
-Ranks by XP: 0 Wanderer · 80 Survivor · 160 Gate Guardian · 240+ Layover Legend. Button: "Start new layover".
+- **Trip Dropdown**: Square 48px native `<select>`. Lists "MANUAL ENTRY" followed by upcoming trips. Preselects nearest upcoming trip within 24 hours.
+- Selecting fills departure, gate, walk time; fields remain editable without mutating saved trip.
+- Shows muted line "FROM TRIP: NAME". Trip location displayed as static text; does not re-run AI or Nominatim geocoding.
+- If trips table is unmigrated or fails: dropdown is hidden and displays single muted line "TRIPS UNAVAILABLE".
 
-## Micro-interactions (each < 10 lines, CSS only)
-- [ ] Timer color via `transition-colors duration-1000`
-- [ ] Stat bars `transition-[width] duration-700`
-- [ ] Mission card slide-up via `@keyframes` on key change
-- [ ] Green flash overlay 800 ms on Complete
-- [ ] Low-stat bar pulse (`animate-pulse`)
-- [ ] Alarm: instant mount, no easing
+---
 
-## Accessibility
-Every alert is visual + audio + (where supported) haptic. Contrast AA on dark. Alarm text never below 40 px.
+## Screen 3: Trips Route (`/trips`)
+Departure-board table displaying real user trips only. Signed-in only.
+```
+┌──────────────────────────────────────┐
+│ < BACK                    [+ ADD TRIP│
+├──────────────────────────────────────┤
+│ DEPARTS       TRIP            STATUS │
+├──────────────────────────────────────┤
+│ 11 OCT        FLIGHT TO TYO     IN 3D│
+│ 18:45         DOH · QR812 · TBA      │
+├──────────────────────────────────────┤
+│ [ USE (48px) ] [ EDIT ] [ DELETE ]   │
+├──────────────────────────────────────┤
+│ 12 OCT        FLIGHT TO LHR     IN 4D│
+│ 06:10         LHR · BA118 · A12      │
+├──────────────────────────────────────┤
+│ [SHOW PAST (2) ▾]                    │
+└──────────────────────────────────────┘
+```
+- **Header**: DEPARTS / TRIP / STATUS in muted uppercase.
+- **Row**: Left = date & time in mono amber (11 OCT over 18:45); middle = name over muted location, flight, gate; right = status (IN 3D, IN 5H, TODAY, PAST).
+- **Row selection**: Tapping a row reveals three 48px square buttons: `USE` (loads trip into Setup and navigates to `/`), `EDIT`, and `DELETE`.
+- **Empty state**: Plain text "NO TRIPS SAVED. ADD YOUR NEXT DEPARTURE." with 48px `ADD TRIP` button.
+- **Offline indicator**: Muted line "OFFLINE, SHOWING SAVED TRIPS" when reading from cache.
+
+### Delete Confirmation Popup
+```
+┌──────────────────────────────────────┐
+│ DELETE TRIP                          │
+│ DELETE "FLIGHT TO TYO"?              │
+│ THIS ACTION CANNOT BE UNDONE.        │
+│                                      │
+│ [ CONFIRM DELETE (48px red)        ] │
+│ [ CANCEL (48px panel)              ] │
+└──────────────────────────────────────┘
+```
+- Flat panel surface with 1px border in `#34322C`. No blur or modal backdrop animations.
+
+### Add / Edit Trip Form (Full Screen)
+- Inputs: NAME (required, 1 to 60 characters), LOCATION (max 60), FLIGHT NO (max 12), GATE (max 8, TBA allowed), DEPARTURE DATE and TIME (native inputs with dark color scheme), WALK TO GATE segmented 2/5/10/15 (default 10).
+- Label: `TIMES USE YOUR DEVICE TIME ZONE.`
+- Validation error: One line in alarm red (`#C8201A`).
+- Save button: 48px tall, idempotent upsert with client-generated UUID.
+
+---
+
+## Screen 4: Quest Screen
+```
+┌──────────────────────────────────────┐
+│ GATE A12                      XP 120 │
+├──────────────────────────────────────┤
+│ RETURN TO GATE IN                    │
+│ 03:42:17                             │
+├──────────────────────────────────────┤
+│ BATTERY [████████░░] 78%             │
+│ HUNGER  [███░░░░░░░] 35%             │
+│ SANITY  [██████░░░░] 62%             │
+├──────────────────────────────────────┤
+│ MISSION M-04 · REST                  │
+│ FIND THE QUIETEST CORNER. SIT.       │
+│ DO NOTHING FOR 10 MINUTES.           │
+│                                      │
+│ [ COMPLETE (48px) ]  [ SKIP (48px) ] │
+└──────────────────────────────────────┘
+```
+- Countdown in mono amber. Digits update cleanly without easing or blur.
+- Stats in segmented blocks (10 blocks).
+- Paper-colored mission card with dashed tear-line.
+
+---
+
+## Screen 5: Alarm Screen
+```
+┌──────────────────────────────────────┐
+│                                      │
+│             RETURN TO                │
+│               GATE                   │
+│                                      │
+│                A12                   │
+│                                      │
+│          DEPARTS IN 35 MIN           │
+│              WALK NOW                │
+│                                      │
+│ [ I'M AT THE GATE (48px)           ] │
+│                                      │
+└──────────────────────────────────────┘
+```
+- Full takeover in `#C8201A` hard-stepping to `#7A120E` with `steps(1)`.
+- No animation on mount, no close or back action. Only "I'M AT THE GATE" dismisses.
+- Text derived strictly from timestamps. Zero network or auth dependency.
+
+---
+
+## Screen 6: Safe Travels + Passport
+- Rotated stamp format in mono.
+- Displays flight name/trip name when present, layover duration, missions completed, and XP rank.
+- Header links for signed-in users: `TRIPS`, `PASSPORT`, `SIGN OUT`.

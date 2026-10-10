@@ -17,6 +17,8 @@ export interface SavedState {
   demo: boolean;
   startedMs: number;
   layoverId: string;
+  tripId?: string | null;
+  tripName?: string | null;
 }
 
 export function load(): SavedState | null {

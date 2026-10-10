@@ -16,6 +16,7 @@ interface LayoverRecord {
   xp: number;
   missions_done: number;
   created_at: string;
+  trip_name?: string | null;
 }
 
 export default function PassportPage() {
@@ -139,6 +140,11 @@ export default function PassportPage() {
         <div className="flex flex-col gap-4 pb-12">
           {layovers.map((l) => (
             <div key={l.id} className="border border-line p-4 flex flex-col gap-3 relative">
+              {l.trip_name && (
+                <div className="font-mono text-xs text-amber font-bold uppercase tracking-wider">
+                  TRIP: {l.trip_name}
+                </div>
+              )}
               <div className="flex justify-between items-start">
                 <div>
                   <div className="font-sans text-[10px] tracking-widest text-muted uppercase">LOCATION</div>

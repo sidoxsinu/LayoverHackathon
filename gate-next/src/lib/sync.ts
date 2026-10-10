@@ -67,7 +67,9 @@ export async function flushSyncQueue() {
           xp: state.xp,
           missions_done: missionsDone,
           missions_skipped: missionsSkipped,
-          is_demo: state.demo
+          is_demo: state.demo,
+          trip_id: state.tripId || null,
+          trip_name: state.tripName || null,
         });
 
       if (layoverError) {

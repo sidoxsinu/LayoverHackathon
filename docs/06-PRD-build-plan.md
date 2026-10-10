@@ -16,10 +16,11 @@
 | 9:30–10:30 | Setup screen | Inputs, duration mode, live safe-time preview, validation, vibe seeding | Impossible inputs blocked |
 | 10:30–11:30 | Alert ladder + persistence | Heads-up/urgent stages, localStorage restore, alarm latch | Refresh and background tests pass |
 | 11:30–12:30 | Safe Travels + Passport | End card, ranks, reset | Screenshot-worthy card |
-| 12:30–1:30 | Polish | Micro-interactions, mission log, mobile layout, battery hook | Feels like a product |
-| 1:30–2:00 | Stretch (pick one) | Vibration tuning / AI proxy / PWA manifest | Optional |
+| 12:30–1:00 | **Trips (F7)** | Saved departures table, /trips, Setup dropdown, offline cache | Full upcoming flight flow works (Done) |
+| 1:00–1:30 | Polish | Mobile layout, battery hook, signage theme | Feels like an airport display |
+| 1:30–2:00 | Stretch | Geolocation + Gemini proxy missions | Working local context |
 | **2:00** | **FREEZE** | Redeploy, tag the commit | Production URL final |
-| 2:00–3:00 | Bug hunt | Edge-case checklist (03), 3 full Demo Mode runs on the phone | Zero known bugs |
+| 2:00–3:00 | Bug hunt | Edge-case checklist (03), 3 full Demo Mode runs on phone | Zero known bugs |
 | 3:00–4:00 | Ship materials | README (what/run/screenshots), QR code, booth sign, backup recording | Booth kit ready |
 | 4:00–6:00 | Rest | Sleep. Run the script once out loud on waking. | Charged phone, power bank |
 
@@ -30,10 +31,10 @@
 | 1:00 AM | Battery API (manual stat), micro-interactions |
 | Always keep | Clock, alarm, Demo Mode, missions, stats |
 
-## Stretch menu (choose one, 30–45 min)
+## Stretch menu (choose one, 30 to 45 min)
 | Option | Impact |
 |---|---|
-| Gemini proxy missions with ✨ badge | Tech depth |
+| Gemini proxy missions | Tech depth |
 | PWA manifest + add-to-home-screen | Feels native |
 | Mission mini-timers | Richer quest |
 | Airport flavor text (DXB/DOH/SIN) | Travel tie-in; verify facts |
@@ -43,7 +44,9 @@
 - [ ] Demo Mode alarm fires at 60 s on the demo phone, three times in a row
 - [ ] Works offline after first load
 - [ ] Passport card looks good in a screenshot
+- [x] Trips management (saved departures table, Setup integration, offline cache, RLS)
 - [ ] README with screenshots
+
 
 ## Kickoff prompt for an AI coding agent
 > Build "GATE", a mobile-first Next.js + Tailwind v4 web app. Follow `docs/03-PRD-technical.md` exactly: epoch-ms time model, `useNow`, `alarm.js`, `pickMission`, localStorage persistence. Screens: Setup, Quest, Alarm, Safe Travels. Implement Demo Mode (triple-tap wordmark → returnBy = now + 60 s). Start with P0 items from `docs/02-PRD-features.md`, commit after each checkpoint, and ask before adding dependencies.

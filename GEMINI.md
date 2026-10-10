@@ -72,15 +72,53 @@ No router, no state library, no UI kit, no animation library. Do not add any dep
 
 ## Non-negotiables
 - Time is stored as epoch milliseconds. Never store Date objects. Derive everything from `Date.now()`, never count ticks.
-- The alarm path must have zero network or AI dependency.
+- The alarm path must have zero network or AI dependency. Trips never touch the alarm path.
+- No sample, placeholder, seeded or fake data anywhere (UI, code, DB, in-app text). Empty states are plain text. Input placeholders show format only.
 - Audio is armed inside the START click handler (autoplay policy). Wake Lock, Vibration and Battery APIs are feature-detected and optional.
-- Demo Mode (triple-tap wordmark → returnBy = now + 60 s) must always work.
+- Demo Mode (triple-tap wordmark → returnBy = now + 60 s) must always work. Demo Mode ignores trips.
 - Alarm screen: instant mount, no animation, no dismiss except "I'M AT THE GATE", text computed from real timestamps.
 - Mobile portrait first (`max-w-sm`, 48px touch targets, 16px+ text, `100dvh`).
 - Every state change persists to localStorage; refresh must restore the session.
 
+## APP FLOW & Routes
+Routes: `/` (AUTH, SETUP, QUEST, ALARM, SAFE TRAVELS) · `/passport` · `/trips`.
+
+1. AUTH (fresh session)
+- Wordmark GATE vertically centered in free space.
+- No sample or seeded departure board rows.
+- Footnote (16px minimum): "Guests can run layovers. Sign in to save trips and your Passport."
+- SIGN IN WITH GOOGLE or CONTINUE AS GUEST.
+
+2. SETUP
+- Header links for signed-in users: TRIPS / PASSPORT / SIGN OUT.
+- If signed in with upcoming trips: TRIP dropdown (native select, square, 48px) above departure fields. Options: "MANUAL ENTRY", then upcoming trips as "11 OCT 18:45 / NAME". Preselects nearest upcoming trip departing within next 24 hours.
+- Selecting a trip fills departure (absolute departureMs passed straight into schedule()), gate, and walk time. Fields stay editable and edits never change saved trip. Displays "FROM TRIP: NAME" and label "TRIP LOCATION: ...".
+- If trips table does not exist or request fails: show muted line "TRIPS UNAVAILABLE" and continue manual flow.
+- START blocked if safe time <= 0. Passes tripId and tripName into state and saves to `layovers.trip_id` and `trip_name`.
+
+3. QUEST
+- Countdown, draining stats, single mission card. Hidden from trips links.
+
+4. ALARM
+- Immediate alarm screen takeover, zero network/auth/trip dependency.
+
+5. SAFE TRAVELS
+- Header links for signed-in users: TRIPS / PASSPORT / SIGN OUT.
+- Layover saved with trip_id and trip_name.
+
+6. /PASSPORT
+- Signed in only. Past layover cards show trip_name when present.
+
+7. /TRIPS
+- Signed-in only. Redirects to `/` if stored screen is quest or alarm.
+- Guests see "SIGN IN TO SAVE TRIPS" and back button.
+- Departure-board table (DEPARTS / TRIP / STATUS) sorted ascending for upcoming trips. Past trips behind "SHOW PAST (n)" toggle.
+- Selected row reveals square 48px buttons: USE, EDIT, DELETE (with popup confirmation).
+- Full screen ADD/EDIT form with device time zone label, validation, and idempotent client-generated UUID upsert.
+- Cached in `gate.trips.v1.{userId}`. Cache cleared on sign-out. Offline displays "OFFLINE, SHOWING SAVED TRIPS". Writes require connection. If table missing, shows "TRIPS UNAVAILABLE".
+
 ## Priorities
-P0 clock + alarm + Demo Mode → deploy → quest (stats, missions) → setup validation → P1 alert ladder + passport → P2 AI.
+P0 clock + alarm + Demo Mode → deploy → quest (stats, missions) → setup validation → P1 alert ladder + passport + trips → P2 AI.
 Finish and verify each P0 item before starting the next.
 
 ## Code style
@@ -98,3 +136,4 @@ Finish and verify each P0 item before starting the next.
 
 ## Definition of done (per task)
 Works on a real phone over HTTPS, matches the PRD acceptance criteria, no console errors, committed.
+

@@ -189,15 +189,67 @@ export function useBattery() {
 
 ## Persistence (`lib/storage.js`)
 ```js
-const KEY = 'gate.v2';
+const KEY = 'gate.v3';
 export const load = () => { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } };
 export const save = s => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch {} };
 export const clear = () => localStorage.removeItem(KEY);
 ```
 Call `save(state)` in an effect on state change. On boot: `load()`; if `returnByMs <= Date.now()` and screen is `quest`, set screen to `alarm`.
 
+## Database Schema & Migrations (Supabase Postgres)
+
+### Migration `0001_init.sql`
+Creates `profiles`, `layovers`, and `mission_log` tables with RLS enabled (`user_id = auth.uid()`).
+
+### Migration `0002_trips.sql`
+Adds upcoming departures tracking with strict multi-tenant isolation:
+1. **`trips` Table**:
+   - `id uuid primary key` (client-generated via `crypto.randomUUID()`)
+   - `user_id uuid not null default auth.uid() references auth.users(id) on delete cascade`
+   - `name text not null check (char_length(name) >= 1 and char_length(name) <= 60)`
+   - `location text check (location is null or char_length(location) <= 60)`
+   - `flight_no text check (flight_no is null or char_length(flight_no) <= 12)`
+   - `gate text check (gate is null or char_length(gate) <= 8)`
+   - `departure_at timestamptz not null`
+   - `walk_min int not null default 10 check (walk_min in (2, 5, 10, 15))`
+   - `created_at timestamptz not null default now()`
+   - `updated_at timestamptz not null default now()`
+   - Index on `(user_id, departure_at)`
+2. **50-Trip Hard Limit Trigger**:
+   - `check_trip_limit_trigger` prevents a single user from inserting more than 50 trips (`RAISE EXCEPTION 'TRIP LIMIT EXCEEDED (MAX 50)'`).
+3. **Row-Level Security (RLS)**:
+   - SELECT, INSERT, UPDATE, DELETE policies on `trips` strictly require `auth.uid() = user_id`, with `WITH CHECK (auth.uid() = user_id)` on INSERT and UPDATE.
+4. **Layovers Integration**:
+   - `layovers` alters table to add `trip_id uuid null references trips(id) on delete set null` and `trip_name text null`.
+   - Layovers INSERT and UPDATE RLS policies enforce:
+     ```sql
+     trip_id is null or exists (
+       select 1 from trips t where t.id = trip_id and t.user_id = auth.uid()
+     )
+     ```
+     This prevents user B from linking their layover to user A's trip.
+
+### Client Cache & Offline Handling (`lib/trips.ts`)
+- **Cache Key**: `gate.trips.v1.{userId}` in `localStorage`.
+- **Reads**: Always caches successful queries. If offline or query fails while cached data exists, returns cached trips with status notice: `OFFLINE, SHOWING SAVED TRIPS`.
+- **Writes**: Client creates a UUID before sending upsert request (`upsert({ ... }, { onConflict: 'id' })`). Idempotent: repeating the save never creates duplicate rows. Writes fail fast if offline with a clear one-line error in alarm red (no silent queues).
+- **Cache Invalidation**: Cleared immediately on user sign-out via `clearTripCache(userId)`.
+
+### Trip ID Data Flow
+1. User selects trip in Setup dropdown -> `trip.id` and `trip.name` set in Setup local state.
+2. Form fields auto-fill (`departureMs = new Date(trip.departure_at).getTime()`, `gate`, `walkMin`).
+3. Form fields remain fully editable by the user without modifying the underlying saved trip.
+4. When START is clicked, `tripId` and `tripName` are dispatched to `AppState` (`START` action).
+5. State is written to `gate.v3` localStorage and subsequently synced to Supabase `layovers` table (`trip_id`, `trip_name`).
+6. Passport screen renders `trip_name` badge alongside the layover history card.
+
+### Timezone Limitation
+Native `<input type="date">` and `<input type="time">` interpret input according to the user's local device clock and convert to UTC ISO strings (`new Date(dateTimeStr).toISOString()`). The UI explicitly surfaces:
+`TIMES USE YOUR DEVICE TIME ZONE.`
+Departures are scheduled as absolute epoch milliseconds, ensuring time math remains identical regardless of local device timezone shifts.
+
 ## AI missions (P2)
-`api/missions.js` (Vercel function) calls Gemini with the key from `process.env.GEMINI_API_KEY` and model name from `process.env.GEMINI_MODEL` (check current model name in AI Studio). Prompt: return JSON array of 6 missions with the same shape as above. Client: `Promise.race([fetch('/api/missions', ...), timeout(3000)])`, validate every field, merge into the pool, else ignore. Never needed for the alarm.
+`api/missions.js` (Vercel function) calls Gemini with the key from `process.env.GEMINI_API_KEY` and model name from `process.env.GEMINI_MODEL`. Prompt: return JSON array of 6 missions with the same shape as above. Client: `Promise.race([fetch('/api/missions', ...), timeout(3000)])`, validate every field, merge into the pool, else ignore. Never needed for the alarm.
 
 ## Deploy
 ```bash
@@ -213,3 +265,7 @@ Open on a real phone over HTTPS, press START in Demo Mode, and verify: sound, vi
 - [ ] Audio blocked → fallback works
 - [ ] Background tab 60 s then return → ladder catches up
 - [ ] Mission never exceeds remaining time
+- [ ] Trips RLS blocks cross-user reads/writes
+- [ ] Trips offline fallback displays cached departures
+- [ ] Unmigrated trips table gracefully falls back to "TRIPS UNAVAILABLE"
+

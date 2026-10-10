@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 // ---------------------------------------------------------------------------
-// deterministic 2-octave value noise — house field, no deps
+// deterministic 2-octave value noise: house field, no deps
 // ---------------------------------------------------------------------------
 function hash2(x: number, y: number) {
   const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
@@ -27,7 +27,7 @@ function noise2(x: number, y: number) {
 }
 
 // ---------------------------------------------------------------------------
-// VaporCountdown — live countdown where every digit change is a phase
+// VaporCountdown: live countdown where every digit change is a phase
 // transition: the outgoing digit sublimates into monochrome grains drifting up
 // on curl-noise wind while the incoming digit condenses from the same cloud,
 // grains spring-seeking their new glyph homes. Canvas 2D over a real <time>
@@ -37,11 +37,11 @@ function noise2(x: number, y: number) {
 
 const FLOATS = 6; // grains: x, y, vx, vy, hx, hy · vapor: x, y, vx, vy, age, life
 const MAX_GRAINS = 2500; // per digit
-const SAMPLE_STRIDE = 3; // px between alpha samples on the glyph raster
-const SPRING_K = 90; // s⁻² — hero-gravity-well constants exactly
+const PIXEL_STEP = 3; // px between alpha samples on the glyph raster
+const SPRING_K = 90; // s⁻²: hero-gravity-well constants exactly
 const ZETA = 0.55; // damping ratio; < 1 gives a soft condensation overshoot
 const DRAG = 0.92; // per-frame velocity drag
-const DT_MAX = 0.032; // s — clamp tab-switch jumps
+const DT_MAX = 0.032; // s: clamp tab-switch jumps
 const FIELD_SCALE = 0.008; // px → noise units for the wind field
 const CURL_EPS = 0.75; // noise-space finite-difference step for curl
 const PAD_X = 40; // canvas overdraw so vapor is not clipped at the digits' box
@@ -64,7 +64,7 @@ export function VaporCountdown({
   className = "",
   color,
 }: {
-  /** countdown target — Date, ISO string, or epoch ms; defaults to 24h from mount */
+  /** countdown target: Date, ISO string, or epoch ms; defaults to 24h from mount */
   targetDate?: Date | string | number;
   /** mono labels under the HH / MM / SS groups; null hides the row */
   labels?: readonly [string, string, string] | null;
@@ -127,7 +127,7 @@ export function VaporCountdown({
     // ---- canvas / particle state (unused under reduced motion) -------------
     const ctx = canvas.getContext("2d");
 
-    // grain color tracks the real foreground token — read fresh on theme
+    // grain color tracks the real foreground token: read fresh on theme
     // change so light/dark both draw legible ink, never a hardcoded hex.
     let grainColor = color || "#ededed";
     const updateGrainColor = () => {
@@ -166,7 +166,7 @@ export function VaporCountdown({
         const v = slot.v;
 
         if (!slot.active) {
-          // asleep: grains sit on their homes — one flat pass, no physics
+          // asleep: grains sit on their homes: one flat pass, no physics
           ctx.globalAlpha = 0.5;
           for (let i = 0; i < slot.gc; i++) {
             const o = i * FLOATS;
@@ -230,7 +230,7 @@ export function VaporCountdown({
           let vx = v[o + 2];
           let vy = v[o + 3];
 
-          // wind = curl of the noise field: (∂n/∂y, -∂n/∂x) — divergence-free
+          // wind = curl of the noise field: (∂n/∂y, -∂n/∂x): divergence-free
           const nx = x * FIELD_SCALE;
           const ny = y * FIELD_SCALE;
           const dndx = noise2(nx + CURL_EPS, ny) - noise2(nx - CURL_EPS, ny);
@@ -354,7 +354,7 @@ export function VaporCountdown({
         };
       });
 
-      // rasterize glyphs 0-9 once — tabular figures make every cell identical
+      // rasterize glyphs 0-9 once: tabular figures make every cell identical
       const cellRect = digitEls[0].getBoundingClientRect();
       const gw = Math.max(2, Math.ceil(cellRect.width));
       const gh = Math.max(2, Math.ceil(cellRect.height));
@@ -374,9 +374,9 @@ export function VaporCountdown({
         octx.fillText(String(d), gw / 2, gh / 2);
         const alpha = octx.getImageData(0, 0, gw, gh).data;
         const pts: number[] = [];
-        for (let y = 1; y < gh; y += SAMPLE_STRIDE) {
+        for (let y = 1; y < gh; y += PIXEL_STEP) {
           const row = y * gw;
-          for (let x = 1; x < gw; x += SAMPLE_STRIDE) {
+          for (let x = 1; x < gw; x += PIXEL_STEP) {
             if (alpha[(row + x) * 4 + 3] > 128) pts.push(x, y);
           }
         }
@@ -392,7 +392,7 @@ export function VaporCountdown({
         glyphs.push(homes.subarray(0, n * 2));
       }
 
-      // seat every slot on its current digit, settled — calm first paint
+      // seat every slot on its current digit, settled: calm first paint
       for (let s = 0; s < 6; s++) {
         const slot = slots[s];
         const homes = glyphs[Number(digits.charAt(s))];

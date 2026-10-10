@@ -13,13 +13,18 @@ A Next.js (App Router) mobile-first web app for navigating airport layovers. Bui
 ### 1. Database & Authentication (Supabase)
 
 1. Create a new project on [Supabase](https://supabase.com).
-2. Go to the SQL Editor and run the migration file provided in this repository:
+2. Go to the SQL Editor and run the migration files provided in this repository:
    ```bash
-   cat supabase/migrations/0001_init.sql # Copy the contents and paste into Supabase
+   # Run 0001 (initial tables, profiles, layovers, mission log)
+   cat supabase/migrations/0001_init.sql
+
+   # Run 0002 (trips table, triggers, and layovers trip integration)
+   cat supabase/migrations/0002_trips.sql
    ```
 3. Enable Google Auth in Supabase:
    - Go to **Authentication > Providers** and enable Google.
    - You will need a Google Cloud OAuth Client ID and Secret (see below).
+
 
 ### 2. Google Cloud OAuth
 
@@ -54,4 +59,5 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 3. Deploy!
 
 ## Security Check (RLS)
-Row Level Security (RLS) is enabled on all tables (`profiles`, `layovers`, `mission_log`). The policies explicitly use `auth.uid() = user_id`, meaning it is mathematically impossible for a user to read, update, or delete any rows belonging to another user.
+Row Level Security (RLS) is enabled on all tables (`profiles`, `layovers`, `mission_log`, `trips`). The policies explicitly use `auth.uid() = user_id`, meaning it is mathematically impossible for a user to read, update, or delete any rows belonging to another user. Furthermore, the `layovers` table verifies that any assigned `trip_id` must belong to the active authenticated user (`trips.user_id = auth.uid()`), preventing cross-user data tampering.
+

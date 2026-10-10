@@ -1,10 +1,15 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { nextOccurrence, schedule, fmtDuration, BUFFER_MIN, MARGIN_MIN } from '@/lib/time';
 import { startStats } from '@/lib/missions';
 import { arm } from '@/lib/alarm';
 import { useNow } from '@/hooks/useNow';
 import GlobalMuteButton from './GlobalMuteButton';
+
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/hooks/useUser';
+import { createBrowserClient } from '@/lib/supabase';
+import { Trip, fetchUserTrips, formatTripDateTime, clearTripsCache } from '@/lib/trips';
 
 type InputMode = 'time' | 'duration';
 
@@ -19,6 +24,8 @@ interface Props {
     vibe: string;
     stats: { hunger: number; energy: number; battery: number };
     startedMs: number;
+    tripId?: string | null;
+    tripName?: string | null;
   }) => void;
   onDemo: () => void;
   tapCount: number;
@@ -53,6 +60,15 @@ function Row({ children }: { children: React.ReactNode }) {
 }
 
 export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }: Props) {
+  const router = useRouter();
+  const { user } = useUser();
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [tripsUnavailable, setTripsUnavailable] = useState(false);
+  const [selectedTripId, setSelectedTripId] = useState<string>('');
+  const [tripDepartureMs, setTripDepartureMs] = useState<number | null>(null);
+  const [selectedTripName, setSelectedTripName] = useState<string | null>(null);
+  const [selectedTripLocation, setSelectedTripLocation] = useState<string | null>(null);
+
   const [inputMode, setInputMode] = useState<InputMode>('time');
   const [timeValue, setTimeValue] = useState('');
   const [durH, setDurH] = useState('2');
@@ -67,6 +83,75 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
   const [showLocationConfirm, setShowLocationConfirm] = useState(false);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [locationStatus, setLocationStatus] = useState<'AUTO' | 'MANUAL' | 'DEFAULT'>('AUTO');
+
+  // Load Trips if user is signed in
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+
+    fetchUserTrips(user.id).then((res) => {
+      if (!active) return;
+      setTrips(res.trips);
+      setTripsUnavailable(res.unavailable);
+
+      const upcoming = res.trips.filter((t) => new Date(t.departure_at).getTime() >= Date.now());
+      if (upcoming.length === 0) return;
+
+      // 1. Check if user came from /trips with USE button
+      let activeId: string | null = null;
+      try {
+        activeId = localStorage.getItem('gate.active_trip_id');
+        if (activeId) {
+          localStorage.removeItem('gate.active_trip_id');
+        }
+      } catch {}
+
+      const activeTrip = activeId ? upcoming.find((t) => t.id === activeId) : null;
+      if (activeTrip) {
+        applyTrip(activeTrip);
+      } else {
+        // 2. Preselect nearest upcoming trip departing within next 24 hours
+        const sorted = [...upcoming].sort(
+          (a, b) => new Date(a.departure_at).getTime() - new Date(b.departure_at).getTime()
+        );
+        const nearest = sorted[0];
+        if (nearest) {
+          const depMs = new Date(nearest.departure_at).getTime();
+          const diffMs = depMs - Date.now();
+          if (diffMs > 0 && diffMs <= 24 * 3600000) {
+            applyTrip(nearest);
+          }
+        }
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  const applyTrip = (trip: Trip) => {
+    setSelectedTripId(trip.id);
+    setSelectedTripName(trip.name);
+    setSelectedTripLocation(trip.location || null);
+    const depDate = new Date(trip.departure_at);
+    setTripDepartureMs(depDate.getTime());
+    setInputMode('time');
+    const hh = String(depDate.getHours()).padStart(2, '0');
+    const mm = String(depDate.getMinutes()).padStart(2, '0');
+    setTimeValue(`${hh}:${mm}`);
+    if (trip.gate) setGate(trip.gate);
+    if (trip.walk_min) setWalkMin(trip.walk_min);
+  };
+
+  const handleSignOut = async () => {
+    if (user) {
+      clearTripsCache(user.id);
+    }
+    const supabase = createBrowserClient();
+    await supabase?.auth.signOut();
+    window.location.reload();
+  };
 
   // Sync draftLocation when airportName changes via auto-detect
   useEffect(() => {
@@ -158,9 +243,27 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
 
   const now = useNow(1000);
 
+  // Upcoming trips computed
+  const upcomingTrips = useMemo(() => {
+    return trips.filter((t) => new Date(t.departure_at).getTime() >= now);
+  }, [trips, now]);
+
   // Compute departureMs
   let departureMs = 0;
-  if (inputMode === 'time' && timeValue) {
+  if (selectedTripId && tripDepartureMs !== null) {
+    if (inputMode === 'time' && timeValue) {
+      const d = new Date(tripDepartureMs);
+      const [h, m] = timeValue.split(':').map(Number);
+      if (!isNaN(h) && !isNaN(m)) {
+        d.setHours(h, m, 0, 0);
+        departureMs = d.getTime();
+      } else {
+        departureMs = tripDepartureMs;
+      }
+    } else {
+      departureMs = tripDepartureMs;
+    }
+  } else if (inputMode === 'time' && timeValue) {
     departureMs = nextOccurrence(timeValue, now);
   } else if (inputMode === 'duration') {
     const h = parseInt(durH) || 0;
@@ -198,6 +301,8 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
       vibe,
       stats: startStats(vibe),
       startedMs: now,
+      tripId: selectedTripId || null,
+      tripName: selectedTripName || null,
     });
   };
 
@@ -273,20 +378,74 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
             GATE
           </span>
         </button>
-        <span
-          style={{
-            fontFamily: 'var(--font-barlow), sans-serif',
-            fontSize: '11px',
-            color: '#8C887C',
-            letterSpacing: '0.15em',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-          }}
-        >
-          LAYOVER COMPANION
-          <GlobalMuteButton />
-        </span>
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button
+              onClick={() => router.push('/trips')}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-barlow), sans-serif',
+                fontSize: '13px',
+                color: '#8C887C',
+                letterSpacing: '0.15em',
+                padding: 0,
+                textTransform: 'uppercase',
+              }}
+            >
+              TRIPS
+            </button>
+            <button
+              onClick={() => router.push('/passport')}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-barlow), sans-serif',
+                fontSize: '13px',
+                color: '#8C887C',
+                letterSpacing: '0.15em',
+                padding: 0,
+                textTransform: 'uppercase',
+              }}
+            >
+              PASSPORT
+            </button>
+            <button
+              onClick={handleSignOut}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-barlow), sans-serif',
+                fontSize: '13px',
+                color: '#C8201A',
+                letterSpacing: '0.15em',
+                padding: 0,
+                textTransform: 'uppercase',
+              }}
+            >
+              SIGN OUT
+            </button>
+            <GlobalMuteButton />
+          </div>
+        ) : (
+          <span
+            style={{
+              fontFamily: 'var(--font-barlow), sans-serif',
+              fontSize: '11px',
+              color: '#8C887C',
+              letterSpacing: '0.15em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+            }}
+          >
+            LAYOVER COMPANION
+            <GlobalMuteButton />
+          </span>
+        )}
       </div>
 
       {/* Demo mode hint */}
@@ -306,6 +465,89 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
 
       {/* Form */}
       <div style={{ flex: 1 }}>
+
+        {/* Trips unavailable notice */}
+        {user && tripsUnavailable && (
+          <Row>
+            <span style={{ fontFamily: 'var(--font-plex), monospace', fontSize: '11px', color: '#8C887C', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+              TRIPS UNAVAILABLE
+            </span>
+          </Row>
+        )}
+
+        {/* Trip Dropdown if signed in and upcoming trips exist */}
+        {user && upcomingTrips.length > 0 && (
+          <Row>
+            <Label>SELECT TRIP</Label>
+            <select
+              value={selectedTripId}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) {
+                  setSelectedTripId('');
+                  setSelectedTripName(null);
+                  setSelectedTripLocation(null);
+                  setTripDepartureMs(null);
+                } else {
+                  const t = upcomingTrips.find((item) => item.id === val);
+                  if (t) applyTrip(t);
+                }
+              }}
+              style={{
+                width: '100%',
+                height: '48px',
+                backgroundColor: '#101010',
+                color: '#E6E1D3',
+                border: '1px solid #34322C',
+                borderRadius: '2px',
+                padding: '0 12px',
+                fontFamily: 'var(--font-plex), monospace',
+                fontSize: '14px',
+                outline: 'none',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="">MANUAL ENTRY</option>
+              {upcomingTrips.map((t) => {
+                const { dateStr, timeStr } = formatTripDateTime(t.departure_at);
+                return (
+                  <option key={t.id} value={t.id}>
+                    {dateStr} {timeStr} / {t.name}
+                  </option>
+                );
+              })}
+            </select>
+            {selectedTripName && (
+              <div
+                style={{
+                  marginTop: '8px',
+                  fontFamily: 'var(--font-plex), monospace',
+                  fontSize: '11px',
+                  color: '#8C887C',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                FROM TRIP: {selectedTripName}
+              </div>
+            )}
+            {selectedTripLocation && (
+              <div
+                style={{
+                  marginTop: '3px',
+                  fontFamily: 'var(--font-plex), monospace',
+                  fontSize: '11px',
+                  color: '#8C887C',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                TRIP LOCATION: {selectedTripLocation}
+              </div>
+            )}
+          </Row>
+        )}
 
         {/* Departure input mode toggle */}
         <Row>
@@ -437,7 +679,7 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
             type="text"
             value={gate}
             onChange={(e) => setGate(e.target.value.toUpperCase())}
-            placeholder="B14 OR TBA"
+            placeholder="TBA"
             maxLength={6}
             style={inputStyle}
           />

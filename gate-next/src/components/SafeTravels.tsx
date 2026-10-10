@@ -7,6 +7,8 @@ import { useUser } from '@/hooks/useUser';
 import { queueLayoverForSave } from '@/lib/sync';
 import { load } from '@/lib/storage';
 import { createBrowserClient } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
+import { clearTripsCache } from '@/lib/trips';
 
 interface Props {
   survivedMs: number;
@@ -16,6 +18,7 @@ interface Props {
 }
 
 export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLayover }: Props) {
+  const router = useRouter();
   const { rank } = getRankInfo(xp);
   const { user, isConfigured, loading } = useUser();
   const [saveStatus, setSaveStatus] = useState<'SAVING' | 'SAVED' | 'QUEUED' | 'SIGN_IN'>('SIGN_IN');
@@ -46,6 +49,15 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` }
     });
+  };
+
+  const handleSignOut = async () => {
+    if (user) {
+      clearTripsCache(user.id);
+    }
+    const supabase = createBrowserClient();
+    await supabase?.auth.signOut();
+    window.location.reload();
   };
 
   return (
@@ -82,7 +94,61 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
         >
           GATE / LAYOVER COMPLETE
         </div>
-        <GlobalMuteButton />
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button
+              onClick={() => router.push('/trips')}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-barlow), sans-serif',
+                fontSize: '13px',
+                color: '#8C887C',
+                letterSpacing: '0.15em',
+                padding: 0,
+                textTransform: 'uppercase',
+              }}
+            >
+              TRIPS
+            </button>
+            <button
+              onClick={() => router.push('/passport')}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-barlow), sans-serif',
+                fontSize: '13px',
+                color: '#8C887C',
+                letterSpacing: '0.15em',
+                padding: 0,
+                textTransform: 'uppercase',
+              }}
+            >
+              PASSPORT
+            </button>
+            <button
+              onClick={handleSignOut}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-barlow), sans-serif',
+                fontSize: '13px',
+                color: '#C8201A',
+                letterSpacing: '0.15em',
+                padding: 0,
+                textTransform: 'uppercase',
+              }}
+            >
+              SIGN OUT
+            </button>
+            <GlobalMuteButton />
+          </div>
+        ) : (
+          <GlobalMuteButton />
+        )}
       </div>
 
       {/* Stamp block */}

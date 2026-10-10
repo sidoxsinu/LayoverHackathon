@@ -1,7 +1,7 @@
 # GATE — Features (v2)
 
-## Scope: 4 screens, 5 systems
-Setup · Quest · Alarm · Safe Travels / Clock · Missions · Stats · Alerts · Persistence
+## Scope: 5 screens, 6 systems
+Auth · Setup · Quest · Alarm · Safe Travels / Clock · Missions · Stats · Alerts · Persistence · Trips
 
 ## Priority legend
 **P0** demo-critical · **P1** polish that scores · **P2** only if everything else is done
@@ -68,8 +68,53 @@ Save `{departureMs, returnByMs, gate, vibe, stats, log, xp, screen}` in localSto
 ## F6. AI missions (P2)
 At START, one request for 6 witty missions (JSON). 3 s timeout, validate shape, else hardcoded. Badge "AI" on AI missions. Never on the alarm path.
 
+## F7. Trips (P1) — Saved Upcoming Departures
+Upcoming flight departures management for signed-in users. Completely isolated from the offline alarm engine.
+
+### Acceptance Criteria
+1. **Access Control & Lockdown**:
+   - Signed-in only. Guests see "SIGN IN TO SAVE TRIPS" and a back button.
+   - Links appear only in SETUP and SAFE TRAVELS headers (`TRIPS` / `PASSPORT` / `SIGN OUT`). Hidden on QUEST and ALARM.
+   - Navigating to `/trips` redirects to `/` if active screen is `quest` or `alarm`.
+2. **Departure Board Table**:
+   - Header row in muted uppercase: `DEPARTS` / `TRIP` / `STATUS`.
+   - Rows at 390px:
+     - Left: Date and time in mono amber (e.g. `11 OCT` over `18:45`).
+     - Middle: Trip name over muted location, flight number, and gate.
+     - Right: Status label (`IN 3D`, `IN 5H`, `TODAY`, `PAST`).
+   - Upcoming trips sorted ascending by departure time.
+   - Past trips hidden behind `SHOW PAST (n)` toggle and dimmed when expanded.
+   - Tapping a row selects it and reveals three square 48px buttons: `USE`, `EDIT`, `DELETE`.
+   - Delete triggers confirmation popup in airport signage modal style.
+3. **Empty State**:
+   - Plain text: `NO TRIPS SAVED. ADD YOUR NEXT DEPARTURE.` with square `ADD TRIP` button. No fake or placeholder cards.
+4. **Add / Edit Form**:
+   - Full screen layout matching airport signage theme.
+   - Inputs: NAME (required, 1–60 chars), LOCATION (max 60), FLIGHT NO (max 12), GATE (max 8, TBA allowed), DEPARTURE DATE and TIME (native inputs, dark scheme), WALK TO GATE segmented 2/5/10/15 (default 10).
+   - Label: `TIMES USE YOUR DEVICE TIME ZONE.`
+   - Validation: required fields, departure must be in the future on create, trimmed and length-limited, single error line in alarm red.
+   - Save performs idempotent upsert with client-generated UUID (`crypto.randomUUID()`).
+5. **Offline & Cache**:
+   - Reads cached in `localStorage` key `gate.trips.v1.{userId}`.
+   - When offline, list renders from cache with muted line: `OFFLINE, SHOWING SAVED TRIPS`.
+   - Writes require network connectivity; offline attempts display clear error line without silent queues.
+   - Cache cleared on sign-out.
+6. **Setup Integration**:
+   - Signed-in user with at least one upcoming trip sees native square 48px `TRIP` select dropdown above departure fields.
+   - Options: `MANUAL ENTRY`, followed by upcoming trips formatted as `11 OCT 18:45 / NAME`.
+   - Auto-preselects nearest upcoming trip departing within next 24 hours; otherwise `MANUAL ENTRY`.
+   - Selecting a trip populates departure (absolute `departureMs`), gate, and walk time. All fields remain editable without altering saved trip.
+   - Displays muted label: `FROM TRIP: NAME`. Location shown as label only; never triggers mission regeneration.
+   - START stores `tripId` and `tripName` in layover state and `layovers` table (`trip_id`, `trip_name`).
+   - Guests and users with no trips see manual entry only.
+7. **Graceful Degradation**:
+   - If trips table does not exist in DB or query fails, dropdown is hidden and displays single muted line: `TRIPS UNAVAILABLE`. App remains 100% functional.
+
 ## Out of scope
-Accounts, maps, lounge data, push notifications, native app, multi-flight, social feeds.
+Maps, lounge data, push notifications, native app, multi-leg flights, social feeds.
+
+## Guest Statement
+Guests can run full layovers with complete countdown, missions, alarm, and local persistence. Sign in with Google is required only to save upcoming trips and access the multi-session Layover Passport.
 
 ## Edge cases
 | Case | Behavior |
@@ -80,3 +125,6 @@ Accounts, maps, lounge data, push notifications, native app, multi-flight, socia
 | Tab backgrounded then returns | Clock recomputes from timestamps; ladder catches up instantly |
 | Audio blocked | Oscillator fallback + vibration + visual |
 | Battery API missing (iOS/Firefox) | Manual battery stat |
+| Trips table missing or unmigrated | Hide dropdown, show TRIPS UNAVAILABLE, app runs manual entry normally |
+| Offline on /trips | Read from local cache with warning; block writes with error line |
+

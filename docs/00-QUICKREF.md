@@ -4,11 +4,17 @@
 ## What it is
 A layover companion: enter your flight → get time-fitted survival missions → an escalating alert ladder ends in an unmissable GATE ALARM → "Safe travels" + shareable Layover Passport card.
 
-## 4 screens
-1. **Setup** — departure (time *or* "in X h"), gate, walk time, vibe → START
-2. **Quest** — countdown, 3 draining stats, one mission card
-3. **Alarm** — full-red takeover, sound, vibration, gate number
-4. **Safe Travels** — Layover Passport card (screenshot-able)
+## Screens & Routes
+- **Screens (in `/` SPA flow)**:
+  1. **Auth** — live clock, sound toggle, wordmark, guest start or sign-in
+  2. **Setup** — departure, gate, walk time, vibe, trip selector (signed-in) → START
+  3. **Quest** — countdown, 3 draining stats, active mission card
+  4. **Alarm** — full-red takeover, sound, vibration, gate number
+  5. **Safe Travels** — Layover Passport card, return to gate
+- **Dedicated Routes**:
+  - `/passport` — saved layover history (signed-in only)
+  - `/trips` — departure board table of upcoming trips, add/edit/delete (signed-in only)
+- **Guest Statement**: Guests can run layovers. Sign in to save trips and your Passport.
 
 ## Core math (all in epoch ms, never Date objects in state)
 ```
@@ -28,16 +34,17 @@ safeTime = returnBy − now
 Mission shown only if `mission.mins ≤ minsLeft − 5`, and it targets your **lowest stat**.
 
 ## Stack
-Next.js (React + Node integrated) + Tailwind v4. **No** framer-motion, no extra UI kits, no animation library.
+Next.js (App Router, React + Node integrated) + Tailwind v4 (`@tailwindcss/vite`, theme in `globals.css` via `@theme`). No router, no state library, no UI kits, no animation library.
 
 ## Priorities
-P0 clock + alarm → P0 deploy to HTTPS + test on a real phone → P0 quest → P0 Demo Mode → P1 ladder, passport → P2 AI.
+P0 clock + alarm → P0 deploy to HTTPS + test on a real phone → P0 quest → P0 Demo Mode → P1 alert ladder, passport, trips → P2 AI missions.
 
 ## Demo (60 s alarm)
 Triple-tap the GATE wordmark = **Demo Mode** (returnBy = now + 60 s). Tap START as you begin your pitch. Alarm lands at ~1:20.
 
-## Colors
-`bg #0A0A0F` · `surface #13131F` · `safe #22C55E` · `caution #EAB308` · `warning #F97316` · `danger #EF4444` · `alarm #DC2626 ↔ #7F1D1D`
+## Colors & Fonts
+- `ink #101010` · `panel #181816` · `line #34322C` · `paper #E6E1D3` · `amber #F2A900` · `signal green #3F9B5B` · `alarm red #C8201A` · `muted text #8C887C`
+- Fonts: `Barlow Condensed` (headings, labels, countdown) and `IBM Plex Mono` (numbers, times, gate).
 
 ## Files
 | # | File | Use |
@@ -48,3 +55,4 @@ Triple-tap the GATE wordmark = **Demo Mode** (returnBy = now + 60 s). Tap START 
 | 04 | UX Design | Tokens, screens, micro-interactions |
 | 05 | Demo Script | 2-min pitch, booth, Q&A, fallbacks |
 | 06 | Build Plan | Timed plan, cut lines, kickoff prompt |
+
