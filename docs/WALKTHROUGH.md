@@ -198,7 +198,10 @@ This file is the **single source of truth** for where the project stands right n
 **What was done:**
 1. Modified `Countdown.tsx` to accept the stable `returnByMs` timestamp instead of a constantly updating `msLeft` delta.
 2. Increased the font size of the timer digits significantly (`clamp(4rem, 15vw, 6rem)`) inside `countdown-vapor-digits.tsx`.
-**Why:** The `msLeft` prop was causing the absolute `targetDate` calculated in `Countdown` to jitter by a few milliseconds on every React render (due to discrepancies with `Date.now()`). This constantly changed the `targetKey` in `VaporCountdown`, forcing its internal animation loop to reset and sleep, which made the timer look static except for rare flickers. Now the stable key allows the sublimation animation to play beautifully every second.
+3. Added the "HOURS", "MINUTES", "SECONDS" labels back below the timer digits (by removing `labels={null}`) and increased the text size of the "RETURN TO GATE IN" label.
+**Why:** 
+- The `msLeft` prop was causing the absolute `targetDate` calculated in `Countdown` to jitter by a few milliseconds on every React render (due to discrepancies with `Date.now()`). This constantly changed the `targetKey` in `VaporCountdown`, forcing its internal animation loop to reset and sleep, which made the timer look static except for rare flickers. Now the stable key allows the sublimation animation to play beautifully every second.
+- The user requested labels and larger font sizes to match the design aesthetic closely.
 
 ---
 

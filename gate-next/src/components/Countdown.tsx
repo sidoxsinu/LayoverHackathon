@@ -27,10 +27,10 @@ export default function Countdown({ targetDate, phase }: Props) {
       <div
         style={{
           fontFamily: 'var(--font-barlow), sans-serif',
-          fontSize: '11px',
+          fontSize: '14px',
           letterSpacing: '0.2em',
           color: '#8C887C',
-          marginBottom: '8px',
+          marginBottom: '12px',
         }}
       >
         RETURN TO GATE IN
@@ -38,7 +38,6 @@ export default function Countdown({ targetDate, phase }: Props) {
       <VaporCountdown
         targetDate={targetDate}
         color={color}
-        labels={null}
         className={phase === 'urgent' ? 'animate-blink' : ''}
       />
     </div>
