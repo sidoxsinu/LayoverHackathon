@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gate-ink: #101010;
+  --color-gate-panel: #181816;
+  --color-gate-line: #34322C;
+  --color-gate-paper: #E6E1D3;
+  --color-gate-amber: #F2A900;
+  --color-gate-green: #3F9B5B;
+  --color-gate-red: #C8201A;
+  --color-gate-red-dark: #7A120E;
+  --color-gate-muted: #8C887C;
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --animate-alarm: alarm 0.6s steps(1) infinite;
+  --animate-blink: blink 2s steps(1) infinite;
+  
+  @keyframes alarm { 
+    0%,100% { background-color: var(--color-gate-red); } 
+    50% { background-color: var(--color-gate-red-dark); } 
+  }
+  @keyframes blink {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+}
+
+html, body {
+  height: 100%;
+  background-color: var(--color-gate-ink);
+  color: var(--color-gate-paper);
+  margin: 0;
+}
