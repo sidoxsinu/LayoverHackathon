@@ -293,6 +293,13 @@ This file is the **single source of truth** for where the project stands right n
 - Popover menu dynamically positions relative to button location (flips above/below, aligns left/right to prevent off-screen overflow).
 - Uses `touch-action: none` and `cursor: grab / grabbing` with airport signage styling intact (square 48px target, 2px radius, `#F2A900` amber).
 
+## [03:16] — Final Report Audio Feedback (Camera Shutter)
+**What was done:**
+- Integrated `/camerashutter.mp3` in [SafeTravels.tsx](file:///Users/sinanm/Documents/TinkerHub/LayoverHackathon/gate-next/src/components/SafeTravels.tsx) to play once upon mounting when printing the final report (survived time, missions completed, XP, and rank).
+- Wrapped with a dedicated single-play ref (`shutterPlayedRef`) to prevent duplicate triggering.
+- Completely isolated from `alarm.ts` and core math, maintaining strict alarm path independence.
+
+
 
 ---
 

@@ -23,10 +23,24 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
   const { user, isConfigured, loading } = useUser();
   const [saveStatus, setSaveStatus] = useState<'SAVING' | 'SAVED' | 'QUEUED' | 'SIGN_IN'>('SIGN_IN');
   const queuedRef = useRef(false);
+  const shutterPlayedRef = useRef(false);
+
+  // Play camera shutter sound once when printing final report
+  useEffect(() => {
+    if (shutterPlayedRef.current) return;
+    shutterPlayedRef.current = true;
+
+    try {
+      const shutter = new Audio('/camerashutter.mp3');
+      shutter.preload = 'auto';
+      shutter.play().catch(() => {});
+    } catch {}
+  }, []);
 
   useEffect(() => {
     if (loading || queuedRef.current) return;
     queuedRef.current = true;
+
     
     const state = load();
     if (state && !state.demo) {
