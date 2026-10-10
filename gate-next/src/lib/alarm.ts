@@ -1,4 +1,4 @@
-// alarm.ts — browser-only module, no SSR
+// alarm.ts - browser-only module, no SSR
 let audio: HTMLAudioElement | undefined;
 let ctx: AudioContext | undefined;
 let wakeLock: WakeLockSentinel | undefined;
@@ -73,7 +73,7 @@ export function chime(): void {
 export function startAlarm(): void {
   const a = getAudio();
   a.play().catch(() => {
-    // Audio file blocked — use oscillator fallback
+    // Audio file blocked - use oscillator fallback
     const burst = () => {
       try {
         beep(880, 0);

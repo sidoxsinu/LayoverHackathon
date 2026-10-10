@@ -12,7 +12,8 @@ export default defineConfig({
     trace: 'on-first-retry',
     viewport: { width: 390, height: 844 },
     hasTouch: true,
-    channel: 'chrome', // Use system Chrome to avoid long Chromium downloads
+    channel: 'chrome',
+    timezoneId: 'UTC',
   },
   projects: [
     {

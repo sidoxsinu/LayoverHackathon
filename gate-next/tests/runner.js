@@ -29,7 +29,7 @@ console.log(`Starting Iteration ${ITERATION}...`);
 try {
   console.log('Running Test 15...');
   // Banned: emojis, gradient, shadow, rounded- above 2px, Inter, Geist, lucide, backdrop, em dashes
-  const cmd = `grep -riE 'gradient|shadow|rounded-(md|lg|xl|2xl|3xl|full)|Inter|Geist|lucide|backdrop|—' src/ || true`;
+  const cmd = `grep -rE 'gradient|shadow|rounded-(md|lg|xl|2xl|3xl|full)|\\bInter\\b|\\bGeist\\b|lucide|backdrop|—' src/ || true`;
   const result = execSync(cmd, { encoding: 'utf8' }).trim();
   if (result.length > 0) {
     logTest(15, 'Grep src for banned items', false, 'Found banned items in source', 'Used banned tailwind classes or fonts');

@@ -16,7 +16,7 @@ const plex = IBM_Plex_Mono({
 });
 
 export const metadata = {
-  title: 'GATE — Layover Companion',
+  title: 'GATE - Layover Companion',
   description: 'Track your layover. Get back to your gate on time.',
 };
 

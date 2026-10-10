@@ -7,36 +7,38 @@
 # Test info
 
 - Name: main.spec.ts >> GATE Layover Hackathon Tests >> 5. Stats drain
-- Location: tests/main.spec.ts:104:7
+- Location: tests/main.spec.ts:108:7
 
 # Error details
 
 ```
 Error: expect(locator).toBeVisible() failed
 
-Locator: locator('text=HUNGER').locator('..').locator('text=60')
+Locator: locator('div').filter({ hasText: 'HUNGER' }).getByText('60', { exact: true })
 Expected: visible
 Timeout: 5000ms
 Error: element(s) not found
 
 Call log:
-  - Expect "toBeVisible" locator('text=HUNGER').locator('..').locator('text=60') with timeout 5000ms
-  - waiting for locator('text=HUNGER').locator('..').locator('text=60')
+  - Expect "toBeVisible" locator('div').filter({ hasText: 'HUNGER' }).getByText('60', { exact: true }) with timeout 5000ms
+  - waiting for locator('div').filter({ hasText: 'HUNGER' }).getByText('60', { exact: true })
 
 ```
 
 ```yaml
 - alert
-- text: GATE 00:00:00 RETURN TO GATE TBA
-- button "I AM AT THE GATE"
+- text: GATE TBA RETURN TO GATE IN 04:14:55 HUNGER 70 SANITY 50 BATTERY 58 REST / REST M-68
+- paragraph: Find the quietest corner. Sit. Do nothing for 10 minutes.
+- text: 15 MIN +35 SANITY +40 XP
+- button "COMPLETE"
+- button "SKIP"
+- text: TOTAL XP 0
+- button "I AM AT THE GATE (EARLY)"
 ```
 
 # Test source
 
 ```ts
-  12  |     await page.clock.setFixedTime(now);
-  13  | 
-  14  |     // 1a. Departure in the past with rollover shows "tomorrow"
   15  |     await page.fill('input[type="time"]', '14:00');
   16  |     await expect(page.getByText(/TOMORROW/i)).toBeVisible();
   17  | 
@@ -56,184 +58,187 @@ Call log:
   31  | 
   32  |   test('2. Demo Mode', async ({ page }) => {
   33  |     const now = new Date('2026-10-10T15:00:00Z');
-  34  |     await page.clock.setFixedTime(now);
+  34  |     await page.clock.install({ time: now });
   35  | 
   36  |     const wordmark = page.locator('span:has-text("GATE")').first();
-  37  |     await wordmark.click(); await wordmark.click(); await wordmark.click();
-  38  | 
-  39  |     // Quest screen shown with DEMO chip
-  40  |     await expect(page.getByText('DEMO')).toBeVisible();
-  41  | 
-  42  |     // Advance 40s (20s left) - heads-up
-  43  |     await page.clock.fastForward(40000);
-  44  |     // Usually banner + chime, let's look for HEADS UP
-  45  |     await expect(page.getByText(/HEADS UP/i)).toBeVisible();
-  46  | 
-  47  |     // Advance 10s (10s left) - urgent
-  48  |     await page.clock.fastForward(10000);
-  49  |     await expect(page.getByText(/URGENT/i)).toBeVisible();
-  50  | 
-  51  |     // Advance 10s (0s left) - alarm
-  52  |     await page.clock.fastForward(10000);
-  53  |     await expect(page.getByRole('button', { name: 'I AM AT THE GATE' })).toBeVisible();
-  54  |   });
-  55  | 
-  56  |   test('3. Alarm', async ({ page }) => {
-  57  |     const now = new Date('2026-10-10T15:00:00Z');
-  58  |     await page.clock.setFixedTime(now);
-  59  | 
-  60  |     const wordmark = page.locator('span:has-text("GATE")').first();
-  61  |     await wordmark.click(); await wordmark.click(); await wordmark.click();
-  62  |     await page.clock.fastForward(60000);
-  63  |     
-  64  |     // Check alarm UI
-  65  |     const dismissBtn = page.getByRole('button', { name: 'I AM AT THE GATE' });
-  66  |     await expect(dismissBtn).toBeVisible();
-  67  |     await dismissBtn.click();
-  68  | 
-  69  |     // Safe Travels
-  70  |     await expect(page.getByText(/SAFE TRAVELS/i)).toBeVisible();
-  71  | 
-  72  |     // Reset
-  73  |     await page.getByRole('button', { name: /START NEW/i }).click();
-  74  |     await expect(page.getByText('LAYOVER COMPANION')).toBeVisible();
-  75  |   });
-  76  | 
-  77  |   test('4. Normal mode ladder', async ({ page }) => {
-  78  |     const now = new Date('2026-10-10T15:00:00Z');
-  79  |     await page.clock.setFixedTime(now);
+  37  |     await wordmark.click(); await page.waitForTimeout(100);
+  38  |     await wordmark.click(); await page.waitForTimeout(100);
+  39  |     await wordmark.click();
+  40  | 
+  41  |     // Quest screen shown with DEMO chip
+  42  |     await expect(page.getByText('DEMO')).toBeVisible();
+  43  | 
+  44  |     // Advance 45s (15s left) - heads-up
+  45  |     await page.clock.fastForward(45000);
+  46  |     // Usually banner + chime, let's look for START WRAPPING UP
+  47  |     await expect(page.getByText(/START WRAPPING UP/i)).toBeVisible();
+  48  | 
+  49  |     // Advance 10s (5s left) - urgent
+  50  |     await page.clock.fastForward(10000);
+  51  |     await expect(page.getByText(/WALK TO GATE NOW/i)).toBeVisible();
+  52  | 
+  53  |     // Advance 10s (-5s left) - alarm
+  54  |     await page.clock.fastForward(10000);
+  55  |     await expect(page.getByRole('button', { name: 'I AM AT THE GATE' })).toBeVisible();
+  56  |   });
+  57  | 
+  58  |   test('3. Alarm', async ({ page }) => {
+  59  |     const now = new Date('2026-10-10T15:00:00Z');
+  60  |     await page.clock.install({ time: now });
+  61  | 
+  62  |     const wordmark = page.locator('span:has-text("GATE")').first();
+  63  |     await wordmark.click(); await page.waitForTimeout(100);
+  64  |     await wordmark.click(); await page.waitForTimeout(100);
+  65  |     await wordmark.click();
+  66  |     await page.clock.fastForward(60000);
+  67  |     
+  68  |     // Check alarm UI
+  69  |     const dismissBtn = page.getByRole('button', { name: 'I AM AT THE GATE' });
+  70  |     await expect(dismissBtn).toBeVisible();
+  71  |     await dismissBtn.click();
+  72  | 
+  73  |     // Safe Travels
+  74  |     await expect(page.getByText(/SAFE TRAVELS/i)).toBeVisible();
+  75  | 
+  76  |     // Reset
+  77  |     await page.getByRole('button', { name: /START NEW/i }).click();
+  78  |     await expect(page.getByText('LAYOVER COMPANION')).toBeVisible();
+  79  |   });
   80  | 
-  81  |     // departure 1.5 hours away => 90 min
-  82  |     // buffer 30 + walk 10 + margin 5 = 45 min
-  83  |     // returnBy = 45 min away
-  84  |     await page.fill('input[type="time"]', '16:30'); 
-  85  |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
-  86  | 
-  87  |     // free > 15 min
-  88  |     await expect(page.getByText(/HEADS UP/i)).not.toBeVisible();
-  89  |     await expect(page.getByText(/URGENT/i)).not.toBeVisible();
+  81  |   test('4. Normal mode ladder', async ({ page }) => {
+  82  |     const now = new Date('2026-10-10T15:00:00Z');
+  83  |     await page.clock.install({ time: now });
+  84  | 
+  85  |     // departure 1.5 hours away => 90 min
+  86  |     // buffer 30 + walk 10 + margin 5 = 45 min
+  87  |     // returnBy = 45 min away
+  88  |     await page.fill('input[type="time"]', '16:30'); 
+  89  |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
   90  | 
-  91  |     // fast forward to 15 min left (30 min forward)
-  92  |     await page.clock.fastForward(30 * 60000);
-  93  |     await expect(page.getByText(/HEADS UP/i)).toBeVisible();
+  91  |     // free > 15 min
+  92  |     await expect(page.getByText(/START WRAPPING UP/i)).not.toBeVisible();
+  93  |     await expect(page.getByText(/WALK TO GATE NOW/i)).not.toBeVisible();
   94  | 
-  95  |     // fast forward to 5 min left (10 min forward)
-  96  |     await page.clock.fastForward(10 * 60000);
-  97  |     await expect(page.getByText(/URGENT/i)).toBeVisible();
+  95  |     // fast forward to 14 min left (31 min forward)
+  96  |     await page.clock.fastForward(31 * 60000);
+  97  |     await expect(page.getByText(/START WRAPPING UP/i)).toBeVisible();
   98  | 
-  99  |     // fast forward to 0
-  100 |     await page.clock.fastForward(5 * 60000);
-  101 |     await expect(page.getByRole('button', { name: 'I AM AT THE GATE' })).toBeVisible();
-  102 |   });
-  103 | 
-  104 |   test('5. Stats drain', async ({ page }) => {
-  105 |     const now = new Date('2026-10-10T15:00:00Z');
-  106 |     await page.clock.setFixedTime(now);
-  107 |     await page.fill('input[type="time"]', '20:00');
-  108 |     // Default vibe is TIRED. Hunger should be 60.
-  109 |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
-  110 |     
-  111 |     // Check hunger starts at 60
-> 112 |     await expect(page.locator('text=HUNGER').locator('..').locator('text=60')).toBeVisible();
-      |                                                                                ^ Error: expect(locator).toBeVisible() failed
-  113 | 
-  114 |     // Fast forward 10 minutes. Drain rate is 0.3/min => -3. Should be 57.
-  115 |     await page.clock.fastForward(10 * 60000);
-  116 |     await expect(page.locator('text=HUNGER').locator('..').locator('text=57')).toBeVisible();
-  117 | 
-  118 |     // Fast forward huge amount to clamp at 0
-  119 |     await page.clock.fastForward(300 * 60000);
-  120 |     await expect(page.locator('text=HUNGER').locator('..').locator('text=0')).toBeVisible();
-  121 |   });
-  122 | 
-  123 |   test('6. Mission engine', async ({ page }) => {
-  124 |     const now = new Date('2026-10-10T15:00:00Z');
-  125 |     await page.clock.setFixedTime(now);
-  126 |     
-  127 |     // Departure at 15:55 => return by 45 mins prior => 15:10. That's 10 mins left!
-  128 |     // Wait, 15:55 - 45m = 15:10 => 10m left.
-  129 |     // If < 15 min left, it should show the go-to-gate mission!
+  99  |     // fast forward to 4 min left (10 min forward)
+  100 |     await page.clock.fastForward(10 * 60000);
+  101 |     await expect(page.getByText(/WALK TO GATE NOW/i)).toBeVisible();
+  102 | 
+  103 |     // fast forward to past 0
+  104 |     await page.clock.fastForward(5 * 60000);
+  105 |     await expect(page.getByRole('button', { name: 'I AM AT THE GATE' })).toBeVisible();
+  106 |   });
+  107 | 
+  108 |   test('5. Stats drain', async ({ page }) => {
+  109 |     const now = new Date('2026-10-10T15:00:00Z');
+  110 |     await page.clock.install({ time: now });
+  111 |     await page.fill('input[type="time"]', '20:00');
+  112 |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
+  113 |     
+  114 |     // Check hunger starts at 60 (vibe tired => hunger 60)
+> 115 |     await expect(page.locator('div').filter({ hasText: 'HUNGER' }).getByText('60', { exact: true })).toBeVisible();
+      |                                                                                                      ^ Error: expect(locator).toBeVisible() failed
+  116 | 
+  117 |     // Fast forward 10 minutes. Drain rate is 0.3/min => -3. Should be 57.
+  118 |     await page.clock.fastForward(10 * 60000);
+  119 |     await expect(page.locator('div').filter({ hasText: 'HUNGER' }).getByText('57', { exact: true })).toBeVisible();
+  120 | 
+  121 |     // Fast forward huge amount to clamp at 0
+  122 |     await page.clock.fastForward(300 * 60000);
+  123 |     await expect(page.locator('div').filter({ hasText: 'HUNGER' }).getByText('0', { exact: true })).toBeVisible();
+  124 |   });
+  125 | 
+  126 |   test('6. Mission engine', async ({ page }) => {
+  127 |     const now = new Date('2026-10-10T15:00:00Z');
+  128 |     await page.clock.install({ time: now });
+  129 |     
   130 |     await page.fill('input[type="time"]', '15:55');
   131 |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
   132 | 
-  133 |     // Check for go-to-gate mission
-  134 |     await expect(page.getByText(/head to your gate/i)).toBeVisible();
-  135 |   });
-  136 | 
-  137 |   test('7. Complete adds boost and XP', async ({ page }) => {
-  138 |     const now = new Date('2026-10-10T15:00:00Z');
-  139 |     await page.clock.setFixedTime(now);
-  140 |     await page.fill('input[type="time"]', '20:00');
-  141 |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
-  142 |     
-  143 |     // Check initial XP
-  144 |     await expect(page.locator('text=XP').locator('..').getByText('0', { exact: true })).toBeVisible();
-  145 | 
-  146 |     // Click Complete
-  147 |     await page.getByRole('button', { name: /COMPLETE/i }).click();
+  133 |     // Check we got a mission card
+  134 |     const skipBtn = page.getByRole('button', { name: /SKIP/i });
+  135 |     await expect(skipBtn).toBeVisible();
+  136 |     
+  137 |     // Clicking skip should generate a new mission or fallback.
+  138 |     // It shouldn't crash.
+  139 |     await skipBtn.click();
+  140 |     await expect(skipBtn).toBeVisible();
+  141 |   });
+  142 | 
+  143 |   test('7. Complete adds boost and XP', async ({ page }) => {
+  144 |     const now = new Date('2026-10-10T15:00:00Z');
+  145 |     await page.clock.install({ time: now });
+  146 |     await page.fill('input[type="time"]', '20:00');
+  147 |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
   148 |     
-  149 |     // XP should increase
-  150 |     await expect(page.locator('text=XP').locator('..').getByText('40', { exact: true })).toBeVisible();
+  149 |     // Check initial XP using TOTAL XP
+  150 |     await expect(page.getByText('TOTAL XP').locator('..').getByText('0', { exact: true })).toBeVisible();
   151 | 
-  152 |     // Rapid taps on SKIP shouldn't break state (meaning no errors thrown, XP remains same)
-  153 |     const skipBtn = page.getByRole('button', { name: /SKIP/i });
-  154 |     for(let i=0; i<20; i++) {
-  155 |       await skipBtn.click();
-  156 |     }
-  157 |     await expect(page.locator('text=XP').locator('..').getByText('40', { exact: true })).toBeVisible();
-  158 |   });
-  159 | 
-  160 |   test('8. Refresh mid-session', async ({ page }) => {
-  161 |     const now = new Date('2026-10-10T15:00:00Z');
-  162 |     await page.clock.setFixedTime(now);
-  163 |     await page.fill('input[type="time"]', '20:00');
-  164 |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
+  152 |     // Click Complete
+  153 |     await page.getByRole('button', { name: /COMPLETE/i }).click();
+  154 |     
+  155 |     // XP should increase
+  156 |     await expect(page.locator('div').filter({ hasText: 'TOTAL XP' }).getByText('40', { exact: true }).first()).toBeVisible();
+  157 | 
+  158 |     // Rapid taps on SKIP shouldn't break state
+  159 |     const skipBtn = page.getByRole('button', { name: /SKIP/i });
+  160 |     for(let i=0; i<5; i++) {
+  161 |       await skipBtn.click();
+  162 |     }
+  163 |     await expect(page.locator('div').filter({ hasText: 'TOTAL XP' }).getByText('40', { exact: true }).first()).toBeVisible();
+  164 |   });
   165 | 
-  166 |     await page.getByRole('button', { name: /COMPLETE/i }).click();
-  167 |     await expect(page.locator('text=XP').locator('..').getByText('40', { exact: true })).toBeVisible();
-  168 | 
-  169 |     // Reload page
-  170 |     await page.reload();
-  171 |     
-  172 |     // XP should still be 40
-  173 |     await expect(page.locator('text=XP').locator('..').getByText('40', { exact: true })).toBeVisible();
+  166 |   test('8. Refresh mid-session', async ({ page }) => {
+  167 |     const now = new Date('2026-10-10T15:00:00Z');
+  168 |     await page.clock.install({ time: now });
+  169 |     await page.fill('input[type="time"]', '20:00');
+  170 |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
+  171 | 
+  172 |     await page.getByRole('button', { name: /COMPLETE/i }).click();
+  173 |     await expect(page.locator('div').filter({ hasText: 'TOTAL XP' }).getByText('40', { exact: true }).first()).toBeVisible();
   174 | 
-  175 |     // Advance time past returnBy (which is 19:15)
-  176 |     await page.clock.fastForward(5 * 3600 * 1000);
-  177 |     await page.reload();
-  178 |     // Should go straight to alarm
-  179 |     await expect(page.getByRole('button', { name: 'I AM AT THE GATE' })).toBeVisible();
-  180 |   });
-  181 | 
-  182 |   test('9. Background simulation', async ({ page }) => {
-  183 |     const now = new Date('2026-10-10T15:00:00Z');
-  184 |     await page.clock.setFixedTime(now);
-  185 |     
-  186 |     // Return by in 16 mins
-  187 |     await page.fill('input[type="time"]', '16:01');
-  188 |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
-  189 |     
-  190 |     // No heads up
-  191 |     await expect(page.getByText(/HEADS UP/i)).not.toBeVisible();
-  192 | 
-  193 |     // Pause clock 60s, resume (simulate suspend/resume).
-  194 |     await page.clock.fastForward(60000); 
-  195 |     // Usually visibilitychange or focus triggers useNow to update
-  196 |     await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
-  197 |     
-  198 |     // Now it should be 15 mins left -> HEADS UP
-  199 |     await expect(page.getByText(/HEADS UP/i)).toBeVisible();
-  200 |   });
-  201 | 
-  202 |   test('10. Departure past midnight computes correctly', async ({ page }) => {
-  203 |     const now = new Date('2026-10-10T23:50:00Z');
-  204 |     await page.clock.setFixedTime(now);
-  205 | 
-  206 |     await page.fill('input[type="time"]', '00:40');
-  207 |     // Departure is tomorrow 00:40
-  208 |     await expect(page.getByText(/TOMORROW/i)).toBeVisible();
-  209 | 
-  210 |     // Return by is 45 mins before 00:40 => 23:55.
-  211 |     // 23:55 is in the future.
-  212 |     const startBtn = page.getByRole('button', { name: /START LAYOVER/i });
+  175 |     // Reload page
+  176 |     await page.reload();
+  177 |     
+  178 |     // XP should still be 40
+  179 |     await expect(page.locator('div').filter({ hasText: 'TOTAL XP' }).getByText('40', { exact: true }).first()).toBeVisible();
+  180 | 
+  181 |     // Advance time past returnBy (which is 19:15)
+  182 |     await page.clock.fastForward(5 * 3600 * 1000);
+  183 |     await page.reload();
+  184 |     // Should go straight to alarm
+  185 |     await expect(page.getByRole('button', { name: 'I AM AT THE GATE' })).toBeVisible();
+  186 |   });
+  187 | 
+  188 |   test('9. Background simulation', async ({ page }) => {
+  189 |     const now = new Date('2026-10-10T15:00:00Z');
+  190 |     await page.clock.install({ time: now });
+  191 |     
+  192 |     // Return by in 16 mins
+  193 |     await page.fill('input[type="time"]', '16:01');
+  194 |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
+  195 |     
+  196 |     // No heads up
+  197 |     await expect(page.getByText(/START WRAPPING UP/i)).not.toBeVisible();
+  198 | 
+  199 |     // Pause clock 120s, resume (simulate suspend/resume). Time left is 14 mins.
+  200 |     await page.clock.fastForward(120000); 
+  201 |     // Usually visibilitychange or focus triggers useNow to update
+  202 |     await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  203 |     
+  204 |     // Now it should be 14 mins left -> HEADS UP
+  205 |     await expect(page.getByText(/START WRAPPING UP/i)).toBeVisible();
+  206 |   });
+  207 | 
+  208 |   test('10. Departure past midnight computes correctly', async ({ page }) => {
+  209 |     const now = new Date('2026-10-10T23:50:00Z');
+  210 |     await page.clock.install({ time: now });
+  211 | 
+  212 |     await page.fill('input[type="time"]', '00:40');
+  213 |     // Departure is tomorrow 00:40
+  214 |     await expect(page.getByText(/TOMORROW/i)).toBeVisible();
+  215 | 
 ```

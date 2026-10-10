@@ -252,7 +252,7 @@ export default function Home() {
     }
   }, [now, state.returnByMs, state.screen, state.demo]);
 
-  // Stat drain — every 30s
+  // Stat drain - every 30s
   useEffect(() => {
     if (state.screen !== 'quest') {
       clearInterval(drainRef.current);
