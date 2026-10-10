@@ -299,6 +299,12 @@ This file is the **single source of truth** for where the project stands right n
 - Wrapped with a dedicated single-play ref (`shutterPlayedRef`) to prevent duplicate triggering.
 - Completely isolated from `alarm.ts` and core math, maintaining strict alarm path independence.
 
+## [03:18] — Removed Duplicate Bottom Audio Component
+**What was done:**
+- Removed duplicate `<GlobalMuteButton />` instances rendered at the bottom of the screens in [page.tsx](file:///Users/sinanm/Documents/TinkerHub/LayoverHackathon/gate-next/src/app/page.tsx).
+- Preserved the primary header audio toggle button positioned at the top of each screen (`AuthScreen`, `SetupScreen`, `QuestScreen`, `GateAlarm`, `SafeTravels`, and `Trips`) without any modifications.
+
+
 
 
 ---
