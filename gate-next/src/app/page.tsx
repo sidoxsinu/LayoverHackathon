@@ -87,7 +87,13 @@ function clamp(v: number): number {
   return Math.max(0, Math.min(100, v));
 }
 
-function nextMission(state: Pick<AppState, 'returnByMs' | 'stats' | 'recent' | 'customMissions'>, now: number): Mission {
+function nextMission(
+  state: Pick<AppState, 'returnByMs' | 'stats' | 'recent' | 'customMissions'> & { log?: LogEntry[] },
+  now: number
+): Mission | null {
+  if (state.log?.some((l) => l.id === 'go' && l.status === 'completed')) {
+    return null;
+  }
   const minsLeft = Math.max(0, Math.floor((state.returnByMs - now) / 60000));
   return pickMission({ minsLeft, stats: state.stats, recent: state.recent, customPool: state.customMissions });
 }
@@ -125,7 +131,7 @@ function reducer(state: AppState, action: Action): AppState {
         stats: demoStats,
         screen: 'quest',
         mission: m,
-        recent: [m.id],
+        recent: m ? [m.id] : [],
         demo: true,
         layoverId: crypto.randomUUID(),
       };
@@ -180,12 +186,24 @@ function reducer(state: AppState, action: Action): AppState {
       ];
       const newRecent = [m.id, ...state.recent].slice(0, 3);
       const now = Date.now();
+      const isGateTask = m.id === 'go';
       return {
         ...state,
         stats: boostedStats,
         xp: newXp,
         log: newLog,
-        mission: nextMission({ returnByMs: state.returnByMs, stats: boostedStats, recent: newRecent, customMissions: state.customMissions }, now),
+        mission: isGateTask
+          ? null
+          : nextMission(
+              {
+                returnByMs: state.returnByMs,
+                stats: boostedStats,
+                recent: newRecent,
+                customMissions: state.customMissions,
+                log: newLog,
+              },
+              now
+            ),
         recent: newRecent,
       };
     }
@@ -202,7 +220,16 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         log: newLog,
-        mission: nextMission({ returnByMs: state.returnByMs, stats: state.stats, recent: newRecent, customMissions: state.customMissions }, now),
+        mission: nextMission(
+          {
+            returnByMs: state.returnByMs,
+            stats: state.stats,
+            recent: newRecent,
+            customMissions: state.customMissions,
+            log: newLog,
+          },
+          now
+        ),
         recent: newRecent,
       };
     }
@@ -244,6 +271,7 @@ export default function Home() {
       return;
     }
 
+    const isGateComplete = saved.log?.some((l: any) => l.id === 'go' && l.status === 'completed');
     const restored: AppState = {
       screen: saved.screen as Screen,
       departureMs: saved.departureMs,
@@ -254,7 +282,9 @@ export default function Home() {
       vibe: saved.vibe,
       walkMin: saved.walkMin,
       stats: saved.stats,
-      mission: saved.missionId
+      mission: isGateComplete
+        ? null
+        : saved.missionId
         ? (pickMission({ minsLeft: Math.max(0, Math.floor((saved.returnByMs - Date.now()) / 60000)), stats: saved.stats, recent: saved.recent, customPool: saved.customMissions || [] }) )
         : null,
       recent: saved.recent,

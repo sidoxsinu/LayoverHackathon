@@ -73,6 +73,7 @@ export default function QuestScreen({
 
   const headsUpBanner = phase === 'headsup';
   const urgentBanner = phase === 'urgent';
+  const isGateComplete = log.some((l) => l.id === 'go' && l.status === 'completed');
 
   return (
     <div
@@ -83,7 +84,7 @@ export default function QuestScreen({
         flexDirection: 'column',
         maxWidth: '480px',
         margin: '0 auto',
-        animation: urgentBanner ? 'urgent-bg 0.5s steps(1) infinite' : 'none',
+        animation: urgentBanner && !isGateComplete ? 'urgent-bg 0.5s steps(1) infinite' : 'none',
       }}
     >
       {/* Header bar */}
@@ -182,7 +183,7 @@ export default function QuestScreen({
       {urgentBanner && (
         <div
           style={{
-            backgroundColor: '#C8201A',
+            backgroundColor: isGateComplete ? '#3F9B5B' : '#C8201A',
             padding: '12px 16px',
             display: 'flex',
             alignItems: 'center',
@@ -198,7 +199,7 @@ export default function QuestScreen({
               color: 'white',
             }}
           >
-            WALK TO GATE NOW
+            {isGateComplete ? 'AT GATE · STANDING BY' : 'WALK TO GATE NOW'}
           </span>
         </div>
       )}
@@ -217,6 +218,8 @@ export default function QuestScreen({
           log={log}
           onComplete={onComplete}
           onSkip={onSkip}
+          gate={gate}
+          onSafeReturn={onSafeReturn}
         />
         <MissionLog log={log} xp={xp} />
       </div>
@@ -228,18 +231,18 @@ export default function QuestScreen({
           style={{
             width: '100%',
             backgroundColor: 'transparent',
-            color: '#8C887C',
+            color: isGateComplete ? '#3F9B5B' : '#8C887C',
             fontFamily: 'var(--font-barlow), sans-serif',
             fontSize: '14px',
             letterSpacing: '0.15em',
             padding: '12px',
-            border: '1px solid #34322C',
+            border: isGateComplete ? '1px solid #3F9B5B' : '1px solid #34322C',
             borderRadius: '2px',
             cursor: 'pointer',
             textTransform: 'uppercase',
           }}
         >
-          I AM AT THE GATE (EARLY)
+          {isGateComplete ? 'I AM AT THE GATE (SAFE RETURN)' : 'I AM AT THE GATE (EARLY)'}
         </button>
       </div>
     </div>

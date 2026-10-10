@@ -40,6 +40,7 @@ This file is the **single source of truth** for where the project stands right n
 | Location Override Modal | ✅ Done | Custom styled popup to confirm manual location changes |
 | Supabase Auth + Postgres | ✅ Done | Google sign in mandatory for passport, idempotent offline queueing, RLS enabled |
 | App Flow Audit | ✅ Done | Conforms to strict PRD state machine; warning.mp3 duplication fixed; Nominatim limits respected |
+| Gate arrival completion | ✅ Done | Replaces mission slot with "ENJOY YOUR JOURNEY" airport signage card; prevents further tasks; allows direct safe return |
 
 **Status legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⚠️ Done with caveats · ❌ Broken
 
@@ -95,6 +96,21 @@ This file is the **single source of truth** for where the project stands right n
 ## Build Log
 
 > Add one entry per completed milestone. Include timestamp and what works/doesn't.
+
+---
+
+## [02:20] — Gate Arrival & Journey Completion Card
+**What was done:**
+1. Modified `lib/missions.ts` and `app/page.tsx` so completing the "Start walking toward your gate now" objective (`id: 'go'`) halts mission progression and sets `mission: null` instead of looping or assigning any other task.
+2. In `components/MissionCard.tsx`, added detection for gate objective completion (`log.some(l => l.id === 'go' && l.status === 'completed')`).
+3. Replaced the task slot with a dedicated airport signage paper card displaying:
+   - Header strip: `GATE REACHED / FINAL` · `GATE {gate || 'TBA'}`
+   - Title: `ENJOY YOUR JOURNEY` in Barlow Condensed, heavy uppercase
+   - Instruction: `ALL OBJECTIVES COMPLETED · STAND BY AT GATE FOR BOARDING ANNOUNCEMENT.`
+   - Flight summary strip: `STATUS: READY TO BOARD` · `TOTAL SCORE: +{xp} XP`
+   - Primary action button: `CONFIRM AT GATE [SAFE RETURN]` linking to safe layover completion.
+4. Updated `QuestScreen.tsx` to reflect arrival state: the bottom action button updates to `I AM AT THE GATE (SAFE RETURN)` in signal green, and the urgent banner reflects `AT GATE · STANDING BY`.
+**What works:** Airport signage aesthetic strictly maintained (zero emojis, flat 1px borders, #E6E1D3 / #101010 palette, Barlow & IBM Plex fonts). Prevents further tasks from generating after reaching the gate. `npm run build` passes cleanly.
 
 ---
 
@@ -242,6 +258,14 @@ This file is the **single source of truth** for where the project stands right n
 5. **Database RLS & Schema**: Added `with check` to RLS update policies in `0001_init.sql`, and mapped frontend `completed` status to `done` in `lib/sync.ts`.
 6. **Mobile Performance**: Added visibility listener to `countdown-vapor-digits.tsx` to sleep rAF loop when document is hidden.
 7. **Clean Build**: Verified `npm run build` succeeds with zero errors or warnings.
+
+## [02:10] — GlobalMuteButton Theme-Matched Airport Signage Icon
+**What was done:**
+- Replaced text labels (`MUTE` / `ON`) in [GlobalMuteButton.tsx](file:///Users/sinanm/Documents/TinkerHub/LayoverHackathon/gate-next/src/components/GlobalMuteButton.tsx) with custom, geometric SVG airport signage sound icons.
+- **Sound ON**: Geometric speaker cone (`M3 7H7L12 3V17L7 13H3V7Z`) with dual concentric crisp broadcast sound waves (`#E6E1D3` paper).
+- **Sound MUTED**: Geometric speaker cone with a square-capped diagonal "X" cancellation mark (`#8C887C` muted on `#181816` panel background).
+- Zero changes to component state, volume/mute toggle logic, or global audio behavior.
+- Added accessible `aria-label` and `title` attributes.
 
 ---
 

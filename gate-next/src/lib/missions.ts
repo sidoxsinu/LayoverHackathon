@@ -66,7 +66,7 @@ export function pickMission({
   stats: Stats;
   recent?: string[];
   customPool?: Mission[];
-}): Mission {
+}): Mission | null {
   // 1. Find all missions that fit the time window
   const allMissions = [...customPool.map(m => ({ ...m, mins: m.mins || 10, when: m.when || [0, 9999], icon: m.icon || 'MOVE', type: m.type || 'LOCAL' })), ...MISSIONS];
   const fits = allMissions.filter(
@@ -80,8 +80,11 @@ export function pickMission({
   const notRecent = fits.filter((m) => !recent.includes(m.id));
   let pool = notRecent.length > 0 ? notRecent : fits;
   
-  // 3. Fallback to 'go' if literally nothing fits
+  // 3. Fallback to 'go' if literally nothing fits and 'go' hasn't already been done
   if (pool.length === 0) {
+    if (recent.includes('go')) {
+      return null;
+    }
     pool = MISSIONS.filter((m) => m.id === 'go');
   }
 
@@ -104,7 +107,7 @@ export function pickMission({
   
   // 5. Select from targeted if possible, otherwise any in pool
   const from = targeted.length > 0 ? targeted : pool;
-  return from[Math.floor(Math.random() * from.length)];
+  return from[Math.floor(Math.random() * from.length)] || null;
 }
 
 export function startStats(vibe: string): Stats {
