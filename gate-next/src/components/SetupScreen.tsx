@@ -4,6 +4,7 @@ import { nextOccurrence, schedule, fmtDuration, BUFFER_MIN, MARGIN_MIN } from '@
 import { startStats } from '@/lib/missions';
 import { arm } from '@/lib/alarm';
 import { useNow } from '@/hooks/useNow';
+import GlobalMuteButton from './GlobalMuteButton';
 
 type InputMode = 'time' | 'duration';
 
@@ -223,9 +224,13 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
             fontSize: '11px',
             color: '#8C887C',
             letterSpacing: '0.15em',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
           }}
         >
           LAYOVER COMPANION
+          <GlobalMuteButton />
         </span>
       </div>
 

@@ -163,6 +163,10 @@ This file is the **single source of truth** for where the project stands right n
 **What was done:** Added a `GlobalMuteButton` component fixed to the top right of every screen. Wired it deep into the `alarm.ts` engine so it forcefully silences and blocks all audio tracks, chimes, and vibrations when toggled ON.
 **Why:** User requested a permanent, accessible way to ensure their device stays completely silent at all times if they are in a quiet zone.
 
+## [23:14] — Audio Unlock "Blip" Fix
+**What was done:** Set the `volume` of the audio tracks to `0` during the `arm()` initialization sequence that fires when clicking "START LAYOVER", and then restored the volume immediately after.
+**Why:** When clicking start, the browser unlocks the audio by playing and instantly pausing it. This was causing a tiny, split-second audio "blip" to be heard by the user. Lowering the volume to 0 makes the unlock sequence completely silent.
+
 
 ---
 

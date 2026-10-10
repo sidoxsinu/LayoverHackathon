@@ -14,9 +14,6 @@ export default function GlobalMuteButton() {
     <button
       onClick={() => setMuted(!muted)}
       style={{
-        position: 'fixed',
-        top: '16px',
-        right: '16px',
         width: '40px',
         height: '40px',
         backgroundColor: muted ? '#34322C' : 'transparent',
@@ -26,7 +23,6 @@ export default function GlobalMuteButton() {
         fontFamily: 'var(--font-plex), monospace',
         fontWeight: 'bold',
         fontSize: '10px',
-        zIndex: 9999,
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',

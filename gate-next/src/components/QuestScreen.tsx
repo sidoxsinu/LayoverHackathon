@@ -6,6 +6,7 @@ import MissionCard from './MissionCard';
 import MissionLog from './MissionLog';
 import { Mission } from '@/lib/missions';
 import { phaseFor } from '@/lib/time';
+import GlobalMuteButton from './GlobalMuteButton';
 
 interface Stats {
   hunger: number;
@@ -139,6 +140,7 @@ export default function QuestScreen({
           >
             {gate}
           </span>
+          <GlobalMuteButton />
         </div>
       </div>
 

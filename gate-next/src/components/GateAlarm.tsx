@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { startAlarm, stopAlarm, silenceAlarm } from '@/lib/alarm';
 import { fmt } from '@/lib/time';
+import GlobalMuteButton from './GlobalMuteButton';
 
 interface Props {
   gate: string;
@@ -34,9 +35,12 @@ export default function GateAlarm({ gate, departureMs, now, onDismiss }: Props) 
         <span style={{ fontFamily: 'var(--font-barlow), sans-serif', fontSize: '14px', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.7)' }}>
           GATE
         </span>
-        <span style={{ fontFamily: 'var(--font-plex), monospace', fontSize: '14px', color: 'rgba(255,255,255,0.7)' }}>
-          {fmt(msLeft)}
-        </span>
+        <div className="flex items-center gap-4">
+          <span style={{ fontFamily: 'var(--font-plex), monospace', fontSize: '14px', color: 'rgba(255,255,255,0.7)' }}>
+            {fmt(msLeft)}
+          </span>
+          <GlobalMuteButton />
+        </div>
       </div>
 
       {/* Main content */}

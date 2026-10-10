@@ -1,5 +1,6 @@
 'use client';
 import { fmtDuration } from '@/lib/time';
+import GlobalMuteButton from './GlobalMuteButton';
 
 interface Props {
   survivedMs: number;
@@ -36,14 +37,24 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
       {/* Header */}
       <div
         style={{
-          fontFamily: 'var(--font-barlow), sans-serif',
-          fontSize: '12px',
-          letterSpacing: '0.25em',
-          color: '#8C887C',
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           marginBottom: '32px',
         }}
       >
-        GATE / LAYOVER COMPLETE
+        <div
+          style={{
+            fontFamily: 'var(--font-barlow), sans-serif',
+            fontSize: '12px',
+            letterSpacing: '0.25em',
+            color: '#8C887C',
+          }}
+        >
+          GATE / LAYOVER COMPLETE
+        </div>
+        <GlobalMuteButton />
       </div>
 
       {/* Stamp block */}
