@@ -285,6 +285,15 @@ This file is the **single source of truth** for where the project stands right n
 6. **Setup Screen Integration**: Added square 48px TRIP dropdown for signed-in users with upcoming trips. Auto-preselects nearest flight within 24h. Auto-fills departure, gate, walk min. Fields remain editable without modifying saved trip. "TRIPS UNAVAILABLE" graceful fallback when unmigrated.
 7. **Alarm Path Isolation**: Confirmed trips data never touches the alarm audio or countdown loop.
 
+## [03:13] — Draggable Floating DEV Widget
+**What was done:**
+- Updated [DebugOverlay.tsx](file:///Users/sinanm/Documents/TinkerHub/LayoverHackathon/gate-next/src/components/DebugOverlay.tsx) to make the DEV button freely movable/draggable anywhere on screen across mouse and mobile touch pointers.
+- Added pointer capture API (`setPointerCapture`) with viewport boundary clamping (`Math.max(8, Math.min(newPos, maxPos))`).
+- Distinguishes click/tap from drag (movement threshold > 4px prevents accidental menu toggle on drag).
+- Popover menu dynamically positions relative to button location (flips above/below, aligns left/right to prevent off-screen overflow).
+- Uses `touch-action: none` and `cursor: grab / grabbing` with airport signage styling intact (square 48px target, 2px radius, `#F2A900` amber).
+
+
 ---
 
 ## Architecture Decisions Log
