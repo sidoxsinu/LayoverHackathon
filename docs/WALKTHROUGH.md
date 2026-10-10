@@ -147,6 +147,10 @@ This file is the **single source of truth** for where the project stands right n
 **What was done:** Configured the application to play `warning.mp3` once when the countdown timer hits the "urgent" phase (under 5 minutes left in real time, or under 10 seconds in demo mode).
 **Why:** User requested a specific sound to play when the timer is about to end as a heads-up before the final alarm triggers.
 
+## [23:06] — Silence Button Fix
+**What was done:** Updated the `silenceAlarm()` function to explicitly pause the newly added `warning.mp3` audio in addition to the main `Alarm.mp3`.
+**Why:** If the warning audio was triggered right before the main alarm, pressing "SILENCE ALARM" would only silence the main alarm but leave the warning audio playing. Now it kills all active audio tracks instantly.
+
 
 ---
 

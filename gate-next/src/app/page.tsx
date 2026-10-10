@@ -424,7 +424,8 @@ export default function Home() {
   return (
     <>
     <SetupScreen
-      onStart={(data) => {
+      onStart={async (data) => {
+        await arm();
         dispatch({
           type: 'START',
           payload: {
