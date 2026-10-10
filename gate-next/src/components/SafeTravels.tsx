@@ -12,6 +12,9 @@ import { clearTripsCache } from '@/lib/trips';
 import { getSignedProofUrl, deleteProof, clearPendingProofs } from '@/lib/proof';
 import { save } from '@/lib/storage';
 import PhotoViewerModal from './ui/PhotoViewerModal';
+import RankInfoSheet from './RankInfoSheet';
+import Tour from './Tour';
+import { SAFE_STEPS, isTourCompleted } from '@/lib/tour';
 
 interface Props {
   survivedMs: number;
@@ -92,7 +95,18 @@ function SafeTravelsPhotoThumb({
 
 export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLayover }: Props) {
   const router = useRouter();
-  const rank = getRank(xp);
+  const rankTier = getRank(xp);
+  const [showRankSheet, setShowRankSheet] = useState(false);
+  const [showTour, setShowTour] = useState(false);
+
+  useEffect(() => {
+    if (!isTourCompleted('safe')) {
+      const timer = setTimeout(() => {
+        setShowTour(true);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, []);
   const { user, isConfigured, loading } = useUser();
   const [saveStatus, setSaveStatus] = useState<'SAVING' | 'SAVED' | 'QUEUED' | 'SIGN_IN'>('SIGN_IN');
   const [savedState, setSavedState] = useState(() => load());
@@ -228,11 +242,15 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
                 letterSpacing: '0.15em',
                 padding: 0,
                 textTransform: 'uppercase',
+                minHeight: '48px',
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
               TRIPS
             </button>
             <button
+              data-tour="safe-passport"
               onClick={() => router.push('/passport')}
               style={{
                 background: 'none',
@@ -244,6 +262,9 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
                 letterSpacing: '0.15em',
                 padding: 0,
                 textTransform: 'uppercase',
+                minHeight: '48px',
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
               PASSPORT
@@ -260,6 +281,9 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
                 letterSpacing: '0.15em',
                 padding: 0,
                 textTransform: 'uppercase',
+                minHeight: '48px',
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
               SIGN OUT
@@ -267,12 +291,35 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
             <GlobalMuteButton />
           </div>
         ) : (
-          <GlobalMuteButton />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button
+              data-tour="safe-passport"
+              onClick={() => router.push('/passport')}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-barlow), sans-serif',
+                fontSize: '13px',
+                color: '#8C887C',
+                letterSpacing: '0.15em',
+                padding: 0,
+                textTransform: 'uppercase',
+                minHeight: '48px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              PASSPORT
+            </button>
+            <GlobalMuteButton />
+          </div>
         )}
       </div>
 
       {/* Stamp block */}
       <div
+        data-tour="safe-summary"
         style={{
           border: '2px solid #E6E1D3',
           padding: '32px 28px',
@@ -420,26 +467,62 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
           </div>
 
           <div style={{ borderTop: '1px solid #34322C', paddingTop: '12px' }}>
-            <div
-              style={{
-                fontFamily: 'var(--font-barlow), sans-serif',
-                fontSize: '10px',
-                letterSpacing: '0.15em',
-                color: '#8C887C',
-              }}
-            >
-              RANK
-            </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-barlow), sans-serif',
-                fontSize: '20px',
-                fontWeight: '700',
-                color: '#3F9B5B',
-                letterSpacing: '0.05em',
-              }}
-            >
-              {rank}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-barlow), sans-serif',
+                    fontSize: '10px',
+                    letterSpacing: '0.15em',
+                    color: '#8C887C',
+                  }}
+                >
+                  RANK
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-barlow), sans-serif',
+                    fontSize: '20px',
+                    fontWeight: '700',
+                    color: '#3F9B5B',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  {rankTier.title}
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-plex), monospace',
+                    fontSize: '11px',
+                    color: '#8C887C',
+                    marginTop: '2px',
+                  }}
+                >
+                  LEVEL {rankTier.level} OF 5
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRankSheet(true)}
+                aria-label="What is this rank?"
+                style={{
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  border: '1px solid #34322C',
+                  backgroundColor: '#181816',
+                  color: '#8C887C',
+                  fontFamily: 'var(--font-plex), monospace',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  borderRadius: '2px',
+                }}
+              >
+                ?
+              </button>
             </div>
           </div>
         </div>
@@ -503,8 +586,33 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
         </div>
       )}
 
-      {/* New layover button */}
-      <div style={{ marginTop: '32px', width: '100%', maxWidth: '320px' }}>
+      {/* Actions */}
+      <div style={{ marginTop: '32px', width: '100%', maxWidth: '320px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <button
+          data-tour="safe-print"
+          onClick={() => router.push('/passport/print')}
+          style={{
+            width: '100%',
+            backgroundColor: '#181816',
+            color: '#E6E1D3',
+            fontFamily: 'var(--font-barlow), sans-serif',
+            fontSize: '16px',
+            fontWeight: '700',
+            letterSpacing: '0.15em',
+            padding: '14px',
+            border: '1px solid #34322C',
+            borderRadius: '2px',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+            minHeight: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          PRINT PASSPORT
+        </button>
+
         <button
           onClick={onNewLayover}
           style={{
@@ -520,11 +628,26 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
             borderRadius: '2px',
             cursor: 'pointer',
             textTransform: 'uppercase',
+            minHeight: '48px',
           }}
         >
           START NEW LAYOVER
         </button>
       </div>
+
+      <RankInfoSheet
+        isOpen={showRankSheet}
+        onClose={() => setShowRankSheet(false)}
+        xp={xp}
+      />
+
+      <Tour
+        screen="safe"
+        steps={SAFE_STEPS}
+        isActive={showTour}
+        onComplete={() => setShowTour(false)}
+        onDismiss={() => setShowTour(false)}
+      />
     </div>
   );
 }

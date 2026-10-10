@@ -9,6 +9,8 @@ import { getRank, rankProgress } from '@/lib/rank';
 import { useUser } from '@/hooks/useUser';
 import { getSignedProofUrl, deleteProof } from '@/lib/proof';
 import { ProofStatus, getProofStatusLabel } from '@/lib/verify';
+import RankInfoSheet from '@/components/RankInfoSheet';
+import InfoTip from '@/components/InfoTip';
 
 interface MissionLogRecord {
   id: string;
@@ -285,6 +287,7 @@ export default function PassportPage() {
   const [lightboxSignedUrls, setLightboxSignedUrls] = useState<Record<string, string>>({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showRankSheet, setShowRankSheet] = useState(false);
 
   // DOM Refs for scroll lock and focus management
   const passportPageRef = useRef<HTMLDivElement>(null);
@@ -624,7 +627,7 @@ export default function PassportPage() {
 
       ctx.fillStyle = '#8C887C';
       ctx.font = '16px "IBM Plex Mono", monospace';
-      ctx.fillText(`LOCATION: ${activeMemoryLayover?.location || 'TBA'} · ${currentRank.toUpperCase()}`, 40, 940);
+      ctx.fillText(`LOCATION: ${activeMemoryLayover?.location || 'TBA'} · ${currentRank.title.toUpperCase()}`, 40, 940);
 
       const pngUrl = canvas.toDataURL('image/png');
       const a = document.createElement('a');
@@ -686,7 +689,16 @@ export default function PassportPage() {
           >
             ← RETURN
           </button>
-          <span className="font-mono text-xs tracking-widest text-muted uppercase">PASSPORT</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/?replay=setup')}
+              style={{ minHeight: '48px' }}
+              className="min-h-[48px] px-2 text-muted hover:text-amber font-mono text-xs tracking-wider uppercase flex items-center focus:outline-none focus:ring-1 focus:ring-paper rounded-[2px]"
+            >
+              HOW IT WORKS
+            </button>
+            <span className="font-mono text-xs tracking-widest text-muted uppercase">PASSPORT</span>
+          </div>
         </header>
 
         <main className="flex-1 p-4 flex flex-col">
@@ -718,18 +730,31 @@ export default function PassportPage() {
                 <div className="font-mono text-3xl font-bold text-amber leading-none mt-1">{totalXp}</div>
               </div>
 
-              {/* Rotated Rank Stamp */}
-              <div
-                style={{ borderColor: '#3F9B5B', color: '#3F9B5B' }}
-                className="border-2 border-signal text-signal px-3 py-1.5 -rotate-4 rounded-[2px] inline-block text-center select-none"
+              {/* Rotated Rank Stamp with WHAT IS THIS affordance */}
+              <button
+                type="button"
+                onClick={() => setShowRankSheet(true)}
+                aria-label="WHAT IS THIS?"
+                className="flex flex-col items-end group focus:outline-none cursor-pointer"
               >
-                <div className="font-sans text-[9px] tracking-[0.2em] text-muted uppercase font-bold">
-                  RANK
+                <div
+                  style={{ borderColor: '#3F9B5B', color: '#3F9B5B' }}
+                  className="border-2 border-signal text-signal px-3 py-1.5 -rotate-4 rounded-[2px] inline-block text-center select-none"
+                >
+                  <div className="font-sans text-[9px] tracking-[0.2em] text-muted uppercase font-bold">
+                    RANK
+                  </div>
+                  <div className="font-sans text-base font-bold tracking-wider uppercase leading-tight">
+                    {currentRank.title}
+                  </div>
+                  <div className="font-mono text-[10px] text-muted uppercase mt-0.5">
+                    LEVEL {currentRank.level} OF 5
+                  </div>
                 </div>
-                <div className="font-sans text-base font-bold tracking-wider uppercase leading-tight">
-                  {currentRank}
-                </div>
-              </div>
+                <span className="font-mono text-[11px] text-amber group-hover:underline uppercase mt-1 min-h-[48px] flex items-center">
+                  WHAT IS THIS?
+                </span>
+              </button>
             </div>
 
             {/* Segmented Rank Progress Bar (10 blocks) */}
@@ -740,7 +765,7 @@ export default function PassportPage() {
                 </span>
                 <span className="text-muted uppercase tracking-wider">
                   {progress.next
-                    ? `${progress.xpToNext} XP TO ${progress.next.toUpperCase()}`
+                    ? `${progress.xpToNext} XP TO ${progress.next.title.toUpperCase()}`
                     : 'MAX RANK'}
                 </span>
               </div>
@@ -776,6 +801,21 @@ export default function PassportPage() {
                 <div className="font-mono text-lg font-bold text-paper mt-0.5 truncate">{longestDurationStr}</div>
               </div>
             </div>
+
+            {/* Print Full Passport Button */}
+            <div className="mt-4 pt-4 border-t border-line">
+              <button
+                onClick={() => router.push('/passport/print')}
+                style={{
+                  minHeight: '48px',
+                  backgroundColor: '#181816',
+                  borderColor: '#34322C',
+                }}
+                className="w-full border border-line text-paper hover:text-amber font-mono text-xs tracking-wider uppercase flex items-center justify-center rounded-[2px] focus:outline-none focus:ring-1 focus:ring-paper active:bg-ink"
+              >
+                PRINT FULL PASSPORT
+              </button>
+            </div>
           </section>
 
           {/* Past Layovers Section */}
@@ -787,9 +827,13 @@ export default function PassportPage() {
             {layovers.length === 0 ? (
               <div
                 style={{ backgroundColor: '#181816', borderColor: '#34322C' }}
-                className="border border-line p-8 text-center text-muted font-mono text-xs uppercase bg-panel rounded-[2px]"
+                className="border border-line p-8 text-center text-muted font-mono text-xs uppercase bg-panel rounded-[2px] flex flex-col items-center gap-3"
               >
-                NO LAYOVERS YET. COMPLETE ONE TO GET YOUR FIRST STAMP.
+                <span>NO LAYOVERS YET. COMPLETE ONE TO GET YOUR FIRST STAMP.</span>
+                <InfoTip
+                  text="COMPLETE LAYOVERS TO FILL YOUR PASSPORT WITH STAMPS AND XP."
+                  label="Passport empty information"
+                />
               </div>
             ) : (
               <div className="flex flex-col gap-4">
@@ -1298,6 +1342,12 @@ export default function PassportPage() {
         </div>,
         document.body
       )}
+
+      <RankInfoSheet
+        isOpen={showRankSheet}
+        onClose={() => setShowRankSheet(false)}
+        xp={totalXp}
+      />
     </>
   );
 }

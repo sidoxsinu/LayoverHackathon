@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Mission } from '@/lib/missions';
 import { PROOF_BONUS_XP } from '@/lib/verify';
+import { MISSION_XP } from '@/lib/rank';
 
 interface LogEntry {
   id: string;
@@ -392,7 +393,7 @@ export default function MissionCard({
               color: '#8C887C',
             }}
           >
-            +40 XP
+            +{MISSION_XP} XP
           </span>
           {mission.proof !== 'none' && (
             <span

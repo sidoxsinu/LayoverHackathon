@@ -1,50 +1,59 @@
+export const MISSION_XP = 40;
+export const PROOF_BONUS_XP = 20;
+
 export interface RankTier {
+  level: number;
   title: string;
   minXp: number;
+  meaning: string;
 }
 
 export const RANKS: readonly RankTier[] = [
-  { title: 'Gate Rookie', minXp: 0 },
-  { title: 'Terminal Nomad', minXp: 50 },
-  { title: 'Concourse Runner', minXp: 150 },
-  { title: 'Gate Guardian', minXp: 300 },
-  { title: 'Transit Legend', minXp: 500 },
+  { level: 1, title: 'Gate Rookie', minXp: 0, meaning: 'JUST LANDED. YOUR FIRST LAYOVER.' },
+  { level: 2, title: 'Terminal Nomad', minXp: 50, meaning: 'YOU KNOW HOW TO FILL AN AIRPORT HOUR.' },
+  { level: 3, title: 'Concourse Runner', minXp: 150, meaning: 'YOU OWN THE CONCOURSE.' },
+  { level: 4, title: 'Gate Guardian', minXp: 300, meaning: 'YOU NEVER MISS A BOARDING CALL.' },
+  { level: 5, title: 'Transit Legend', minXp: 500, meaning: 'TOP RANK. THE TERMINAL KNOWS YOUR NAME.' },
 ] as const;
 
-function sanitizeXp(xp: unknown): number {
+export function sanitizeXp(xp: unknown): number {
   if (typeof xp !== 'number' || isNaN(xp) || !isFinite(xp) || xp < 0) {
     return 0;
   }
   return Math.floor(xp);
 }
 
-export function getRank(xp: unknown): string {
+export function getRank(xp: unknown): RankTier {
   const clean = sanitizeXp(xp);
   for (let i = RANKS.length - 1; i >= 0; i--) {
     if (clean >= RANKS[i].minXp) {
-      return RANKS[i].title;
+      return RANKS[i];
     }
   }
-  return RANKS[0].title;
+  return RANKS[0];
 }
 
-export function getNextRank(xp: unknown): string | null {
+export function getNextRank(xp: unknown): RankTier | null {
   const clean = sanitizeXp(xp);
   for (let i = 0; i < RANKS.length; i++) {
     if (clean < RANKS[i].minXp) {
-      return RANKS[i].title;
+      return RANKS[i];
     }
   }
   return null;
 }
 
 export interface RankProgress {
-  current: string;
-  next: string | null;
+  level: number;
+  totalLevels: number;
+  current: RankTier;
+  next: RankTier | null;
   xpIntoRank: number;
   xpForNext: number;
   xpToNext: number;
   pct: number;
+  missionsToNext: number;
+  missionsToNextWithProof: number;
 }
 
 export function rankProgress(xp: unknown): RankProgress {
@@ -63,12 +72,16 @@ export function rankProgress(xp: unknown): RankProgress {
 
   if (!nextTier) {
     return {
-      current: currentTier.title,
+      level: currentTier.level,
+      totalLevels: RANKS.length,
+      current: currentTier,
       next: null,
       xpIntoRank: clean - currentTier.minXp,
       xpForNext: 0,
       xpToNext: 0,
       pct: 100,
+      missionsToNext: 0,
+      missionsToNextWithProof: 0,
     };
   }
 
@@ -76,14 +89,20 @@ export function rankProgress(xp: unknown): RankProgress {
   const xpForNext = nextTier.minXp - currentTier.minXp;
   const xpToNext = Math.max(0, nextTier.minXp - clean);
   const pct = Math.min(100, Math.max(0, Math.round((xpIntoRank / xpForNext) * 100)));
+  const missionsToNext = Math.ceil(xpToNext / MISSION_XP);
+  const missionsToNextWithProof = Math.ceil(xpToNext / (MISSION_XP + PROOF_BONUS_XP));
 
   return {
-    current: currentTier.title,
-    next: nextTier.title,
+    level: currentTier.level,
+    totalLevels: RANKS.length,
+    current: currentTier,
+    next: nextTier,
     xpIntoRank,
     xpForNext,
     xpToNext,
     pct,
+    missionsToNext,
+    missionsToNextWithProof,
   };
 }
 
@@ -94,9 +113,8 @@ export function getRankInfo(xp: unknown): { rank: string; nextThreshold: number 
   const clean = sanitizeXp(xp);
   const current = getRank(clean);
   const next = getNextRank(clean);
-  const nextTier = next ? RANKS.find((r) => r.title === next) : null;
   return {
-    rank: current,
-    nextThreshold: nextTier ? nextTier.minXp : null,
+    rank: current.title,
+    nextThreshold: next ? next.minXp : null,
   };
 }

@@ -15,7 +15,7 @@ import {
 } from '@/lib/trips';
 import GlobalMuteButton from '@/components/GlobalMuteButton';
 import ThemeTimePicker from '@/components/ui/ThemeTimePicker';
-
+import InfoTip from '@/components/InfoTip';
 import { useNow } from '@/hooks/useNow';
 
 const WALK_OPTIONS = [2, 5, 10, 15];
@@ -461,17 +461,24 @@ export default function TripsPage() {
           borderBottom: '1px solid #34322C',
         }}
       >
-        <span
-          style={{
-            fontFamily: 'var(--font-barlow), sans-serif',
-            fontSize: '13px',
-            color: '#8C887C',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-          }}
-        >
-          SCHEDULED TRIPS
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-barlow), sans-serif',
+              fontSize: '13px',
+              color: '#8C887C',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+            }}
+          >
+            SCHEDULED TRIPS
+          </span>
+          <InfoTip
+            text="SAVE UPCOMING FLIGHTS TO QUICK-LOAD DEPARTURE AND GATE."
+            label="Trips information"
+            align="left"
+          />
+        </div>
         <button
           onClick={openAddForm}
           style={{

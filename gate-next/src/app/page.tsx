@@ -16,6 +16,7 @@ import { useUser } from '@/hooks/useUser';
 
 import { ProcessedPhoto, uploadProofBlob, retryPendingProofUploads } from '@/lib/proof';
 import { ProofStatus, PROOF_BONUS_XP, verifyProof } from '@/lib/verify';
+import { MISSION_XP } from '@/lib/rank';
 import { LogEntry } from '@/components/MissionLog';
 
 type Screen = 'auth' | 'setup' | 'quest' | 'alarm' | 'safe';
@@ -186,7 +187,7 @@ function reducer(state: AppState, action: Action): AppState {
       // Once real AI vision verification exists, this bonus moves to status 'verified' only.
       const hasPhoto = Boolean(action.payload?.photo);
       const proofXp = hasPhoto ? PROOF_BONUS_XP : 0;
-      const earnedXp = 40 + proofXp;
+      const earnedXp = MISSION_XP + proofXp;
       const newXp = state.xp + earnedXp;
       const logId = action.payload?.logId || crypto.randomUUID();
 

@@ -9,6 +9,9 @@ import { Mission } from '@/lib/missions';
 import { phaseFor } from '@/lib/time';
 import { ProcessedPhoto } from '@/lib/proof';
 import GlobalMuteButton from './GlobalMuteButton';
+import InfoTip from './InfoTip';
+import Tour from './Tour';
+import { QUEST_STEPS, isTourCompleted } from '@/lib/tour';
 
 interface Stats {
   hunger: number;
@@ -60,7 +63,29 @@ export default function QuestScreen({
   const minsLeft = Math.max(0, Math.floor(msLeft / 60000));
   const isProofDisabled = phase === 'urgent' || phase === 'alarm' || minsLeft <= 5;
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const prevPhase = useRef(phase);
+
+  // Auto-start tour once for first time users if safe time > 15m and not demo
+  useEffect(() => {
+    if (demo) return;
+    if (minsLeft <= 15) return;
+    if (phase === 'urgent' || phase === 'alarm') return;
+
+    if (!isTourCompleted('quest')) {
+      const timer = setTimeout(() => {
+        setShowTour(true);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // Alarm safety: unmount tour immediately if phase becomes urgent or alarm
+  useEffect(() => {
+    if (phase === 'urgent' || phase === 'alarm') {
+      setShowTour(false);
+    }
+  }, [phase]);
 
   // Instant alarm guard: Close proof modal immediately if alarm triggers
   useEffect(() => {
@@ -213,13 +238,27 @@ export default function QuestScreen({
       )}
 
       {/* Countdown */}
-      <Countdown targetDate={returnByMs} phase={phase} />
+      <div data-tour="quest-countdown">
+        <Countdown targetDate={returnByMs} phase={phase} />
+      </div>
 
-      {/* Stats */}
-      <StatBar stats={stats} realBattery={realBattery} onChange={onStatChange} />
+      {/* Stats with InfoTip */}
+      <div data-tour="quest-stats">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', borderBottom: '1px solid #34322C' }}>
+          <span style={{ fontFamily: 'var(--font-barlow), sans-serif', fontSize: '11px', letterSpacing: '0.2em', color: '#8C887C', textTransform: 'uppercase' }}>
+            VITALS & STATS
+          </span>
+          <InfoTip
+            text="STATS DRAIN OVER TIME. COMPLETE MISSIONS TO BOOST THEM."
+            label="Stats information"
+            align="right"
+          />
+        </div>
+        <StatBar stats={stats} realBattery={realBattery} onChange={onStatChange} />
+      </div>
 
       {/* Missions */}
-      <div style={{ flex: 1, overflowY: 'auto', paddingTop: '4px' }}>
+      <div data-tour="quest-mission" style={{ flex: 1, overflowY: 'auto', paddingTop: '4px' }}>
         <MissionCard
           mission={mission}
           xp={xp}
@@ -273,6 +312,15 @@ export default function QuestScreen({
           {isGateComplete ? 'I AM AT THE GATE (SAFE RETURN)' : 'I AM AT THE GATE (EARLY)'}
         </button>
       </div>
+
+      <Tour
+        screen="quest"
+        steps={QUEST_STEPS}
+        isActive={showTour && phase !== 'urgent' && phase !== 'alarm'}
+        onComplete={() => setShowTour(false)}
+        onDismiss={() => setShowTour(false)}
+        isAlarmActive={phase === 'urgent' || phase === 'alarm'}
+      />
     </div>
   );
 }

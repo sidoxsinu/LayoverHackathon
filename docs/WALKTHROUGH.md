@@ -47,7 +47,11 @@ This file is the **single source of truth** for where the project stands right n
 | Gate arrival completion | ✅ Done | Replaces mission slot with "ENJOY YOUR JOURNEY" airport signage card; prevents further tasks; allows direct safe return |
 | Photo proof (F8 mission proofs) | ✅ Done | Camera & upload, client resize (1280px, JPEG 0.7, EXIF stripped), IndexedDB queue, 5-min/phase guard, placeholder verifier |
 | Migration 0003_proofs.sql | ✅ Done | Written to supabase/migrations/0003_proofs.sql (manual run in SQL Editor) |
-
+| Rank & Level Model | ✅ Done | `src/lib/rank.ts`: MISSION_XP = 40, PROOF_BONUS_XP = 20, 5 tiers with spec meanings, mission estimates, 14 unit tests |
+| Rank Explainer | ✅ Done | Shared `RankInfoSheet.tsx` with departure-board ladder, reached/current/locked states, integrated into /passport & SafeTravels |
+| Spotlight Onboarding Tour | ✅ Done | `Tour.tsx` & `lib/tour.ts`: 4-box flat ink dimming, 2px amber frame, emergency unmount on urgent/alarm, HOW IT WORKS replay |
+| Context Hints | ✅ Done | `InfoTip.tsx`: 48px square "?" button, single-active listener, click-outside/escape dismiss across all primary screens |
+| Printable Completion Passport | ✅ Done | `/passport/print` & `lib/passport.ts`: A4/Letter print CSS, certificate stamp, aggregate metrics, photo gallery |
 
 **Status legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⚠️ Done with caveats · ❌ Broken
 
@@ -114,6 +118,8 @@ This file is the **single source of truth** for where the project stands right n
 | 11 | Rank title mismatch (160 XP displayed "NAVIGATOR" instead of "Concourse Runner") | `src/lib/rank.ts` defined 150-299 XP tier as "NAVIGATOR" instead of PRD specification "Concourse Runner" | Unified `lib/rank.ts` as single source of truth (`RANKS`, `getRank`, `getNextRank`, `rankProgress`), eliminated duplicate tables, added 12 unit tests | Yes |
 | 12 | Playwright test selector `input[type="time"]` failed | Custom `ThemeTimePicker` airport modal hid the standard `<input type="time">` | Added visually-hidden native `<input type="time">` synced with picker `value` & `onChange` for test/accessibility support | Yes |
 | 13 | /passport Trip Memories sheet appeared transparent with overlapping headers | Tailwind v4 `@theme` defined `--color-gate-ink` rather than `--color-ink`, causing `bg-ink`, `bg-panel` to evaluate to no CSS. The sheet also lacked `createPortal` isolation and body scroll locking | Added canonical color tokens to `@theme`, rendered sheet and lightbox via `createPortal` into `document.body` with opaque `#101010`, locked scroll, added `inert` to page root, and isolated headers | Yes |
+| 14 | React hook order crash in `Tour.tsx` when phase became urgent/alarm | Conditional `if (isAlarmActive) return null;` placed before hooks | Moved emergency unmount check to final return alongside `!isActive` and `!step` | Yes |
+| 15 | Playwright selector collisions and non-ASCII dashes | Substring match on "GATE GUARDIAN" matched summary string & ladder, duplicate CLOSE buttons in sheet, en-dash in `ThemeTimePicker` | Replaced en-dash with ASCII `-`, scoped ladder checks to dialog, and selected `.first()` on CLOSE button | Yes |
 
 ---
 
@@ -516,3 +522,50 @@ Run this at **6:45 AM**, 15 minutes before judges start.
        - `# NEXT_PUBLIC_SUPABASE_...`: App automatically drops into Guest Mode with full local countdown, IndexedDB photo proofs, and Safe Travels passport card.
        - *Airplane Mode*: Entire alarm path, WebAudio/audio element, and vibration run 100% locally with zero network calls.
   3. Updated `gate-next/.env.example` with instructions on hashtag env fallback testing.
+
+## [05:25] — First-Time Onboarding Tour, Rank Model & Printable Passport
+**What was done:**
+1. **Rank & Level Model (`src/lib/rank.ts`)**:
+   - Centralized XP constants: `MISSION_XP = 40`, `PROOF_BONUS_XP = 20`.
+   - Extended `RANKS` to 5 tiers with exact spec levels (1–5) and airport voice meanings (no em dashes, no emojis):
+     - Level 1: `GATE ROOKIE` — "JUST LANDED. YOUR FIRST LAYOVER." (0 XP)
+     - Level 2: `TERMINAL NOMAD` — "YOU KNOW HOW TO FILL AN AIRPORT HOUR." (50 XP)
+     - Level 3: `CONCOURSE RUNNER` — "YOU OWN THE CONCOURSE." (150 XP)
+     - Level 4: `GATE GUARDIAN` — "YOU NEVER MISS A BOARDING CALL." (300 XP)
+     - Level 5: `TRANSIT LEGEND` — "TOP RANK. THE TERMINAL KNOWS YOUR NAME." (500 XP)
+   - Exported `getRank(xp)`, `getNextRank(xp)`, and `rankProgress(xp)` returning `{ level, totalLevels, current, next, xpIntoRank, xpForNext, xpToNext, pct, missionsToNext, missionsToNextWithProof }`.
+   - Input hardening guards against `NaN`, negative numbers, and `undefined`.
+   - Everywhere rank title appears (Passport, Safe Travels, Print view), displays `LEVEL x OF 5` in muted mono.
+   - Comprehensive unit test suite (`tests/rank.spec.ts`) covering all 14 boundary and edge cases (0, 49, 50, 149, 150, 160, 299, 300, 499, 500, 10000, negatives, NaN, undefined).
+
+2. **Rank Explainer Modal (`src/components/RankInfoSheet.tsx`)**:
+   - Accessible modal sheet rendering traveler rank summary, 10-block segmented progress bar, and "HOW TO EARN XP" breakdown (+40 complete, +20 photo proof, 0 skip, XP is never lost).
+   - Departure-board ladder table displaying all 5 ranks with `LV`, `TITLE`, `XP NEEDED`, and `MEANING`.
+   - Ranks reached receive green `REACHED` tag; current rank receives amber highlight and `YOU ARE HERE`; locked tiers remain muted.
+   - Calculates exact missions to next rank with and without photo proof.
+   - Integrated into `/passport` via `"WHAT IS THIS?"` affordance and `SafeTravels.tsx` via `"?"` button ($\ge 48$px targets).
+
+3. **Spotlight Onboarding Tour (`src/lib/tour.ts` & `src/components/Tour.tsx`)**:
+   - Flat 4-rectangle dimming (`rgba(16,16,16,0.8)`) without blur, box-shadow, or glow.
+   - 2px amber outline frame with 4px padding around target element.
+   - Dynamic step cards featuring step counter (`STEP x OF y`), title, description, and `BACK`, `NEXT`, `SKIP TOUR` actions ($\ge 48$px touch targets).
+   - Auto-starts on fresh session for Setup, Quest, and Safe Travels; stored in `gate.tour.v1`.
+   - Replay button (`"HOW IT WORKS"`) added to Setup footer and Passport header.
+   - Critical Safety Invariant: unmounts immediately on `urgent` or `alarm` phase to guarantee the alarm path is never delayed, covered, or blocked. Alarm z-index (100) strictly supersedes Tour (70). Demo Mode triple-tap never auto-runs the tour.
+
+4. **Context Hints (`src/components/InfoTip.tsx`)**:
+   - Flat popover triggered by 48px square `"?"` button.
+   - Single-active listener (`gate:infotip-opened`) automatically closes other open tips.
+   - Dismisses cleanly on outside click or `Escape` key.
+   - Attached to Safe Time, Walk Time, Vibe, Stats, Proof, Scheduled Trips, and Passport empty state.
+
+5. **Printable Completion Passport (`src/app/passport/print/page.tsx` & `src/lib/passport.ts`)**:
+   - Dedicated print-ready route `/passport/print` supporting full passport or single layover certificate (`?layover=<id>`).
+   - Clean `@page { margin: 12mm }` styling with `print-color-adjust: exact` and paper background (`#E6E1D3`).
+   - Features `OFFICIAL TRANSIT DOCUMENT` header, rotated `CONCOURSE CLEARED` stamp box, traveler rank tier (`LEVEL x OF 5`), aggregate stats, and photo gallery with captions.
+   - Action header provides `← RETURN` and 48px `PRINT / SAVE PDF` action.
+
+**Verification**:
+- 38/38 Playwright tests pass (10/10 core/ladder, 22/22 rank & memories, 6/6 onboarding & print).
+- Zero banned UI elements (no emojis, gradients, shadows, glows, rounded > 2px, or em dashes).
+- Production build succeeds cleanly (`npm run build`).

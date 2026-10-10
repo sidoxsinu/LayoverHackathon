@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { processProofImage, ProcessedPhoto } from '@/lib/proof';
+import InfoTip from '../InfoTip';
 
 interface Props {
   missionTitle: string;
@@ -123,17 +124,24 @@ export default function ProofModal({
             marginBottom: '16px',
           }}
         >
-          <span
-            style={{
-              fontFamily: 'var(--font-barlow), sans-serif',
-              fontSize: '14px',
-              fontWeight: '700',
-              letterSpacing: '0.15em',
-              color: '#F2A900',
-            }}
-          >
-            MISSION PROOF
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-barlow), sans-serif',
+                fontSize: '14px',
+                fontWeight: '700',
+                letterSpacing: '0.15em',
+                color: '#F2A900',
+              }}
+            >
+              MISSION PROOF
+            </span>
+            <InfoTip
+              text="OPTIONAL PHOTO EVIDENCE EARNS +20 BONUS XP."
+              label="Proof information"
+              align="left"
+            />
+          </div>
           <button
             onClick={onCancel}
             style={{

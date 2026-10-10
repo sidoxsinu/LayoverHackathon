@@ -12,6 +12,9 @@ import { createBrowserClient } from '@/lib/supabase';
 import { Trip, fetchUserTrips, formatTripDateTime, clearTripsCache } from '@/lib/trips';
 import ThemeDropdown from './ui/ThemeDropdown';
 import ThemeTimePicker from './ui/ThemeTimePicker';
+import InfoTip from './InfoTip';
+import Tour from './Tour';
+import { SETUP_STEPS, isTourCompleted } from '@/lib/tour';
 
 type InputMode = 'time' | 'duration';
 
@@ -85,6 +88,25 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
   const [showLocationConfirm, setShowLocationConfirm] = useState(false);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [locationStatus, setLocationStatus] = useState<'AUTO' | 'MANUAL' | 'DEFAULT'>('AUTO');
+  const [showTour, setShowTour] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('replay') === 'setup') {
+        setShowTour(true);
+        window.history.replaceState({}, '', '/');
+        return;
+      }
+    }
+
+    if (!isTourCompleted('setup')) {
+      const timer = setTimeout(() => {
+        setShowTour(true);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Load Trips if user is signed in
   useEffect(() => {
@@ -543,72 +565,81 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         )}
 
         {/* Departure input mode toggle */}
-        <Row>
-          <Label>DEPARTURE</Label>
-          <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-            <button style={segBtnStyle(inputMode === 'time')} onClick={() => setInputMode('time')}>
-              TIME
-            </button>
-            <button style={segBtnStyle(inputMode === 'duration')} onClick={() => setInputMode('duration')}>
-              IN X H Y M
-            </button>
-          </div>
-          {inputMode === 'time' ? (
-            <ThemeTimePicker
-              value={timeValue}
-              onChange={(val) => setTimeValue(val)}
-            />
-          ) : (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input
-                type="number"
-                value={durH}
-                min="0"
-                max="23"
-                onChange={(e) => setDurH(e.target.value)}
-                style={{ ...inputStyle, width: '80px', textAlign: 'center' }}
-                placeholder="H"
-              />
-              <span style={{ fontFamily: 'var(--font-barlow), sans-serif', color: '#8C887C', fontSize: '16px' }}>H</span>
-              <input
-                type="number"
-                value={durM}
-                min="0"
-                max="59"
-                onChange={(e) => setDurM(e.target.value)}
-                style={{ ...inputStyle, width: '80px', textAlign: 'center' }}
-                placeholder="M"
-              />
-              <span style={{ fontFamily: 'var(--font-barlow), sans-serif', color: '#8C887C', fontSize: '16px' }}>M</span>
+        <div data-tour="setup-flight">
+          <Row>
+            <Label>DEPARTURE</Label>
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+              <button style={segBtnStyle(inputMode === 'time')} onClick={() => setInputMode('time')}>
+                TIME
+              </button>
+              <button style={segBtnStyle(inputMode === 'duration')} onClick={() => setInputMode('duration')}>
+                IN X H Y M
+              </button>
             </div>
-          )}
-          {departsLabel && (
-            <div
-              style={{
-                marginTop: '6px',
-                fontFamily: 'var(--font-plex), monospace',
-                fontSize: '11px',
-                color: '#8C887C',
-              }}
-            >
-              {departsLabel}
-            </div>
-          )}
-        </Row>
+            {inputMode === 'time' ? (
+              <ThemeTimePicker
+                value={timeValue}
+                onChange={(val) => setTimeValue(val)}
+              />
+            ) : (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  type="number"
+                  value={durH}
+                  min="0"
+                  max="23"
+                  onChange={(e) => setDurH(e.target.value)}
+                  style={{ ...inputStyle, width: '80px', textAlign: 'center' }}
+                  placeholder="H"
+                />
+                <span style={{ fontFamily: 'var(--font-barlow), sans-serif', color: '#8C887C', fontSize: '16px' }}>H</span>
+                <input
+                  type="number"
+                  value={durM}
+                  min="0"
+                  max="59"
+                  onChange={(e) => setDurM(e.target.value)}
+                  style={{ ...inputStyle, width: '80px', textAlign: 'center' }}
+                  placeholder="M"
+                />
+                <span style={{ fontFamily: 'var(--font-barlow), sans-serif', color: '#8C887C', fontSize: '16px' }}>M</span>
+              </div>
+            )}
+            {departsLabel && (
+              <div
+                style={{
+                  marginTop: '6px',
+                  fontFamily: 'var(--font-plex), monospace',
+                  fontSize: '11px',
+                  color: '#8C887C',
+                }}
+              >
+                {departsLabel}
+              </div>
+            )}
+          </Row>
+        </div>
 
         {/* Safe time preview */}
-        {departureMs > 0 && (
+        <div data-tour="setup-safe-time">
           <Row>
-            <Label>SAFE TIME</Label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <Label>SAFE TIME</Label>
+              <InfoTip
+                text="MINUTES LEFT BEFORE YOU MUST HEAD TO THE GATE. EQUALS DEPARTURE MINUS WALK TIME MINUS 35 MIN BUFFER."
+                label="Safe time information"
+                align="right"
+              />
+            </div>
             <div
               style={{
                 fontFamily: 'var(--font-plex), monospace',
                 fontSize: '28px',
                 fontWeight: '700',
-                color: safeOk ? '#3F9B5B' : '#C8201A',
+                color: departureMs === 0 ? '#8C887C' : safeOk ? '#3F9B5B' : '#C8201A',
               }}
             >
-              {safeOk ? fmtDuration(safeMs) : 'HEAD TO GATE NOW'}
+              {departureMs === 0 ? '--' : safeOk ? fmtDuration(safeMs) : 'HEAD TO GATE NOW'}
             </div>
             <div
               style={{
@@ -621,7 +652,7 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
               BUFFER {BUFFER_MIN}M + WALK + {MARGIN_MIN}M MARGIN
             </div>
           </Row>
-        )}
+        </div>
 
         {/* Location */}
         <Row>
@@ -677,36 +708,54 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         </Row>
 
         {/* Walk time */}
-        <Row>
-          <Label>WALK TO GATE</Label>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {WALK_OPTIONS.map((w) => (
-              <button
-                key={w}
-                style={segBtnStyle(walkMin === w)}
-                onClick={() => setWalkMin(w)}
-              >
-                {w}M
-              </button>
-            ))}
-          </div>
-        </Row>
+        <div data-tour="setup-walk">
+          <Row>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <Label>WALK TO GATE</Label>
+              <InfoTip
+                text="HOW LONG IT TAKES TO REACH YOUR GATE FROM CONCOURSE."
+                label="Walk time information"
+                align="right"
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {WALK_OPTIONS.map((w) => (
+                <button
+                  key={w}
+                  style={segBtnStyle(walkMin === w)}
+                  onClick={() => setWalkMin(w)}
+                >
+                  {w}M
+                </button>
+              ))}
+            </div>
+          </Row>
+        </div>
 
         {/* Vibe */}
-        <Row>
-          <Label>VIBE</Label>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {VIBES.map((v) => (
-              <button
-                key={v}
-                style={segBtnStyle(vibe === v)}
-                onClick={() => setVibe(v)}
-              >
-                {v.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </Row>
+        <div data-tour="setup-vibe">
+          <Row>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <Label>VIBE</Label>
+              <InfoTip
+                text="SETS YOUR STARTING ENERGY AND STAT PROFILE."
+                label="Vibe information"
+                align="right"
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {VIBES.map((v) => (
+                <button
+                  key={v}
+                  style={segBtnStyle(vibe === v)}
+                  onClick={() => setVibe(v)}
+                >
+                  {v.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </Row>
+        </div>
 
         {/* Error */}
         {error && (
@@ -747,8 +796,37 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         >
           START LAYOVER
         </button>
+
+        <div style={{ marginTop: '12px', textAlign: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setShowTour(true)}
+            style={{
+              minHeight: '48px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-barlow), sans-serif',
+              fontSize: '13px',
+              color: '#8C887C',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              padding: '0 16px',
+            }}
+          >
+            HOW IT WORKS
+          </button>
+        </div>
       </div>
     </div>
+
+    <Tour
+      screen="setup"
+      steps={SETUP_STEPS}
+      isActive={showTour}
+      onComplete={() => setShowTour(false)}
+      onDismiss={() => setShowTour(false)}
+    />
 
     {showLocationConfirm && (
       <div 

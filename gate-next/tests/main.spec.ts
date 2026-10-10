@@ -29,7 +29,10 @@ test.beforeEach(async ({ page }) => {
 
   await page.goto('/');
   await page.evaluate(() => {
-    try { window.localStorage.clear(); } catch {}
+    try {
+      window.localStorage.clear();
+      window.localStorage.setItem('gate.tour.v1', JSON.stringify({ setup: true, quest: true, safe: true, passport: true }));
+    } catch {}
   });
   try {
     await page.getByRole('button', { name: 'CONTINUE AS GUEST' }).click({ timeout: 1000 });
@@ -76,12 +79,8 @@ test.beforeEach(async ({ page }) => {
     await expect(page.getByText(/START WRAPPING UP/i)).toBeVisible();
 
     // Advance 10s (5s left) - urgent
-    
-        
     await page.evaluate((ms) => { window.fakeTime += ms; }, 10000);
     await page.clock.fastForward(10000);
-  
-  
     await expect(page.getByText(/WALK TO GATE NOW/i)).toBeVisible();
 
     // Advance 10s (-5s left) - alarm
@@ -174,19 +173,14 @@ test.beforeEach(async ({ page }) => {
   });
 
   test('5. Stats drain', async ({ page }) => {
-
-    page.on('console', msg => console.log('BROWSER LOG:', msg.text()));        await page.getByRole('button', { name: 'IN X H Y M' }).click();
+    await page.getByRole('button', { name: 'IN X H Y M' }).click();
     await page.fill('input[placeholder="H"]', '5');
     await page.fill('input[placeholder="M"]', '0');
-    
     
     await page.getByRole('button', { name: /START LAYOVER/i }).click();
     await expect(page.getByRole('button', { name: /SKIP/i })).toBeVisible();
 
-    
-    
-    // Check hunger starts at 60 (vibe tired => hunger 60)
-    console.log("Test 5 state at start:", await page.locator('body').innerText());
+    // Check hunger starts at 70
     await expect(page.locator('div').filter({ hasText: 'HUNGER' }).getByText('70', { exact: true })).toBeVisible();
 
     // Wait for quest screen useEffect to register setInterval
@@ -196,7 +190,6 @@ test.beforeEach(async ({ page }) => {
     await page.evaluate((ms) => { (window as any).fakeTime += ms; }, 10 * 60000);
     await page.clock.runFor(10 * 60000);
 
-    console.log('Test 5 state after fast forward:', await page.locator('body').innerText());
     await expect(page.locator('div').filter({ hasText: 'HUNGER' }).getByText('67', { exact: true })).toBeVisible();
 
     // Fast forward 10 more minutes: 67 - 3 = 64.

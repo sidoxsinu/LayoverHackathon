@@ -17,12 +17,8 @@ export interface VerifyResult {
   note?: string;
 }
 
-/**
- * Bonus XP granted for providing photo proof.
- * Note: Under current placeholder behavior, attaching a photo grants this bonus (+20 XP).
- * Once real AI vision verification exists, this bonus will only be awarded when status is 'verified'.
- */
-export const PROOF_BONUS_XP = 20;
+import { PROOF_BONUS_XP } from './rank';
+export { PROOF_BONUS_XP };
 
 /**
  * Format human-readable status labels.

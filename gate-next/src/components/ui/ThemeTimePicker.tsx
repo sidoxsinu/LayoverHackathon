@@ -206,7 +206,7 @@ export default function ThemeTimePicker({ value, onChange, label }: Props) {
                   padding: 0,
                 }}
               >
-                ✕
+                X
               </button>
             </div>
 
@@ -334,7 +334,7 @@ export default function ThemeTimePicker({ value, onChange, label }: Props) {
                   textTransform: 'uppercase',
                 }}
               >
-                SELECT HOUR (00–23)
+                SELECT HOUR (00-23)
               </button>
               <button
                 type="button"
@@ -354,7 +354,7 @@ export default function ThemeTimePicker({ value, onChange, label }: Props) {
                   textTransform: 'uppercase',
                 }}
               >
-                SELECT MINUTE (00–59)
+                SELECT MINUTE (00-59)
               </button>
             </div>
 
