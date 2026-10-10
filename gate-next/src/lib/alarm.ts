@@ -10,7 +10,7 @@ let vibLoop: ReturnType<typeof setInterval> | undefined;
 
 function getAudio(): HTMLAudioElement {
   if (!audio) {
-    audio = new Audio('/Alarm.mp3');
+    audio = new Audio('/alarm.mp3');
     audio.loop = true;
     audio.preload = 'auto';
   }

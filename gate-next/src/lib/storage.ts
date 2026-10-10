@@ -1,4 +1,4 @@
-const KEY = 'gate.v2';
+const KEY = 'gate.v3';
 
 export interface SavedState {
   departureMs: number;

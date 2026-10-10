@@ -35,7 +35,7 @@ create table public.mission_log (
   user_id uuid not null references auth.users default auth.uid(),
   mission_code text not null,
   title text not null,
-  status text not null check (status in ('done', 'skipped')),
+  status text not null check (status in ('done', 'completed', 'skipped')),
   xp integer not null default 0,
   created_at timestamptz default now()
 );
@@ -58,7 +58,7 @@ create policy "Users can read own profile" on public.profiles
   for select using (auth.uid() = id);
 
 create policy "Users can update own profile" on public.profiles
-  for update using (auth.uid() = id);
+  for update using (auth.uid() = id) with check (auth.uid() = id);
 
 -- Layovers: Users can insert, read, update, delete only their own layovers
 create policy "Users can read own layovers" on public.layovers
@@ -68,7 +68,7 @@ create policy "Users can insert own layovers" on public.layovers
   for insert with check (auth.uid() = user_id);
 
 create policy "Users can update own layovers" on public.layovers
-  for update using (auth.uid() = user_id);
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "Users can delete own layovers" on public.layovers
   for delete using (auth.uid() = user_id);
@@ -81,7 +81,7 @@ create policy "Users can insert own mission_log" on public.mission_log
   for insert with check (auth.uid() = user_id);
 
 create policy "Users can update own mission_log" on public.mission_log
-  for update using (auth.uid() = user_id);
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "Users can delete own mission_log" on public.mission_log
   for delete using (auth.uid() = user_id);

@@ -145,7 +145,7 @@ function reducer(state: AppState, action: Action): AppState {
 
     case 'NEW_LAYOVER':
       clear();
-      return { ...DEFAULT_STATE };
+      return { ...DEFAULT_STATE, screen: 'setup' };
 
     case 'DRAIN_STATS': {
       const newStats = {
@@ -229,11 +229,21 @@ export default function Home() {
   const alarmFiredRef = useRef(false);
   const warningFiredRef = useRef(false);
   const drainRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const hasRestoredRef = useRef(false);
 
   // Restore from localStorage on mount
   useEffect(() => {
+    if (userLoading || hasRestoredRef.current) return;
+    hasRestoredRef.current = true;
+
     const saved = load();
-    if (!saved) return;
+    if (!saved) {
+      if (user) {
+        dispatch({ type: 'SKIP_AUTH' });
+      }
+      return;
+    }
+
     const restored: AppState = {
       screen: saved.screen as Screen,
       departureMs: saved.departureMs,
@@ -255,6 +265,7 @@ export default function Home() {
       wordmarkTaps: 0,
       layoverId: saved.layoverId || crypto.randomUUID(),
     };
+
     // If time already passed and was in quest, go straight to alarm
     if (restored.screen === 'quest' && restored.returnByMs <= Date.now()) {
       restored.screen = 'alarm';
@@ -262,12 +273,18 @@ export default function Home() {
     } else {
       alarmFiredRef.current = false;
       warningFiredRef.current = false;
-      if (restored.screen === 'auth') {
-        restored.screen = 'setup'; // Don't persist auth screen loop
+      if (restored.screen === 'quest' || restored.screen === 'alarm' || restored.screen === 'safe') {
+        // Active or completed layover - keep screen as is
+      } else if (user) {
+        // Signed-in user skips AUTH
+        restored.screen = 'setup';
+      } else {
+        // Saved setup with no session goes to AUTH
+        restored.screen = 'auth';
       }
     }
     dispatch({ type: 'RESTORE', payload: restored });
-  }, []);
+  }, [userLoading, user]);
 
   // Sync real battery to stats
   useEffect(() => {
@@ -325,7 +342,7 @@ export default function Home() {
 
   // Persist on state change
   useEffect(() => {
-    if (state.screen === 'setup' && state.startedMs === 0) return; // don't save blank setup
+    if (state.screen === 'auth' || (state.screen === 'setup' && state.startedMs === 0)) return;
     const toSave: Partial<SavedState> = {
       departureMs: state.departureMs,
       returnByMs: state.returnByMs,
@@ -409,7 +426,7 @@ export default function Home() {
   };
 
   const survivedMs = state.screen === 'safe' || state.screen === 'alarm'
-    ? Date.now() - state.startedMs
+    ? (now && state.startedMs ? Math.max(0, now - state.startedMs) : 0)
     : 0;
 
   const missionsCompleted = state.log.filter((e) => e.status === 'completed').length;

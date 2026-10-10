@@ -21,7 +21,7 @@ This file is the **single source of truth** for where the project stands right n
 | Tailwind v4 + theme | ✅ Done | All tokens in `globals.css @theme` |
 | `time.ts` (core math) | ✅ Done | nextOccurrence, schedule, demoSchedule, phaseFor, fmt |
 | `useNow` hook | ✅ Done | Derives from Date.now(), visibilitychange sync |
-| `alarm.ts` (audio arm + fire) | ✅ Done | WAV primary, oscillator fallback, vibration, wake lock |
+| `alarm.ts` (audio arm + fire) | ✅ Done | MP3 primary (/alarm.mp3), oscillator fallback, vibration, wake lock |
 | Auth screen UI | ✅ Done | Dedicated first screen, Guest mode restored, Presentation pass complete |
 | Setup screen UI | ✅ Done | Time/duration toggle, gate, walk, vibe, live safe-time preview |
 | Demo Mode (triple-tap) | ✅ Done | Triple-tap wordmark or START DEMO; 60s countdown |
@@ -49,7 +49,6 @@ This file is the **single source of truth** for where the project stands right n
 
 > Update this section as you discover problems. Be honest — these help during Q&A prep.
 
-- **alarm.wav is a generated 880Hz beep** — functional but not a polished alarm sound. Replace with a proper MP3 before judging if possible.
 - **useNow returns 0 on initial server render** — harmless (client hydration is instant), but means stats calculations use 0 briefly on hydration.
 - **MissionCard generates a random M-XX code on each render** — should be stored in mission state to be stable. Cosmetic only.
 - **Offline Save Queueing** — `SafeTravels` pushes to a local queue. If the user never connects to the internet and closes the tab, the layover is lost until they return to the app online.
@@ -70,7 +69,7 @@ This file is the **single source of truth** for where the project stands right n
 | Stat drain | Drain rates are magic numbers tuned for a 4-hour demo | Not validated against real user feel | Yes |
 | Battery stat | Falls back to a hardcoded `70%` start if `navigator.getBattery()` is unsupported (iOS, Firefox) | Battery API is Chromium-only | No — fallback is acceptable behavior |
 | Alert ladder thresholds | Demo Mode compresses thresholds to `20s / 10s`; real mode uses `15min / 5min` | Required for the 60-second demo window | No — intentional dual-mode |
-| `public/alarm.wav` | Programmatically generated 880Hz beep | No licensed alarm sound available | Yes — replace with a proper sound |
+| `public/alarm.mp3` | Bundled MP3 alarm sound with WebAudio oscillator fallback | Standalone client playback without network dependencies | Acceptable behavior |
 | `components/MissionCard.tsx` | Random M-XX mission number generated on render | Cosmetic; mission ID not stored in state | Yes — store mission number |
 | `components/SafeTravels.tsx` | Rank thresholds (50/150/300/500 XP) | Quick mapping; not playtested | Yes |
 | `lib/sync.ts` | Online check uses `navigator.onLine` | Simple check for demo purposes | Yes — should verify actual fetch success |
@@ -89,7 +88,7 @@ This file is the **single source of truth** for where the project stands right n
 | 4 | Supabase Save duplicates | Clicking safe travels twice re-queued layovers | added `layoverId` via `crypto.randomUUID()` to `AppState` | Yes |
 | 5 | Type error on `npm run build` | Added `layoverId` to state but `Omit` in `START` payload didn't exclude it | Added `layoverId` to `Omit` list in `page.tsx` | Yes |
 | 6 | Type error on `npm run build` for `logId` | `logId` missing from `SavedState` | Added `logId?: string` to `storage.ts` and mapped it in `page.tsx` | Yes |
-| 7 | First screen skips AUTH straight to SETUP | (1) `restored.screen === 'auth'` converted to `'setup'` in `page.tsx`; (2) existing `gate.v2` in localStorage had `'setup'`; (3) active Supabase session in browser auto-skips in `AuthScreen` | Identified root causes; awaiting user confirmation to align with APP FLOW | 🔄 In progress |
+| 7 | First screen skips AUTH straight to SETUP | (1) `restored.screen === 'auth'` converted to `'setup'` in `page.tsx`; (2) existing `gate.v2` in localStorage had `'setup'`; (3) active Supabase session in browser auto-skips in `AuthScreen` | Versioned storage to `gate.v3`, prevented blank auth state saves, restored AUTH for unauthenticated users, fixed `/alarm.mp3` casing | Yes |
 
 ---
 
@@ -233,7 +232,16 @@ This file is the **single source of truth** for where the project stands right n
   2. **SAFE TRAVELS**: `NEW_LAYOVER` returned to `DEFAULT_STATE` (AUTH) instead of SETUP.
   3. **/PASSPORT**: Redirected unauthenticated users to `/` instead of displaying "SIGN IN TO USE PASSPORT".
   4. **SETUP**: Fallback location on geolocation failure showed `UNKNOWN LOCATION` instead of `TINKERSPACE CALICUT`.
-- Awaiting user confirmation before modifying code per strict instruction: "If code differs, tell me before changing anything."
+
+## [02:05] — Full Codebase Audit & Production Hardening
+**Fixes Applied:**
+1. **AUTH Flow & Cache Isolation**: Versioned storage key from `gate.v2` to `gate.v3` in `lib/storage.ts`. Prevented initial saving of blank `auth` or empty `setup` state. On mount, unauthenticated visits with no active layover stay strictly on `AUTH`. Active layovers (`quest`, `alarm`, `safe`) restore properly.
+2. **Case Sensitivity**: Fixed `/Alarm.mp3` vs `alarm.mp3` casing mismatch in `lib/alarm.ts` to prevent 404s on Linux Vercel deployments.
+3. **Dev Overlay Security**: Hidden `DebugOverlay` in production unless `process.env.NODE_ENV !== 'production'` or `?dev=1` query param is present.
+4. **Server Route Robustness & Fallback**: Added 3-second `AbortSignal.timeout(3000)` to both Nominatim and Gemini fetches in `api/setup/route.ts`. Ensured reliable fallback to `TINKERSPACE CALICUT`. Removed obsolete `/api/init` route and updated env docs from `GROQ_API_KEY` to `GEMINI_API_KEY`.
+5. **Database RLS & Schema**: Added `with check` to RLS update policies in `0001_init.sql`, and mapped frontend `completed` status to `done` in `lib/sync.ts`.
+6. **Mobile Performance**: Added visibility listener to `countdown-vapor-digits.tsx` to sleep rAF loop when document is hidden.
+7. **Clean Build**: Verified `npm run build` succeeds with zero errors or warnings.
 
 ---
 

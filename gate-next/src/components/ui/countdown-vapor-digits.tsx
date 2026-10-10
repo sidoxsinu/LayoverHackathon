@@ -476,6 +476,17 @@ export function VaporCountdown({
     const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
     colorScheme.addEventListener("change", onThemeChange);
 
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        if (timer) clearTimeout(timer);
+        cancelAnimationFrame(raf);
+        raf = 0;
+      } else {
+        tick();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
     return () => {
       disposed = true;
       if (timer) clearTimeout(timer);
@@ -484,6 +495,7 @@ export function VaporCountdown({
       ro?.disconnect();
       mo.disconnect();
       colorScheme.removeEventListener("change", onThemeChange);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [targetKey, color]);
 

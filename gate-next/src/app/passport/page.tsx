@@ -35,9 +35,9 @@ export default function PassportPage() {
     // 2. Wait for auth to settle
     if (authLoading) return;
 
-    // 3. If signed out, redirect
+    // 3. If signed out, stop loading so guest line displays
     if (!isConfigured || !user) {
-      router.replace('/');
+      setLoading(false);
       return;
     }
 
@@ -61,7 +61,7 @@ export default function PassportPage() {
     fetchLayovers();
   }, [router, authLoading, isConfigured, user]);
 
-  if (authLoading || loading) {
+  if (authLoading || (loading && user)) {
     return (
       <div className="min-h-[100dvh] bg-ink flex items-center justify-center p-4">
         <div className="font-mono text-muted text-sm tracking-widest uppercase">LOADING...</div>
@@ -69,7 +69,26 @@ export default function PassportPage() {
     );
   }
 
-  if (!user) return null; // will redirect
+  if (!user) {
+    return (
+      <div className="min-h-[100dvh] bg-ink flex flex-col p-4 sm:p-8 max-w-lg mx-auto">
+        <div className="flex justify-between items-center pb-4 border-b border-line mb-8">
+          <button 
+            onClick={() => router.push('/')}
+            className="text-muted hover:text-paper font-mono text-xs uppercase"
+          >
+            ← BACK
+          </button>
+          <div className="text-right text-muted tracking-widest uppercase font-mono text-xs">PASSPORT</div>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-center">
+          <div className="font-mono text-muted text-sm tracking-widest uppercase">
+            SIGN IN TO USE PASSPORT
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const totalXp = layovers.reduce((acc, l) => acc + l.xp, 0);
   const totalCount = layovers.length;

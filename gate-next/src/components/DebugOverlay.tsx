@@ -1,8 +1,17 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function DebugOverlay({ onAction }: { onAction: (action: string) => void }) {
   const [open, setOpen] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production' || window.location.search.includes('dev=1')) {
+      setVisible(true);
+    }
+  }, []);
+
+  if (!visible) return null;
 
   return (
     <>

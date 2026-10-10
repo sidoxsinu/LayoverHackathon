@@ -6,7 +6,7 @@ A Next.js (App Router) mobile-first web app for navigating airport layovers. Bui
 - **Framework:** Next.js (App Router) + TypeScript
 - **Styling:** Tailwind CSS v4 (no external UI libraries)
 - **Database & Auth:** Supabase (PostgreSQL + Google OAuth)
-- **AI Integration:** Groq API
+- **AI Integration:** Google Gemini API
 
 ## Setup Instructions
 
@@ -37,8 +37,8 @@ A Next.js (App Router) mobile-first web app for navigating airport layovers. Bui
 Create a `.env.local` file in the `gate-next` directory (copy from `.env.example`):
 
 ```bash
-# Groq API Key for AI Mission Generation
-GROQ_API_KEY=gsk_your_groq_api_key_here
+# Gemini API Key for AI Mission Generation
+GEMINI_API_KEY=AIzaSy_your_gemini_api_key_here
 
 # Supabase Auth & Database
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -50,7 +50,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ### 4. Vercel Deployment
 
 1. Connect your repository to Vercel.
-2. In the Vercel project settings, add the Environment Variables (`GROQ_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
+2. In the Vercel project settings, add the Environment Variables (`GEMINI_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
 3. Deploy!
 
 ## Security Check (RLS)

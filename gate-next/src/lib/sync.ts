@@ -86,7 +86,7 @@ export async function flushSyncQueue() {
               user_id: session.session.user.id,
               mission_code: l.id,
               title: l.text,
-              status: l.status,
+              status: l.status === 'completed' ? 'done' : l.status,
               xp: l.xp,
               created_at: new Date(l.ts).toISOString()
             }))

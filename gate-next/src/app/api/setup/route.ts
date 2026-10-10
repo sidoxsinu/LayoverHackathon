@@ -15,7 +15,8 @@ export async function POST(req: Request) {
     if (!locationOverride && lat && lon) {
       try {
         const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`, {
-          headers: { 'User-Agent': 'GATE-Hackathon-App (contact@layover-gate.app)' }
+          headers: { 'User-Agent': 'GATE-Hackathon-App (contact@layover-gate.app)' },
+          signal: AbortSignal.timeout(3000)
         });
         if (geoRes.ok) {
           const geoData = await geoRes.json();
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
     if (!apiKey) {
       console.warn('GEMINI_API_KEY missing, returning fallback');
       return NextResponse.json({
-        airport: shortName,
+        airport: shortName !== 'UNKNOWN LOCATION' ? shortName : 'TINKERSPACE CALICUT',
         missions: []
       });
     }
@@ -75,6 +76,7 @@ Output exactly and only a JSON object in this format:
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(3000),
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {

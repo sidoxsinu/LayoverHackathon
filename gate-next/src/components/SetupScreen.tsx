@@ -92,7 +92,7 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         else setLocationStatus('AUTO');
       } catch (e) {
         if (!active) return;
-        setAirportName('UNKNOWN LOCATION');
+        setAirportName('TINKERSPACE CALICUT');
         setLocationStatus('DEFAULT');
       }
     };
@@ -104,13 +104,13 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         },
         () => {
           if (!active) return;
-          setAirportName('LOCATION ACCESS DENIED');
+          setAirportName('TINKERSPACE CALICUT');
           setLocationStatus('DEFAULT');
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
-      setAirportName('LOCATION UNSUPPORTED');
+      setAirportName('TINKERSPACE CALICUT');
       setLocationStatus('DEFAULT');
     }
 
