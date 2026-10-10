@@ -71,7 +71,7 @@ test.describe('GATE Layover Hackathon Tests', () => {
     await dismissBtn.click();
 
     // Safe Travels
-    await expect(page.getByText(/SAFE TRAVELS/i)).toBeVisible();
+    await expect(page.getByText(/LAYOVER COMPLETE/i)).toBeVisible();
 
     // Reset
     await page.getByRole('button', { name: /START NEW/i }).click();
