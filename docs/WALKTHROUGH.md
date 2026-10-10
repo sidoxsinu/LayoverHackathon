@@ -159,6 +159,10 @@ This file is the **single source of truth** for where the project stands right n
 **What was done:** Added `+1 MIN` and `-1 MIN` buttons to the DEV menu for fine-grained timer manipulation. Removed the behavior that automatically closed the menu when clicking any debug button.
 **Why:** Makes it easier to quickly skip ahead to test the `urgent` (warning) phase and the `alarm` phase in real-time without the menu closing repeatedly.
 
+## [23:12] — Global Mute Toggle
+**What was done:** Added a `GlobalMuteButton` component fixed to the top right of every screen. Wired it deep into the `alarm.ts` engine so it forcefully silences and blocks all audio tracks, chimes, and vibrations when toggled ON.
+**Why:** User requested a permanent, accessible way to ensure their device stays completely silent at all times if they are in a quiet zone.
+
 
 ---
 

@@ -37,6 +37,8 @@ function getCtx(): AudioContext {
 export async function arm(): Promise<void> {
   // Must be called inside a user gesture handler
   const a = getAudio();
+  const prevA = a.volume;
+  a.volume = 0;
   try {
     await a.play();
     if (!isPlaying) {
@@ -44,13 +46,17 @@ export async function arm(): Promise<void> {
       a.currentTime = 0;
     }
   } catch {}
+  a.volume = prevA;
   
   const w = getWarningAudio();
+  const prevW = w.volume;
+  w.volume = 0;
   try {
     await w.play();
     w.pause();
     w.currentTime = 0;
   } catch {}
+  w.volume = prevW;
 
   try {
     await getCtx().resume();
