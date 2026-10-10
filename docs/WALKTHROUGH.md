@@ -17,24 +17,24 @@ This file is the **single source of truth** for where the project stands right n
 
 | Area | Status | Notes |
 |------|--------|-------|
-| Project scaffold | ⬜ Not started | |
-| Tailwind v4 + theme | ⬜ Not started | |
-| `time.js` (core math) | ⬜ Not started | |
-| `useNow` hook | ⬜ Not started | |
-| `alarm.js` (audio arm + fire) | ⬜ Not started | |
-| Setup screen UI | ⬜ Not started | |
-| Demo Mode (triple-tap) | ⬜ Not started | |
-| Vercel deploy + HTTPS | ⬜ Not started | |
-| Quest screen (countdown) | ⬜ Not started | |
-| Stat bars (drain loop) | ⬜ Not started | |
-| Mission card + engine | ⬜ Not started | |
-| Alert ladder (3 stages) | ⬜ Not started | |
-| Persistence (localStorage) | ⬜ Not started | |
-| Safe Travels screen | ⬜ Not started | |
-| Layover Passport card | ⬜ Not started | |
-| Mission log (collapsible) | ⬜ Not started | |
-| Battery API hook | ⬜ Not started | |
-| AI missions (Gemini proxy) | ⬜ Not started | |
+| Project scaffold | ✅ Done | Next.js (App Router) + Tailwind v4 in `gate-next/` |
+| Tailwind v4 + theme | ✅ Done | All tokens in `globals.css @theme` |
+| `time.ts` (core math) | ✅ Done | nextOccurrence, schedule, demoSchedule, phaseFor, fmt |
+| `useNow` hook | ✅ Done | Derives from Date.now(), visibilitychange sync |
+| `alarm.ts` (audio arm + fire) | ✅ Done | WAV primary, oscillator fallback, vibration, wake lock |
+| Setup screen UI | ✅ Done | Time/duration toggle, gate, walk, vibe, live safe-time preview |
+| Demo Mode (triple-tap) | ✅ Done | Triple-tap wordmark or START DEMO; 60s countdown |
+| Vercel deploy + HTTPS | ⬜ Not started | Next step |
+| Quest screen (countdown) | ✅ Done | RETURN TO GATE IN strip, amber mono digits |
+| Stat bars (drain loop) | ✅ Done | 10-block segmented, 30s drain interval, blink <25 |
+| Mission card + engine | ✅ Done | pickMission, paper card, COMPLETE flash, SKIP |
+| Alert ladder (3 stages) | ✅ Done | Heads-up banner (15min/20s demo), urgent red banner (5min/10s demo), alarm screen |
+| Persistence (localStorage) | ✅ Done | Save on state change, restore on mount, straight-to-alarm if returnBy passed |
+| Safe Travels screen | ✅ Done | Rotated stamp, survived time, missions, XP, rank |
+| Layover Passport card | ⬜ Not started | P1 — rank shown in Safe Travels as text |
+| Mission log (collapsible) | ✅ Done | Collapsible DONE/SKIP list with XP per entry |
+| Battery API hook | ✅ Done | useBattery.ts — null on iOS/Firefox, manual stat fallback |
+| AI missions (Gemini proxy) | ⬜ Not started | P2 — skipped per instructions |
 
 **Status legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⚠️ Done with caveats · ❌ Broken
 
@@ -44,7 +44,9 @@ This file is the **single source of truth** for where the project stands right n
 
 > Update this section as you discover problems. Be honest — these help during Q&A prep.
 
-*(None yet — project not started)*
+- **alarm.wav is a generated 880Hz beep** — functional but not a polished alarm sound. Replace with a proper MP3 before judging if possible.
+- **useNow returns 0 on initial server render** — harmless (client hydration is instant), but means stats calculations use 0 briefly on hydration.
+- **MissionCard generates a random M-XX code on each render** — should be stored in mission state to be stable. Cosmetic only.
 
 ---
 
@@ -54,40 +56,34 @@ This file is the **single source of truth** for where the project stands right n
 
 | Location | What's hardcoded / hacked | Why | Should be fixed later? |
 |----------|--------------------------|-----|------------------------|
-| `lib/time.js` `demoSchedule()` | `returnByMs = now + 60_000` (60-second alarm) | Demo Mode needs a predictable, short alarm window for the pitch | Yes — real usage reads from departure input |
-| `lib/missions.js` | All 10 missions are static strings | No time to build a full mission CMS overnight | Yes — AI-generated missions are P2 |
-| `lib/alarm.js` `arm()` | Audio is pre-played and paused on START to bypass autoplay policy | iOS/Android block audio that doesn't originate from a user gesture | No — this is the correct production pattern |
+| `lib/time.ts` `demoSchedule()` | `returnByMs = now + 60_000` (60-second alarm) | Demo Mode needs a predictable, short alarm window for the pitch | Yes — real usage reads from departure input |
+| `lib/missions.ts` | All 10 missions are static strings | No time to build a full mission CMS overnight | Yes — AI-generated missions are P2 |
+| `lib/alarm.ts` `arm()` | Audio is pre-played and paused on START to bypass autoplay policy | iOS/Android block audio that doesn't originate from a user gesture | No — this is the correct production pattern |
 | Setup screen | "in X h Y m" mode is a toggle, not auto-detected from locale/timezone | Timezone detection adds complexity | Yes |
-| Stat drain | Drain rates are magic numbers (`hunger -0.3/min`, `sanity -0.4/min`) tuned for a 4-hour demo | Not validated against real user feel | Yes |
+| Stat drain | Drain rates are magic numbers tuned for a 4-hour demo | Not validated against real user feel | Yes |
 | Battery stat | Falls back to a hardcoded `70%` start if `navigator.getBattery()` is unsupported (iOS, Firefox) | Battery API is Chromium-only | No — fallback is acceptable behavior |
 | Alert ladder thresholds | Demo Mode compresses thresholds to `20s / 10s`; real mode uses `15min / 5min` | Required for the 60-second demo window | No — intentional dual-mode |
-| Passport ranks | XP → rank mapping is hardcoded: 0=Wanderer, 80=Survivor, 160=Gate Guardian, 240+=Layover Legend | Simple to implement without a DB | Yes — could be expanded |
-| Gemini model name | `gemini-2.0-flash` (verify in AI Studio before using) | Model names change | Yes — move to env var |
+| `public/alarm.wav` | Programmatically generated 880Hz beep | No licensed alarm sound available | Yes — replace with a proper sound |
+| `components/MissionCard.tsx` | Random M-XX mission number generated on render | Cosmetic; mission ID not stored in state | Yes — store mission number |
+| `components/SafeTravels.tsx` | Rank thresholds (50/150/300/500 XP) | Quick mapping; not playtested | Yes |
 
 ---
 
 ## Error Log
 
-> Record every bug found and whether it was fixed. Include the symptom, cause, and fix.
+> Record every bug found and whether it was fixed. Include the symptom, cause, fix.
 
-*(None yet)*
+| # | Symptom | Cause | Fix | Fixed? |
+|---|---------|-------|-----|--------|
+| 1 | Next.js build error: `Expected 1 arguments, but got 0` for `useRef` | TypeScript strict mode requires explicit `undefined` for `useRef` without initial value | Changed to `useRef<T | undefined>(undefined)` | Yes |
+| 2 | Next.js build error: `unstable Date.now() in Client Component` | `useState(Date.now())` called during prerender | Changed to `useState(0)` with `setNow(Date.now())` in useEffect | Yes |
+| 3 | Viewport metadata warning | Next.js 16 moved `viewport` out of `metadata` export | Added separate `export const viewport = {...}` | Yes |
 
 ---
 
 ## Build Log
 
 > Add one entry per completed milestone. Include timestamp and what works/doesn't.
-
----
-
-### Entry template
-```
-## [HH:MM] — Milestone name
-**What was done:** ...
-**What works:** ...
-**What doesn't yet:** ...
-**Immediate next step:** ...
-```
 
 ---
 
@@ -103,7 +99,23 @@ This file is the **single source of truth** for where the project stands right n
 **What doesn't yet:** Quest and Setup screens are pending.
 **Immediate next step:** Build the rest of the application screens in Next.js.
 
-*(Entries will appear here as the build progresses)*
+## [20:45] — Full P0 Build Complete
+**What was done:** Built the entire GATE app in one pass:
+- `lib/missions.ts` — all 10 missions + pickMission engine + startStats
+- `lib/storage.ts` — localStorage save/load/clear
+- `hooks/useBattery.ts` — Battery API with null fallback
+- `components/SetupScreen.tsx` — time/duration input, gate, walk, vibe, live safe time preview
+- `components/Countdown.tsx` — amber board strip, hard-step digits
+- `components/StatBar.tsx` — 10-block segmented bars, green/amber/red, blink <25
+- `components/MissionCard.tsx` — paper card, tear line, COMPLETE flash, SKIP
+- `components/MissionLog.tsx` — collapsible DONE/SKIP log with XP
+- `components/QuestScreen.tsx` — all alert banners, stat drain, full quest loop
+- `components/SafeTravels.tsx` — rotated stamp, survived/missions/XP/rank
+- `app/page.tsx` — full reducer, persistence, alarm latch, drain loop, Demo Mode
+**What works:** `npm run build` passes with 0 errors.
+**What doesn't yet:** Not tested on a real phone; audio/wake lock/vibration need HTTPS to verify; Vercel deploy pending.
+**Immediate next step:** Deploy to Vercel and test alarm on a real phone.
+
 
 ---
 
