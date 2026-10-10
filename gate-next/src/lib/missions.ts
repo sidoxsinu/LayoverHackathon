@@ -21,7 +21,7 @@ export const MISSIONS: Mission[] = [
   { id: 'plug',     icon: 'PLUG', type: 'CAMP',      text: 'Find a working wall outlet. Plug in your device and guard your territory.', mins: 20, need: 'battery', boost: 40, when: [30, 9999] },
   { id: 'coffee',   icon: 'FOOD', type: 'CAFFEINE',  text: 'Secure a coffee, tea, or local beverage. Sit somewhere facing the tarmac.', mins: 15, need: 'energy', boost: 30, when: [40, 240] },
   { id: 'art',      icon: 'MOVE', type: 'CULTURE',   text: 'Find a piece of airport art or an installation. Stare at it until you understand it.', mins: 15, need: 'energy', boost: -15, when: [60, 240] },
-  { id: 'stretch',  icon: 'MOVE', type: 'HEALTH',    text: 'Find an empty gate area and do some shameless stretches for 5 minutes.', mins: 10, need: 'energy', boost: 10, when: [40, 9999] },
+  { id: 'stretch',  icon: 'MOVE', type: 'HEALTH',    text: 'Find an empty gate area and do some shameless stretches for 5 minutes.', mins: 10, need: 'energy', boost: -10, when: [40, 9999] },
   { id: 'flight',   icon: 'REST', type: 'SPY',       text: 'Look at the departure board. Find a flight to a city you cannot pronounce.', mins: 10, need: 'energy', boost: 20, when: [40, 9999] },
   { id: 'snack',    icon: 'FOOD', type: 'SUPPLY',    text: 'Hunt down a convenience store and secure a tactical flight snack.', mins: 10, need: 'hunger', boost: 30, when: [20, 120] },
 
@@ -29,11 +29,11 @@ export const MISSIONS: Mission[] = [
   { id: 'water',    icon: 'FOOD', type: 'HYDRATE',   text: 'Find a water fountain. Fill your bottle or drink directly. Hydration is survival.', mins: 5, need: 'hunger', boost: 15, when: [15, 60] },
   { id: 'wash',     icon: 'REST', type: 'PREP',      text: 'Head to the restroom. Splash water on your face. Become a new person.', mins: 10, need: 'energy', boost: 20, when: [15, 60] },
   { id: 'charge',   icon: 'PLUG', type: 'JUICE',     text: 'Find a charging station. Stand there and get 5% more battery. Every drop counts.', mins: 10, need: 'battery', boost: 15, when: [15, 60] },
-  { id: 'pack',     icon: 'PREP', type: 'GEAR',      text: 'Repack your bags. Ensure your boarding pass and passport are immediately accessible.', mins: 5, need: 'energy', boost: 20, when: [10, 40] },
-  { id: 'trash',    icon: 'PREP', type: 'CLEAN',     text: 'Find a trash can and throw away any receipts or garbage you collected.', mins: 5, need: 'energy', boost: 10, when: [10, 40] },
+  { id: 'pack',     icon: 'PREP', type: 'GEAR',      text: 'Repack your bags. Ensure your boarding pass and passport are immediately accessible.', mins: 5, need: 'energy', boost: -15, when: [10, 40] },
+  { id: 'trash',    icon: 'PREP', type: 'CLEAN',     text: 'Find a trash can and throw away any receipts or garbage you collected.', mins: 5, need: 'energy', boost: -10, when: [10, 40] },
 
   // FINAL
-  { id: 'go',       icon: 'MOVE', type: 'FINAL',     text: 'Your safe time is almost up. Start walking toward your gate now.', mins: 5, need: 'energy', boost: 0, when: [0, 20] },
+  { id: 'go',       icon: 'MOVE', type: 'FINAL',     text: 'Your safe time is almost up. Start walking toward your gate now.', mins: 5, need: 'energy', boost: -10, when: [0, 20] },
 ];
 
 export interface Stats {
