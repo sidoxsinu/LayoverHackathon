@@ -188,6 +188,12 @@ This file is the **single source of truth** for where the project stands right n
 **What was done:** Set the default location fallback in both `SetupScreen.tsx` and the `/api/setup` route to `TINKERSPACE CALICUT` whenever geolocation is unavailable, denied, or during network errors.
 **Why:** Tailored directly for the hackathon venue and demo environment.
 
+## [23:50] — Vapor Countdown Integration for Timer
+**What was done:** 
+1. Added `countdown-vapor-digits.tsx` in `components/ui/` with zero external dependencies (pure Canvas 2D + curl-noise sublimation physics).
+2. Connected `VaporCountdown` to `Countdown.tsx` preserving exact airport signage colors (`#F2A900` amber and `#C8201A` red), layout borders, and background tokens without modifying any other screens or elements.
+3. Added the `--color-ns-muted` variable to Tailwind v4 `globals.css`.
+
 ---
 
 ## Architecture Decisions Log

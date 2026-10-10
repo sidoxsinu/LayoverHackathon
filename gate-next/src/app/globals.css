@@ -10,10 +10,19 @@
   --color-gate-red: #C8201A;
   --color-gate-red-dark: #7A120E;
   --color-gate-muted: #8C887C;
+  --color-ns-muted: var(--ns-muted);
 
   --animate-alarm: alarm 0.6s steps(1) infinite;
   --animate-blink: blink 1s steps(1) infinite;
   --animate-urgent-bg: urgent-bg 0.5s steps(1) infinite;
+}
+
+:root {
+  --ns-muted: #8C887C;
+}
+
+.dark {
+  --ns-muted: #8C887C;
 }
 
 @keyframes alarm {

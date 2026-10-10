@@ -1,17 +1,14 @@
 'use client';
 
+import { VaporCountdown } from '@/components/ui/countdown-vapor-digits';
+
 interface Props {
   msLeft: number;
   phase: 'free' | 'headsup' | 'urgent' | 'alarm';
 }
 
 export default function Countdown({ msLeft, phase }: Props) {
-  const s = Math.max(0, Math.floor(msLeft / 1000));
-  const p = (n: number) => String(n).padStart(2, '0');
-  const hh = p(Math.floor(s / 3600));
-  const mm = p(Math.floor((s % 3600) / 60));
-  const ss = p(s % 60);
-
+  const targetDate = Date.now() + msLeft;
   const color = phase === 'alarm' ? '#C8201A' : phase === 'urgent' ? '#F2A900' : '#F2A900';
 
   return (
@@ -22,6 +19,10 @@ export default function Countdown({ msLeft, phase }: Props) {
         backgroundColor: '#181816',
         padding: '20px 16px',
         textAlign: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
       <div
@@ -35,19 +36,12 @@ export default function Countdown({ msLeft, phase }: Props) {
       >
         RETURN TO GATE IN
       </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-plex), monospace',
-          fontSize: 'clamp(48px, 14vw, 80px)',
-          fontWeight: '700',
-          color,
-          letterSpacing: '-0.02em',
-          lineHeight: '1',
-          animation: phase === 'urgent' ? 'blink 1s steps(1) infinite' : 'none',
-        }}
-      >
-        {hh}:{mm}:{ss}
-      </div>
+      <VaporCountdown
+        targetDate={targetDate}
+        color={color}
+        labels={null}
+        className={phase === 'urgent' ? 'animate-blink' : ''}
+      />
     </div>
   );
 }
