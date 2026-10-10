@@ -1,5 +1,6 @@
 // alarm.ts - browser-only module, no SSR
 let audio: HTMLAudioElement | undefined;
+let warningAudio: HTMLAudioElement | undefined;
 let isPlaying = false;
 let ctx: AudioContext | undefined;
 let wakeLock: WakeLockSentinel | undefined;
@@ -13,6 +14,15 @@ function getAudio(): HTMLAudioElement {
     audio.preload = 'auto';
   }
   return audio;
+}
+
+function getWarningAudio(): HTMLAudioElement {
+  if (!warningAudio) {
+    warningAudio = new Audio('/warning.mp3');
+    warningAudio.loop = false;
+    warningAudio.preload = 'auto';
+  }
+  return warningAudio;
 }
 
 function getCtx(): AudioContext {
@@ -33,6 +43,14 @@ export async function arm(): Promise<void> {
       a.currentTime = 0;
     }
   } catch {}
+  
+  const w = getWarningAudio();
+  try {
+    await w.play();
+    w.pause();
+    w.currentTime = 0;
+  } catch {}
+
   try {
     await getCtx().resume();
   } catch {}
@@ -71,6 +89,14 @@ function beep(frequency: number, startOffset: number, duration = 0.25): void {
 
 export function chime(): void {
   try { beep(660, 0, 0.4); } catch {}
+}
+
+export function playWarning(): void {
+  try {
+    const w = getWarningAudio();
+    w.currentTime = 0;
+    w.play().catch(() => {});
+  } catch {}
 }
 
 export function startAlarm(): void {

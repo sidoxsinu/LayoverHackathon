@@ -4,7 +4,7 @@ import { useNow } from '@/hooks/useNow';
 import { useBattery } from '@/hooks/useBattery';
 import { phaseFor, demoSchedule } from '@/lib/time';
 import { pickMission, startStats, DRAIN_30S, Mission, Stats } from '@/lib/missions';
-import { arm } from '@/lib/alarm';
+import { arm, playWarning } from '@/lib/alarm';
 import { load, save, clear, SavedState } from '@/lib/storage';
 import SetupScreen from '@/components/SetupScreen';
 import QuestScreen from '@/components/QuestScreen';
@@ -213,6 +213,7 @@ export default function Home() {
   const now = useNow(500);
   const realBattery = useBattery();
   const alarmFiredRef = useRef(false);
+  const warningFiredRef = useRef(false);
   const drainRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   // Restore from localStorage on mount
@@ -260,7 +261,10 @@ export default function Home() {
   useEffect(() => {
     if (state.screen === 'quest' && !alarmFiredRef.current) {
       const phase = phaseFor(state.returnByMs - now, state.demo);
-      if (phase === 'alarm') {
+      if (phase === 'urgent' && !warningFiredRef.current) {
+        warningFiredRef.current = true;
+        playWarning();
+      } else if (phase === 'alarm') {
         alarmFiredRef.current = true;
         dispatch({ type: 'ALARM' });
       }

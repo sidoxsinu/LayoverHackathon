@@ -139,6 +139,10 @@ This file is the **single source of truth** for where the project stands right n
 2. Updated the audio source in `alarm.ts` to use `/Alarm.mp3` instead of the old `alarm.wav`.
 **Why:** To improve user experience when the alarm triggers in a public terminal, and to utilize the custom audio file provided.
 
+## [23:02] — Alarm Audio Race Condition Fix
+**What was done:** Added an `isPlaying` flag to `alarm.ts` to prevent the `arm()` function from accidentally pausing the audio if `startAlarm()` has already begun playback. 
+**Why:** Because `arm()` is asynchronous (it awaits `play()`), if the alarm triggers while `arm()` is still resolving, it would immediately call `pause()`, resulting in the audio playing for only a single millisecond before going silent.
+
 
 ---
 
