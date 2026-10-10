@@ -133,6 +133,12 @@ This file is the **single source of truth** for where the project stands right n
 **Why:** To make testing edges cases (like alarm audio, low battery behavior, and safe travels states) possible without waiting hours.
 **Styling:** Follows the strict design guidelines (no radius, no shadows, uses Barlow and IBM Plex Mono).
 
+## [22:58] — Silence Alarm & Custom Audio
+**What was done:** 
+1. Added a `SILENCE ALARM` button to the `GateAlarm` screen. This allows the user to stop the loud audio and vibration while walking to the gate without dismissing the screen or losing the wake lock.
+2. Updated the audio source in `alarm.ts` to use `/Alarm.mp3` instead of the old `alarm.wav`.
+**Why:** To improve user experience when the alarm triggers in a public terminal, and to utilize the custom audio file provided.
+
 
 ---
 

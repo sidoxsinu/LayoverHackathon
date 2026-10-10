@@ -1,5 +1,6 @@
 // alarm.ts - browser-only module, no SSR
 let audio: HTMLAudioElement | undefined;
+let isPlaying = false;
 let ctx: AudioContext | undefined;
 let wakeLock: WakeLockSentinel | undefined;
 let beepLoop: ReturnType<typeof setInterval> | undefined;
@@ -27,8 +28,10 @@ export async function arm(): Promise<void> {
   const a = getAudio();
   try {
     await a.play();
-    a.pause();
-    a.currentTime = 0;
+    if (!isPlaying) {
+      a.pause();
+      a.currentTime = 0;
+    }
   } catch {}
   try {
     await getCtx().resume();
@@ -71,8 +74,12 @@ export function chime(): void {
 }
 
 export function startAlarm(): void {
+  if (isPlaying) return;
+  isPlaying = true;
   const a = getAudio();
-  a.play().catch(() => {
+  a.play().catch((err) => {
+    if (err.name === 'AbortError') return;
+    if (!isPlaying) return;
     // Audio file blocked - use oscillator fallback
     const burst = () => {
       try {
@@ -93,6 +100,7 @@ export function startAlarm(): void {
 }
 
 export function silenceAlarm(): void {
+  isPlaying = false;
   try {
     const a = getAudio();
     a.pause();

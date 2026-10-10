@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { stopAlarm, silenceAlarm } from '@/lib/alarm';
+import { startAlarm, stopAlarm, silenceAlarm } from '@/lib/alarm';
 import { fmt } from '@/lib/time';
 
 interface Props {
@@ -14,6 +14,7 @@ export default function GateAlarm({ gate, departureMs, now, onDismiss }: Props) 
   const [muted, setMuted] = useState(false);
 
   useEffect(() => {
+    startAlarm();
     return () => stopAlarm();
   }, []);
 

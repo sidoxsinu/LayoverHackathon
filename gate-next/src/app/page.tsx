@@ -4,7 +4,7 @@ import { useNow } from '@/hooks/useNow';
 import { useBattery } from '@/hooks/useBattery';
 import { phaseFor, demoSchedule } from '@/lib/time';
 import { pickMission, startStats, DRAIN_30S, Mission, Stats } from '@/lib/missions';
-import { startAlarm, arm } from '@/lib/alarm';
+import { arm } from '@/lib/alarm';
 import { load, save, clear, SavedState } from '@/lib/storage';
 import SetupScreen from '@/components/SetupScreen';
 import QuestScreen from '@/components/QuestScreen';
@@ -242,7 +242,6 @@ export default function Home() {
     // If time already passed and was in quest, go straight to alarm
     if (restored.screen === 'quest' && restored.returnByMs <= Date.now()) {
       restored.screen = 'alarm';
-      startAlarm();
       alarmFiredRef.current = true;
     }
     dispatch({ type: 'RESTORE', payload: restored });
@@ -263,7 +262,6 @@ export default function Home() {
       const phase = phaseFor(state.returnByMs - now, state.demo);
       if (phase === 'alarm') {
         alarmFiredRef.current = true;
-        startAlarm();
         dispatch({ type: 'ALARM' });
       }
     }
