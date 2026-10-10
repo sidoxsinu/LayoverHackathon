@@ -501,3 +501,18 @@ Run this at **6:45 AM**, 15 minutes before judges start.
   5. Updated Gemini prompt and added a server-side guard to guarantee concise building-level naming is preserved.
   6. Synchronized fallbacks across `route.ts` and `SetupScreen.tsx` to `TINKERSPACE, CALICUT`.
 **Verification:** Tested with direct API curls (`lat: 11.2784487, lon: 75.8442351`), nearby coordinates, and manual overrides. All return `TINKERSPACE, CALICUT`. `npm run build` succeeds and full Playwright test suite (30/30 tests) passes cleanly.
+
+## [05:01] — Demo Script Update: Dynamic Location Proof & `# ENV` Fallback Demo
+**What was done:**
+- Updated `docs/05-PRD-demo-script.md` with two critical sections for the live judging presentation:
+  1. **Proving Dynamic Location (4 Methods)**:
+     - *In-App Manual Override*: Tap location input in Setup, enter any airport/venue (e.g. `Terminal 3, Dubai`), and tap Apply to show live badge shift to `[MANUAL]` and dynamic mission regeneration.
+     - *Status Badges*: Highlight `[AUTO]` (active GPS granted), `[MANUAL]` (user override), and `[DEFAULT]` (GPS denied/fallback).
+     - *Chrome DevTools Sensors*: Use DevTools Sensors dropdown to teleport coordinates live to San Francisco or Tokyo, showing the header update dynamically.
+     - *Network Tab*: Inspect `POST /api/setup` payload (`{ lat, lon }`) and live reverse geocoded response.
+  2. **The `# ENV` Fallback Demonstration (The Reliability Flex)**:
+     - Documented how commenting out (`#`) environment variables in `.env.local` proves zero-dependency resilience:
+       - `# GEMINI_API_KEY`: Server gracefully falls back to building-level geocoding (`TINKERSPACE, CALICUT`) and 17 algorithmic missions without crashing or hanging.
+       - `# NEXT_PUBLIC_SUPABASE_...`: App automatically drops into Guest Mode with full local countdown, IndexedDB photo proofs, and Safe Travels passport card.
+       - *Airplane Mode*: Entire alarm path, WebAudio/audio element, and vibration run 100% locally with zero network calls.
+  3. Updated `gate-next/.env.example` with instructions on hashtag env fallback testing.
