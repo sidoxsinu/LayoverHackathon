@@ -50,7 +50,8 @@ type Action =
   | { type: 'DRAIN_STATS' }
   | { type: 'SET_BATTERY'; value: number }
   | { type: 'WORDMARK_TAP' }
-  | { type: 'RESTORE'; payload: AppState };
+  | { type: 'RESTORE'; payload: AppState }
+  | { type: 'SET_MISSION'; payload: any };
 
 const DEFAULT_STATE: AppState = {
   screen: 'setup',
@@ -85,13 +86,12 @@ function reducer(state: AppState, action: Action): AppState {
 
     case 'START': {
       const now = Date.now();
-      const m = nextMission({ returnByMs: action.payload.returnByMs, stats: action.payload.stats, recent: [] }, now);
       return {
         ...DEFAULT_STATE,
         ...action.payload,
         screen: 'quest',
-        mission: m,
-        recent: [m.id],
+        mission: null,
+        recent: [],
         demo: false,
         startedMs: now,
       };
@@ -136,6 +136,13 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, stats: newStats };
     }
 
+    case 'SET_MISSION':
+      return {
+        ...state,
+        mission: action.payload,
+        recent: action.payload ? [action.payload.id, ...state.recent].slice(0, 3) : state.recent,
+      };
+
     case 'SET_BATTERY':
       return { ...state, stats: { ...state.stats, battery: action.value } };
 
@@ -153,14 +160,13 @@ function reducer(state: AppState, action: Action): AppState {
       ];
       const newRecent = [m.id, ...state.recent].slice(0, 3);
       const now = Date.now();
-      const nextM = nextMission({ returnByMs: state.returnByMs, stats: boostedStats, recent: newRecent }, now);
       return {
         ...state,
         stats: boostedStats,
         xp: newXp,
         log: newLog,
-        mission: nextM,
-        recent: [nextM.id, ...newRecent].slice(0, 3),
+        mission: null,
+        recent: newRecent,
       };
     }
 
@@ -173,12 +179,11 @@ function reducer(state: AppState, action: Action): AppState {
       ];
       const newRecent = [m.id, ...state.recent].slice(0, 3);
       const now = Date.now();
-      const nextM = nextMission({ returnByMs: state.returnByMs, stats: state.stats, recent: newRecent }, now);
       return {
         ...state,
         log: newLog,
-        mission: nextM,
-        recent: [nextM.id, ...newRecent].slice(0, 3),
+        mission: null,
+        recent: newRecent,
       };
     }
 
@@ -241,7 +246,43 @@ export default function Home() {
     }
   }, [realBattery, state.screen]);
 
+  
+  // AI Mission Fetch
+  useEffect(() => {
+    if (state.screen === 'quest' && state.mission === null) {
+      let active = true;
+      const minsLeft = Math.max(0, Math.floor((state.returnByMs - Date.now()) / 60000));
+      
+      fetch('/api/mission', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stats: state.stats, minsLeft })
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error('API failed');
+          return res.json();
+        })
+        .then((data) => {
+          if (!active) return;
+          if (data && data.id && data.text) {
+            dispatch({ type: 'SET_MISSION', payload: data });
+          } else {
+            throw new Error('Invalid response');
+          }
+        })
+        .catch((err) => {
+          if (!active) return;
+          console.warn('AI mission failed, using local fallback:', err);
+          const fallback = nextMission({ returnByMs: state.returnByMs, stats: state.stats, recent: state.recent }, Date.now());
+          dispatch({ type: 'SET_MISSION', payload: fallback });
+        });
+
+      return () => { active = false; };
+    }
+  }, [state.screen, state.mission, state.stats, state.returnByMs, state.recent]);
+
   // Alarm latch
+
   useEffect(() => {
     if (state.screen === 'quest' && !alarmFiredRef.current) {
       const phase = phaseFor(state.returnByMs - now, state.demo);
