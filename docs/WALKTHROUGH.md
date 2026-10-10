@@ -113,12 +113,25 @@ This file is the **single source of truth** for where the project stands right n
 | 10 | React error: `Render order of hooks changed` on sign-in | `useEffect` for pending proof upload retry was placed after conditional early returns (`userLoading`, `screen === 'auth'`) in `page.tsx` | Moved `useEffect` to top of `Home` component before any conditional early returns | Yes |
 | 11 | Rank title mismatch (160 XP displayed "NAVIGATOR" instead of "Concourse Runner") | `src/lib/rank.ts` defined 150-299 XP tier as "NAVIGATOR" instead of PRD specification "Concourse Runner" | Unified `lib/rank.ts` as single source of truth (`RANKS`, `getRank`, `getNextRank`, `rankProgress`), eliminated duplicate tables, added 12 unit tests | Yes |
 | 12 | Playwright test selector `input[type="time"]` failed | Custom `ThemeTimePicker` airport modal hid the standard `<input type="time">` | Added visually-hidden native `<input type="time">` synced with picker `value` & `onChange` for test/accessibility support | Yes |
+| 13 | /passport Trip Memories sheet appeared transparent with overlapping headers | Tailwind v4 `@theme` defined `--color-gate-ink` rather than `--color-ink`, causing `bg-ink`, `bg-panel` to evaluate to no CSS. The sheet also lacked `createPortal` isolation and body scroll locking | Added canonical color tokens to `@theme`, rendered sheet and lightbox via `createPortal` into `document.body` with opaque `#101010`, locked scroll, added `inert` to page root, and isolated headers | Yes |
 
 ---
 
 ## Build Log
 
 > Add one entry per completed milestone. Include timestamp and what works/doesn't.
+
+---
+
+## [04:40] — /passport Trip Memories Sheet & Lightbox Layering & Stacking Polish
+**What was done:**
+1. **Tailwind v4 Theme Token Resolution**: Defined `--color-ink: #101010`, `--color-panel: #181816`, `--color-line: #34322C`, `--color-paper: #E6E1D3`, `--color-amber: #F2A900`, `--color-signal: #3F9B5B`, `--color-alarm: #C8201A`, `--color-muted: #8C887C` in `globals.css @theme`. Guaranteed opaque backgrounds with inline fallback `backgroundColor: '#101010'`.
+2. **React Portal Isolation (`createPortal`)**: Memory sheet (`z-index: 50`) and Lightbox (`z-index: 60`) now render directly into `document.body` with SSR guards (`mounted` state), preventing parent transforms, overflow or stacking contexts from bleeding through.
+3. **Background Invalidation & Scroll Lock**: When sheet opens, page root gets `inert` and `aria-hidden="true"`. Exact `window.scrollY` position is saved and restored upon closing; `document.body.style.overflow = 'hidden'` prevents background scrolling. Focus is trapped inside dialogs; `Escape` key closes lightbox and sheet hierarchically.
+4. **Header & Content Separation**: Sheet renders exactly one sticky header (`TRIP MEMORIES` left, `CLOSE` right, 48px target) on solid ink background with 1px border. Passport header is 100% hidden and non-hit-testable. Inside the sheet, only the boarding-pass strip and 2-column captured frames grid are rendered.
+5. **Frame Grid Polish & Copy Fixes**: Frames spaced with 20px gap and 12px horizontal padding to ensure `-1.5deg` and `1deg` rotations never overlap. Corrected photo copy to singular `"1 PHOTO"` when count is 1 across cards, summary, and sheet. Long trip headers wrap cleanly across two lines without touching dates.
+6. **Next.js Dev Overlay Isolation**: Disabled `devIndicators` in `next.config.ts` and hid `#next-logo` in CSS to prevent dev overlay from intercepting bottom action targets.
+**What works:** Clean build, 30/30 Playwright tests pass (including hit-testing, opacity check, scroll restoration, singular/plural copy, and 360px/390px responsive tests), 42/42 banned UI and proof checks pass.
 
 ---
 
@@ -458,3 +471,20 @@ Run this at **6:45 AM**, 15 minutes before judges start.
 - [ ] Laptop open to repo/README (not code editor)
 - [ ] `npm run preview` or Vercel URL confirmed working
 
+
+## [04:35] — Photo Proof Demo Assets & Upload Analysis
+**What was done:**
+- Analyzed the mission photo verification and upload system:
+  1. `ProofModal.tsx` provides dual upload methods: native camera capture (`capture="environment"`) and generic file selection (`input type="file" accept="image/*"`).
+  2. `lib/proof.ts` decodes files, scales to $\le 1280$px on longest side, renders onto HTML5 Canvas to permanently strip EXIF and GPS metadata, compresses as JPEG 0.70 (strictly $\le 1$ MB output), and generates a local object preview URL.
+  3. Uploads directly to Supabase Storage bucket `proofs` under `{userId}/{layoverId}/{logId}.jpg` with an IndexedDB offline retry queue (`gate_proofs_db`) for network resilience.
+  4. Awards +20 bonus XP per attached proof (`proofXp`), renders 64px square thumbnails in `SafeTravels` and `/passport`, and supports full-screen inspection with deletion.
+  5. Built-in time guard shuts down photo proofing when safe time $\le 5$ min or in urgent/alarm phases to prioritize gate arrival.
+- Generated and staged a complete suite of authentic airport demo photos in `demo_images/` and `gate-next/public/demo_images/` tailored for live hackathon presentations:
+  - `01_coffee_quest.jpg` — Skyline Coffee cup at terminal gate window with airplanes on tarmac.
+  - `02_charging_station.jpg` — Airport power pillar with braided USB charger cable plugged in.
+  - `03_flight_departure_board.jpg` — Digital FIDS departures board displaying flights to London, Paris, Tokyo, and gates B14/A12.
+  - `04_gate_sign_b14.jpg` & `04_gate_direction_sign.jpg` — Overhead illuminated Gate B14 departure sign.
+  - `05_water_refill_station.jpg` — Stainless steel airport drinking water bottle refill station.
+  - `06_runway_aircraft_view.jpg` — Commercial jet airliner parked on the terminal apron.
+**What works:** All 7 demo photos are validated under the 10 MB input limit, format-compatible (`image/jpeg`), and staged for easy mobile transfer or direct URL access.
