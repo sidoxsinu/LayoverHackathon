@@ -2,6 +2,7 @@
 let audio: HTMLAudioElement | undefined;
 let warningAudio: HTMLAudioElement | undefined;
 let isPlaying = false;
+let globalMute = false;
 let ctx: AudioContext | undefined;
 let wakeLock: WakeLockSentinel | undefined;
 let beepLoop: ReturnType<typeof setInterval> | undefined;
@@ -87,11 +88,19 @@ function beep(frequency: number, startOffset: number, duration = 0.25): void {
   o.stop(c.currentTime + startOffset + duration);
 }
 
+export function setGlobalMute(muted: boolean): void {
+  globalMute = muted;
+  if (audio) audio.muted = muted;
+  if (warningAudio) warningAudio.muted = muted;
+}
+
 export function chime(): void {
+  if (globalMute) return;
   try { beep(660, 0, 0.4); } catch {}
 }
 
 export function playWarning(): void {
+  if (globalMute) return;
   try {
     const w = getWarningAudio();
     w.currentTime = 0;
@@ -103,11 +112,13 @@ export function startAlarm(): void {
   if (isPlaying) return;
   isPlaying = true;
   const a = getAudio();
+  a.muted = globalMute;
   a.play().catch((err) => {
     if (err.name === 'AbortError') return;
     if (!isPlaying) return;
     // Audio file blocked - use oscillator fallback
     const burst = () => {
+      if (globalMute) return;
       try {
         beep(880, 0);
         beep(880, 0.35);
@@ -119,6 +130,7 @@ export function startAlarm(): void {
   });
 
   const buzz = () => {
+    if (globalMute) return;
     try { navigator.vibrate?.([500, 200, 500]); } catch {}
   };
   buzz();

@@ -11,6 +11,7 @@ import QuestScreen from '@/components/QuestScreen';
 import GateAlarm from '@/components/GateAlarm';
 import SafeTravels from '@/components/SafeTravels';
 import DebugOverlay from '@/components/DebugOverlay';
+import GlobalMuteButton from '@/components/GlobalMuteButton';
 
 type Screen = 'setup' | 'quest' | 'alarm' | 'safe';
 
@@ -380,6 +381,7 @@ export default function Home() {
         onDismiss={() => dispatch({ type: 'DISMISS_ALARM' })}
       />
       <DebugOverlay onAction={handleDebugAction} />
+      <GlobalMuteButton />
       </>
     );
   }
@@ -401,6 +403,7 @@ export default function Home() {
         onNewLayover={() => dispatch({ type: 'NEW_LAYOVER' })}
       />
       <DebugOverlay onAction={handleDebugAction} />
+      <GlobalMuteButton />
       </>
     );
   }
@@ -426,6 +429,7 @@ export default function Home() {
         onStatChange={(key, value) => dispatch({ type: 'SET_STAT', key, value })}
       />
       <DebugOverlay onAction={handleDebugAction} />
+      <GlobalMuteButton />
       </>
     );
   }
@@ -456,6 +460,7 @@ export default function Home() {
       onWordmarkTap={handleWordmarkTap}
     />
     <DebugOverlay onAction={handleDebugAction} />
+    <GlobalMuteButton />
     </>
   );
 }

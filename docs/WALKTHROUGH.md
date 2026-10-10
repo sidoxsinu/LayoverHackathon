@@ -155,6 +155,10 @@ This file is the **single source of truth** for where the project stands right n
 **What was done:** Wired up the `arm()` function to the `START LAYOVER` button in the Setup screen (`page.tsx`). 
 **Why:** Browsers strictly block any audio playback that didn't originate from a direct user gesture. By making sure `arm()` fires exactly when the user clicks "START LAYOVER", the audio engine successfully initializes and pre-authorizes background playback for later.
 
+## [23:08] — DEV Overlay Tweaks
+**What was done:** Added `+1 MIN` and `-1 MIN` buttons to the DEV menu for fine-grained timer manipulation. Removed the behavior that automatically closed the menu when clicking any debug button.
+**Why:** Makes it easier to quickly skip ahead to test the `urgent` (warning) phase and the `alarm` phase in real-time without the menu closing repeatedly.
+
 
 ---
 
