@@ -28,7 +28,7 @@ Output exactly and only a JSON object in this format:
 {
   "airport": "Airport Name (CODE)",
   "missions": [
-    { "id": "M-AI-1", "text": "...", "need": "energy", "boost": 30 },
+    { "id": "M-AI-1", "text": "...", "need": "energy", "boost": 30, "mins": 10, "when": [0, 9999], "icon": "MOVE", "type": "LOCAL" },
     ...
   ]
 }

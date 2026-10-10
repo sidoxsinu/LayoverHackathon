@@ -340,9 +340,6 @@ export default function Home() {
 
   let currentStats = { ...state.stats };
   if (state.screen === 'quest' && state.startedMs) {
-    const elapsedMins = (now - state.startedMs) / 60000;
-    currentStats.hunger = Math.max(0, Math.floor(state.stats.hunger - (elapsedMins * 0.3)));
-    currentStats.energy = Math.max(0, Math.floor(state.stats.energy - (elapsedMins * 0.5)));
     currentStats.battery = state.stats.battery;
   }
 
