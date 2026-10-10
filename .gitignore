@@ -31,3 +31,4 @@ dist-ssr/
 # Next.js
 .next/
 out/
+demo_images/

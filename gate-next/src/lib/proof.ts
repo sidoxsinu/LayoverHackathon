@@ -333,6 +333,9 @@ export async function retryPendingProofUploads(): Promise<void> {
  */
 export async function getSignedProofUrl(path: string): Promise<string | null> {
   if (!path) return null;
+  if (path.startsWith('data:') || path.startsWith('blob:') || path.startsWith('http:') || path.startsWith('https:')) {
+    return path;
+  }
 
   const cached = signedUrlCache.get(path);
   if (cached && cached.expiresAt > Date.now() + 60000) {

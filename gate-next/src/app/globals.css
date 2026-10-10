@@ -1,6 +1,16 @@
 @import "tailwindcss";
 
 @theme {
+  --color-ink: #101010;
+  --color-panel: #181816;
+  --color-line: #34322C;
+  --color-paper: #E6E1D3;
+  --color-amber: #F2A900;
+  --color-signal: #3F9B5B;
+  --color-alarm: #C8201A;
+  --color-alarm-dark: #7A120E;
+  --color-muted: #8C887C;
+
   --color-gate-ink: #101010;
   --color-gate-panel: #181816;
   --color-gate-line: #34322C;
@@ -49,4 +59,10 @@ html, body {
 
 * {
   box-sizing: border-box;
+}
+
+#next-logo,
+[data-nextjs-dev-tools-button],
+nextjs-portal {
+  display: none !important;
 }

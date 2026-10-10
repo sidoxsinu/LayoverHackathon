@@ -16,10 +16,10 @@
 - **Status:** PASS
 - All 10 core flow, alarm, demo mode, background, and stats tests pass reliably.
 
-## Iteration 4 (/passport rework, rank system single source of truth, and trip memories)
+## Iteration 5 (Trip Memories sheet & lightbox layering, portal isolation, hit-testing, and scroll lock)
 - **Status:** PASS
-- **Rank Boundaries:** 12 unit tests pass in `tests/rank.spec.ts` (0, 49, 50, 149, 150, 160, 299, 300, 499, 500, 10000, negatives/NaN). 160 XP strictly returns "Concourse Runner".
-- **Passport & Trip Memories E2E:** 6 tests pass in `tests/passport.spec.ts` at 390x844 (empty state, rank 160 progress bar, 2-row card layout, Memory Sheet expansion, Lightbox prev/next/save frame, zero horizontal overflow).
+- **Trip Memories Sheet & Lightbox:** 8 tests pass in `tests/passport.spec.ts` (hit-testing confirms passport header covered, sheet computed background `#101010` opacity 1, inert page behind, body scroll locked & restored, singular "1 PHOTO" / plural "3 PHOTOS", Lightbox close returns to sheet, 360x640 and 390x844 zero horizontal scroll).
 - **Core Regression:** All 10 E2E tests pass in `tests/main.spec.ts`.
+- **Rank Boundaries:** All 12 unit tests pass in `tests/rank.spec.ts`.
 - **Verification Audit:** 42/42 checks pass in `scripts/verify-proofs.mjs`.
 - **Production Build:** `npm run build` succeeds with zero errors.
