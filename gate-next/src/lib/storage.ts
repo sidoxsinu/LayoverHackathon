@@ -16,6 +16,7 @@ export interface SavedState {
   recent: string[];
   demo: boolean;
   startedMs: number;
+  layoverId: string;
 }
 
 export function load(): SavedState | null {

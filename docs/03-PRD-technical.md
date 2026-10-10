@@ -6,10 +6,11 @@
 | App | Next.js (App Router, JS/TS) | Requested full-stack |
 | Styling | Tailwind v4 | Theme in CSS |
 | State | `useReducer` + localStorage | No libraries |
+| Database | Supabase (Postgres) | RLS, idempotent sync, Auth |
 | Animation | CSS only | No extra dependency |
 | Audio | `<audio>` file + WebAudio fallback | Reliable on iOS and Android |
 | Platform APIs | Wake Lock, Vibration, Battery (all optional, feature-detected) | Alarm reliability |
-| AI (P2) | Gemini via Vercel serverless proxy | Key stays server-side |
+| AI (P2) | Gemini/Groq via Vercel serverless proxy | Key stays server-side |
 | Hosting | Vercel | HTTPS required for Wake Lock/audio testing |
 
 ## Setup

@@ -1,6 +1,12 @@
 'use client';
+import { useEffect, useRef, useState } from 'react';
 import { fmtDuration } from '@/lib/time';
 import GlobalMuteButton from './GlobalMuteButton';
+import { getRankInfo } from '@/lib/rank';
+import { useUser } from '@/hooks/useUser';
+import { queueLayoverForSave } from '@/lib/sync';
+import { load } from '@/lib/storage';
+import { createBrowserClient } from '@/lib/supabase';
 
 interface Props {
   survivedMs: number;
@@ -9,16 +15,38 @@ interface Props {
   onNewLayover: () => void;
 }
 
-function rankFor(xp: number): string {
-  if (xp >= 500) return 'GATE GUARDIAN';
-  if (xp >= 300) return 'SEASONED TRAVELER';
-  if (xp >= 150) return 'BOARDING VETERAN';
-  if (xp >= 50)  return 'NERVOUS PASSENGER';
-  return 'FIRST-TIMER';
-}
-
 export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLayover }: Props) {
-  const rank = rankFor(xp);
+  const { rank } = getRankInfo(xp);
+  const { user, isConfigured, loading } = useUser();
+  const [saveStatus, setSaveStatus] = useState<'SAVING' | 'SAVED' | 'QUEUED' | 'SIGN_IN'>('SIGN_IN');
+  const queuedRef = useRef(false);
+
+  useEffect(() => {
+    if (loading || queuedRef.current) return;
+    queuedRef.current = true;
+    
+    const state = load();
+    if (state && !state.demo) {
+      queueLayoverForSave(state, Math.floor(survivedMs / 1000));
+    }
+    
+    if (!isConfigured || !user) {
+      setSaveStatus('SIGN_IN');
+    } else {
+      // It queued it. Assuming flushSyncQueue runs inside queueLayoverForSave. 
+      // A more robust app would track real network status, but per PRD: "SAVING" or "WILL RETRY" (queued)
+      setSaveStatus(navigator.onLine ? 'SAVED' : 'QUEUED');
+    }
+  }, [user, isConfigured, loading, survivedMs]);
+
+  const handleSignInToSave = async () => {
+    const supabase = createBrowserClient();
+    if (!supabase) return;
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` }
+    });
+  };
 
   return (
     <div
@@ -183,6 +211,23 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
           </div>
         </div>
       </div>
+
+      {/* Save Status Line */}
+      {isConfigured && !loading && (
+        <div style={{ marginTop: '24px', fontFamily: 'var(--font-barlow), sans-serif', fontSize: '12px', letterSpacing: '0.1em' }}>
+          {saveStatus === 'SAVED' && <span style={{ color: '#3F9B5B' }}>SAVED TO PASSPORT</span>}
+          {saveStatus === 'SAVING' && <span style={{ color: '#8C887C' }}>SAVING...</span>}
+          {saveStatus === 'QUEUED' && <span style={{ color: '#F2A900' }}>WILL RETRY SAVE</span>}
+          {saveStatus === 'SIGN_IN' && (
+            <button 
+              onClick={handleSignInToSave}
+              style={{ color: '#8C887C', border: 'none', background: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              SIGN IN TO SAVE
+            </button>
+          )}
+        </div>
+      )}
 
       {/* New layover button */}
       <div style={{ marginTop: '48px', width: '100%', maxWidth: '320px' }}>

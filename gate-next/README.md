@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GATE — Layover Companion
 
-## Getting Started
+A Next.js (App Router) mobile-first web app for navigating airport layovers. Built for the LAYOVER hackathon.
 
-First, run the development server:
+## Stack
+- **Framework:** Next.js (App Router) + TypeScript
+- **Styling:** Tailwind CSS v4 (no external UI libraries)
+- **Database & Auth:** Supabase (PostgreSQL + Google OAuth)
+- **AI Integration:** Groq API
+
+## Setup Instructions
+
+### 1. Database & Authentication (Supabase)
+
+1. Create a new project on [Supabase](https://supabase.com).
+2. Go to the SQL Editor and run the migration file provided in this repository:
+   ```bash
+   cat supabase/migrations/0001_init.sql # Copy the contents and paste into Supabase
+   ```
+3. Enable Google Auth in Supabase:
+   - Go to **Authentication > Providers** and enable Google.
+   - You will need a Google Cloud OAuth Client ID and Secret (see below).
+
+### 2. Google Cloud OAuth
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com).
+2. Create a new project (or select an existing one).
+3. Go to **APIs & Services > Credentials** and create an **OAuth 2.0 Client ID** (Web application).
+4. Configure the **Authorized Redirect URIs**:
+   - For local development: `http://localhost:3000/auth/callback`
+   - For production (replace with your Vercel URL): `https://gate-next-cyan.vercel.app/auth/callback`
+   - **Also add the Supabase Auth URL:** `https://<YOUR_SUPABASE_PROJECT_ID>.supabase.co/auth/v1/callback`
+5. Copy the **Client ID** and **Client Secret** into the Supabase Google Provider settings.
+
+### 3. Environment Variables
+
+Create a `.env.local` file in the `gate-next` directory (copy from `.env.example`):
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Groq API Key for AI Mission Generation
+GROQ_API_KEY=gsk_your_groq_api_key_here
+
+# Supabase Auth & Database
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+*Note: The app will run in "Guest Mode" if the Supabase keys are missing or invalid.*
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Vercel Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Connect your repository to Vercel.
+2. In the Vercel project settings, add the Environment Variables (`GROQ_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
+3. Deploy!
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Security Check (RLS)
+Row Level Security (RLS) is enabled on all tables (`profiles`, `layovers`, `mission_log`). The policies explicitly use `auth.uid() = user_id`, meaning it is mathematically impossible for a user to read, update, or delete any rows belonging to another user.

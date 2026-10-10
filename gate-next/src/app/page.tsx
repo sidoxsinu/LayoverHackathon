@@ -12,10 +12,12 @@ import GateAlarm from '@/components/GateAlarm';
 import SafeTravels from '@/components/SafeTravels';
 import DebugOverlay from '@/components/DebugOverlay';
 import GlobalMuteButton from '@/components/GlobalMuteButton';
+import { SetupHeader } from '@/components/SetupHeader';
 
 type Screen = 'setup' | 'quest' | 'alarm' | 'safe';
 
 interface LogEntry {
+  logId: string;
   id: string;
   text: string;
   status: 'completed' | 'skipped';
@@ -40,10 +42,11 @@ interface AppState {
   demo: boolean;
   startedMs: number;
   wordmarkTaps: number;
+  layoverId: string;
 }
 
 type Action =
-  | { type: 'START'; payload: Omit<AppState, 'screen' | 'mission' | 'recent' | 'log' | 'xp' | 'demo' | 'wordmarkTaps'> }
+  | { type: 'START'; payload: Omit<AppState, 'screen' | 'mission' | 'recent' | 'log' | 'xp' | 'demo' | 'wordmarkTaps' | 'layoverId'> }
   | { type: 'START_DEMO'; payload: { departureMs: number; returnByMs: number; walkMin: number; startedMs: number } }
   | { type: 'ALARM' }
   | { type: 'DISMISS_ALARM' }
@@ -74,6 +77,7 @@ const DEFAULT_STATE: AppState = {
   demo: false,
   startedMs: 0,
   wordmarkTaps: 0,
+  layoverId: '',
 };
 
 function clamp(v: number): number {
@@ -100,6 +104,7 @@ function reducer(state: AppState, action: Action): AppState {
         recent: [],
         demo: false,
         startedMs: now,
+        layoverId: crypto.randomUUID(),
       };
     }
 
@@ -119,6 +124,7 @@ function reducer(state: AppState, action: Action): AppState {
         mission: m,
         recent: [m.id],
         demo: true,
+        layoverId: crypto.randomUUID(),
       };
     }
 
@@ -163,7 +169,7 @@ function reducer(state: AppState, action: Action): AppState {
       }
       const newXp = state.xp + 40;
       const newLog: LogEntry[] = [
-        { id: m.id, text: m.text, status: 'completed', xp: 40, ts: Date.now() },
+        { logId: crypto.randomUUID(), id: m.id, text: m.text, status: 'completed', xp: 40, ts: Date.now() },
         ...state.log,
       ];
       const newRecent = [m.id, ...state.recent].slice(0, 3);
@@ -182,7 +188,7 @@ function reducer(state: AppState, action: Action): AppState {
       if (!state.mission) return state;
       const m = state.mission;
       const newLog: LogEntry[] = [
-        { id: m.id, text: m.text, status: 'skipped', xp: 0, ts: Date.now() },
+        { logId: crypto.randomUUID(), id: m.id, text: m.text, status: 'skipped', xp: 0, ts: Date.now() },
         ...state.log,
       ];
       const newRecent = [m.id, ...state.recent].slice(0, 3);
@@ -240,6 +246,7 @@ export default function Home() {
       demo: saved.demo,
       startedMs: saved.startedMs,
       wordmarkTaps: 0,
+      layoverId: saved.layoverId || crypto.randomUUID(),
     };
     // If time already passed and was in quest, go straight to alarm
     if (restored.screen === 'quest' && restored.returnByMs <= Date.now()) {
@@ -325,6 +332,7 @@ export default function Home() {
       recent: state.recent,
       demo: state.demo,
       startedMs: state.startedMs,
+      layoverId: state.layoverId,
     };
     save(toSave);
   }, [state]);
@@ -421,6 +429,7 @@ export default function Home() {
 
     return (
       <>
+      <SetupHeader />
       <SafeTravels
         survivedMs={survivedMs}
         missionsCompleted={missionsCompleted}
@@ -462,6 +471,7 @@ export default function Home() {
   // Setup screen
   return (
     <>
+    <SetupHeader />
     <SetupScreen
       onStart={async (data) => {
         await arm();

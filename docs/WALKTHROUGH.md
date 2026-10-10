@@ -31,10 +31,11 @@ This file is the **single source of truth** for where the project stands right n
 | Alert ladder (3 stages) | ✅ Done | Heads-up banner (15min/20s demo), urgent red banner (5min/10s demo), alarm screen |
 | Persistence (localStorage) | ✅ Done | Save on state change, restore on mount, straight-to-alarm if returnBy passed |
 | Safe Travels screen | ✅ Done | Rotated stamp, survived time, missions, XP, rank |
-| Layover Passport card | ⬜ Not started | P1 — rank shown in Safe Travels as text |
+| Layover Passport card | ✅ Done | Replaced with /passport route and Supabase integration |
 | Mission log (collapsible) | ✅ Done | Collapsible DONE/SKIP list with XP per entry |
 | Battery API hook | ✅ Done | useBattery.ts — null on iOS/Firefox, manual stat fallback |
 | AI missions (Gemini proxy) | ⬜ Not started | P2 — skipped per instructions |
+| Supabase Auth + Postgres | ✅ Done | Google sign in, idempotent offline queueing, RLS enabled |
 
 **Status legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⚠️ Done with caveats · ❌ Broken
 
@@ -47,6 +48,7 @@ This file is the **single source of truth** for where the project stands right n
 - **alarm.wav is a generated 880Hz beep** — functional but not a polished alarm sound. Replace with a proper MP3 before judging if possible.
 - **useNow returns 0 on initial server render** — harmless (client hydration is instant), but means stats calculations use 0 briefly on hydration.
 - **MissionCard generates a random M-XX code on each render** — should be stored in mission state to be stable. Cosmetic only.
+- **Offline Save Queueing** — `SafeTravels` pushes to a local queue. If the user never connects to the internet and closes the tab, the layover is lost until they return to the app online.
 
 ---
 
@@ -67,6 +69,7 @@ This file is the **single source of truth** for where the project stands right n
 | `public/alarm.wav` | Programmatically generated 880Hz beep | No licensed alarm sound available | Yes — replace with a proper sound |
 | `components/MissionCard.tsx` | Random M-XX mission number generated on render | Cosmetic; mission ID not stored in state | Yes — store mission number |
 | `components/SafeTravels.tsx` | Rank thresholds (50/150/300/500 XP) | Quick mapping; not playtested | Yes |
+| `lib/sync.ts` | Online check uses `navigator.onLine` | Simple check for demo purposes | Yes — should verify actual fetch success |
 
 ---
 
@@ -79,6 +82,7 @@ This file is the **single source of truth** for where the project stands right n
 | 1 | Next.js build error: `Expected 1 arguments, but got 0` for `useRef` | TypeScript strict mode requires explicit `undefined` for `useRef` without initial value | Changed to `useRef<T | undefined>(undefined)` | Yes |
 | 2 | Next.js build error: `unstable Date.now() in Client Component` | `useState(Date.now())` called during prerender | Changed to `useState(0)` with `setNow(Date.now())` in useEffect | Yes |
 | 3 | Viewport metadata warning | Next.js 16 moved `viewport` out of `metadata` export | Added separate `export const viewport = {...}` | Yes |
+| 4 | Supabase Save duplicates | Clicking safe travels twice re-queued layovers | added `layoverId` via `crypto.randomUUID()` to `AppState` | Yes |
 
 ---
 
