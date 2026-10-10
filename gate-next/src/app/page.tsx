@@ -10,6 +10,7 @@ import SetupScreen from '@/components/SetupScreen';
 import QuestScreen from '@/components/QuestScreen';
 import GateAlarm from '@/components/GateAlarm';
 import SafeTravels from '@/components/SafeTravels';
+import DebugOverlay from '@/components/DebugOverlay';
 
 type Screen = 'setup' | 'quest' | 'alarm' | 'safe';
 
@@ -324,6 +325,33 @@ export default function Home() {
     }
   }, [state.wordmarkTaps, handleDemo]);
 
+
+  const handleDebugAction = (action: string) => {
+    switch (action) {
+      case 'trigger_alarm':
+        if (state.screen === 'quest') {
+          arm();
+          dispatch({ type: 'RESTORE', payload: { ...state, returnByMs: now + 10000 } });
+        }
+        break;
+      case 'fast_forward':
+        if (state.returnByMs) {
+          dispatch({ type: 'RESTORE', payload: { ...state, returnByMs: state.returnByMs - 3600000, departureMs: state.departureMs - 3600000 } });
+        }
+        break;
+      case 'fill_stats':
+        ['hunger', 'energy', 'battery'].forEach(k => dispatch({ type: 'SET_STAT', key: k as any, value: 100 }));
+        break;
+      case 'drain_stats':
+        ['hunger', 'energy', 'battery'].forEach(k => dispatch({ type: 'SET_STAT', key: k as any, value: 10 }));
+        break;
+      case 'reset':
+        clear();
+        window.location.reload();
+        break;
+    }
+  };
+
   const survivedMs = state.screen === 'safe' || state.screen === 'alarm'
     ? Date.now() - state.startedMs
     : 0;
@@ -332,12 +360,15 @@ export default function Home() {
 
   if (state.screen === 'alarm') {
     return (
+      <>
       <GateAlarm
         gate={state.gate}
         departureMs={state.departureMs}
         now={now}
         onDismiss={() => dispatch({ type: 'DISMISS_ALARM' })}
       />
+      <DebugOverlay onAction={handleDebugAction} />
+      </>
     );
   }
 
@@ -350,17 +381,21 @@ export default function Home() {
   if (state.screen === 'safe') {
 
     return (
+      <>
       <SafeTravels
         survivedMs={survivedMs}
         missionsCompleted={missionsCompleted}
         xp={state.xp}
         onNewLayover={() => dispatch({ type: 'NEW_LAYOVER' })}
       />
+      <DebugOverlay onAction={handleDebugAction} />
+      </>
     );
   }
 
   if (state.screen === 'quest') {
     return (
+      <>
       <QuestScreen
         returnByMs={state.returnByMs}
         departureMs={state.departureMs}
@@ -378,11 +413,14 @@ export default function Home() {
         onSafeReturn={() => dispatch({ type: 'SAFE_RETURN' })}
         onStatChange={(key, value) => dispatch({ type: 'SET_STAT', key, value })}
       />
+      <DebugOverlay onAction={handleDebugAction} />
+      </>
     );
   }
 
   // Setup screen
   return (
+    <>
     <SetupScreen
       onStart={(data) => {
         dispatch({
@@ -404,5 +442,7 @@ export default function Home() {
       tapCount={state.wordmarkTaps}
       onWordmarkTap={handleWordmarkTap}
     />
+    <DebugOverlay onAction={handleDebugAction} />
+    </>
   );
 }
