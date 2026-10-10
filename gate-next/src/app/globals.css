@@ -10,24 +10,34 @@
   --color-gate-red: #C8201A;
   --color-gate-red-dark: #7A120E;
   --color-gate-muted: #8C887C;
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
+
   --animate-alarm: alarm 0.6s steps(1) infinite;
-  --animate-blink: blink 2s steps(1) infinite;
-  
-  @keyframes alarm { 
-    0%,100% { background-color: var(--color-gate-red); } 
-    50% { background-color: var(--color-gate-red-dark); } 
-  }
-  @keyframes blink {
-    0%,100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
+  --animate-blink: blink 1s steps(1) infinite;
+  --animate-urgent-bg: urgent-bg 0.5s steps(1) infinite;
+}
+
+@keyframes alarm {
+  0%, 100% { background-color: #C8201A; }
+  50% { background-color: #7A120E; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes urgent-bg {
+  0%, 100% { background-color: #181816; }
+  50% { background-color: #101010; }
 }
 
 html, body {
   height: 100%;
-  background-color: var(--color-gate-ink);
-  color: var(--color-gate-paper);
+  background-color: #101010;
+  color: #E6E1D3;
   margin: 0;
+}
+
+* {
+  box-sizing: border-box;
 }

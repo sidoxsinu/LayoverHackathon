@@ -1,68 +1,106 @@
-let audio: HTMLAudioElement | undefined, 
-    ctx: AudioContext | undefined, 
-    wakeLock: any | undefined, 
-    loop: ReturnType<typeof setInterval>, 
-    vib: ReturnType<typeof setInterval>;
+// alarm.ts — browser-only module, no SSR
+let audio: HTMLAudioElement | undefined;
+let ctx: AudioContext | undefined;
+let wakeLock: WakeLockSentinel | undefined;
+let beepLoop: ReturnType<typeof setInterval> | undefined;
+let vibLoop: ReturnType<typeof setInterval> | undefined;
 
-const el = () => {
+function getAudio(): HTMLAudioElement {
   if (!audio) {
-    audio = Object.assign(new Audio('/alarm.mp3'), { loop: true, preload: 'auto' });
+    audio = new Audio('/alarm.wav');
+    audio.loop = true;
+    audio.preload = 'auto';
   }
   return audio;
-};
+}
 
-export async function arm() {            
-  try { 
-    await el().play(); 
-    el().pause(); 
-    el().currentTime = 0; 
-  } catch {}
+function getCtx(): AudioContext {
   if (!ctx) {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    ctx = new AudioContextClass();
+    const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    ctx = new AC();
   }
-  await ctx.resume().catch(() => {});
+  return ctx;
+}
+
+export async function arm(): Promise<void> {
+  // Must be called inside a user gesture handler
+  const a = getAudio();
+  try {
+    await a.play();
+    a.pause();
+    a.currentTime = 0;
+  } catch {}
+  try {
+    await getCtx().resume();
+  } catch {}
   await lockScreen();
 }
 
-export async function lockScreen() {
-  try { 
+export async function lockScreen(): Promise<void> {
+  try {
     if ('wakeLock' in navigator) {
-      wakeLock = await (navigator as any).wakeLock.request('screen'); 
+      wakeLock = await navigator.wakeLock.request('screen');
     }
   } catch {}
 }
 
+// Re-acquire wake lock when page becomes visible again
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') lockScreen();
+    if (document.visibilityState === 'visible') {
+      lockScreen();
+    }
   });
 }
 
-function beep(f: number, t: number, d = 0.25) {
-  if (!ctx) return;
-  const o = ctx.createOscillator(), g = ctx.createGain();
-  o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
-  g.gain.setValueAtTime(0.6, ctx.currentTime + t);
-  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + d);
-  o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + d);
+function beep(frequency: number, startOffset: number, duration = 0.25): void {
+  const c = getCtx();
+  const o = c.createOscillator();
+  const g = c.createGain();
+  o.frequency.value = frequency;
+  o.connect(g);
+  g.connect(c.destination);
+  g.gain.setValueAtTime(0.6, c.currentTime + startOffset);
+  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + startOffset + duration);
+  o.start(c.currentTime + startOffset);
+  o.stop(c.currentTime + startOffset + duration);
 }
 
-export const chime = () => ctx && beep(660, 0, 0.4);
+export function chime(): void {
+  try { beep(660, 0, 0.4); } catch {}
+}
 
-export function startAlarm() {
-  el().play().catch(() => {                     
-    const burst = () => [0, 0.35, 0.7].forEach(t => beep(880, t));
-    burst(); loop = setInterval(burst, 1500);
+export function startAlarm(): void {
+  const a = getAudio();
+  a.play().catch(() => {
+    // Audio file blocked — use oscillator fallback
+    const burst = () => {
+      try {
+        beep(880, 0);
+        beep(880, 0.35);
+        beep(880, 0.7);
+      } catch {}
+    };
+    burst();
+    beepLoop = setInterval(burst, 1500);
   });
-  const buzz = () => navigator.vibrate?.([500, 200, 500]);
-  buzz(); vib = setInterval(buzz, 1500);
+
+  const buzz = () => {
+    try { navigator.vibrate?.([500, 200, 500]); } catch {}
+  };
+  buzz();
+  vibLoop = setInterval(buzz, 1500);
 }
 
-export function stopAlarm() {
-  audio?.pause(); 
-  clearInterval(loop); 
-  clearInterval(vib); 
-  navigator.vibrate?.(0);
-  wakeLock?.release?.();
+export function stopAlarm(): void {
+  try {
+    const a = getAudio();
+    a.pause();
+    a.currentTime = 0;
+  } catch {}
+  clearInterval(beepLoop);
+  clearInterval(vibLoop);
+  try { navigator.vibrate?.(0); } catch {}
+  try { wakeLock?.release(); } catch {}
+  wakeLock = undefined;
 }

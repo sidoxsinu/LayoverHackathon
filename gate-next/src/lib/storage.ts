@@ -1,0 +1,36 @@
+const KEY = 'gate.v2';
+
+export interface SavedState {
+  departureMs: number;
+  returnByMs: number;
+  gate: string;
+  vibe: string;
+  walkMin: number;
+  stats: { hunger: number; sanity: number; battery: number };
+  log: { id: string; text: string; status: 'completed' | 'skipped'; xp: number; ts: number }[];
+  xp: number;
+  screen: string;
+  missionId: string | null;
+  recent: string[];
+  demo: boolean;
+  startedMs: number;
+}
+
+export function load(): SavedState | null {
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function save(s: Partial<SavedState>): void {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(s));
+  } catch {}
+}
+
+export function clear(): void {
+  localStorage.removeItem(KEY);
+}
