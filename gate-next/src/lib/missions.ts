@@ -13,15 +13,15 @@ export const MISSIONS: Mission[] = [
   // 3+ HOURS (LONG LAYOVER, HUNGER/REST)
   { id: 'meal',     icon: 'FOOD', type: 'FEAST',     text: 'Find a real sit-down restaurant. Order something you have never tried before.', mins: 60, need: 'hunger', boost: 80, when: [180, 9999] },
   { id: 'lounge',   icon: 'REST', type: 'LOUNGE',    text: 'Attempt to find a paid lounge. Check the entry price, but do not actually go in.', mins: 20, need: 'energy', boost: 20, when: [180, 9999] },
-  { id: 'walk_end', icon: 'MOVE', type: 'EXPLORE',   text: 'Walk to the absolute furthest gate in this terminal and touch the window.', mins: 30, need: 'energy', boost: 40, when: [120, 9999] },
+  { id: 'walk_end', icon: 'MOVE', type: 'EXPLORE',   text: 'Walk to the absolute furthest gate in this terminal and touch the window.', mins: 30, need: 'energy', boost: -40, when: [120, 9999] },
 
   // 1-3 HOURS (MID LAYOVER, ACTIVITY)
-  { id: 'souv',     icon: 'MOVE', type: 'HUNT',      text: 'Find the most overpriced, absurd souvenir. Do not buy it. Take a photo.', mins: 15, need: 'energy', boost: 30, when: [60, 9999] },
+  { id: 'souv',     icon: 'MOVE', type: 'HUNT',      text: 'Find the most overpriced, absurd souvenir. Do not buy it. Take a photo.', mins: 15, need: 'energy', boost: -20, when: [60, 9999] },
   { id: 'quiet',    icon: 'REST', type: 'ZEN',       text: 'Locate the quietest, most abandoned corner of the airport. Sit and do nothing for 10 minutes.', mins: 15, need: 'energy', boost: 35, when: [45, 9999] },
   { id: 'plug',     icon: 'PLUG', type: 'CAMP',      text: 'Find a working wall outlet. Plug in your device and guard your territory.', mins: 20, need: 'battery', boost: 40, when: [30, 9999] },
-  { id: 'coffee',   icon: 'FOOD', type: 'CAFFEINE',  text: 'Secure a coffee, tea, or local beverage. Sit somewhere facing the tarmac.', mins: 15, need: 'hunger', boost: 20, when: [40, 240] },
-  { id: 'art',      icon: 'MOVE', type: 'CULTURE',   text: 'Find a piece of airport art or an installation. Stare at it until you understand it.', mins: 15, need: 'energy', boost: 25, when: [60, 240] },
-  { id: 'stretch',  icon: 'MOVE', type: 'HEALTH',    text: 'Find an empty gate area and do some shameless stretches for 5 minutes.', mins: 10, need: 'energy', boost: 30, when: [40, 9999] },
+  { id: 'coffee',   icon: 'FOOD', type: 'CAFFEINE',  text: 'Secure a coffee, tea, or local beverage. Sit somewhere facing the tarmac.', mins: 15, need: 'energy', boost: 30, when: [40, 240] },
+  { id: 'art',      icon: 'MOVE', type: 'CULTURE',   text: 'Find a piece of airport art or an installation. Stare at it until you understand it.', mins: 15, need: 'energy', boost: -15, when: [60, 240] },
+  { id: 'stretch',  icon: 'MOVE', type: 'HEALTH',    text: 'Find an empty gate area and do some shameless stretches for 5 minutes.', mins: 10, need: 'energy', boost: 10, when: [40, 9999] },
   { id: 'flight',   icon: 'REST', type: 'SPY',       text: 'Look at the departure board. Find a flight to a city you cannot pronounce.', mins: 10, need: 'energy', boost: 20, when: [40, 9999] },
   { id: 'snack',    icon: 'FOOD', type: 'SUPPLY',    text: 'Hunt down a convenience store and secure a tactical flight snack.', mins: 10, need: 'hunger', boost: 30, when: [20, 120] },
 
@@ -71,9 +71,22 @@ export function pickMission({
     pool = MISSIONS.filter((m) => m.id === 'go');
   }
 
-  // 4. Determine lowest stat to target need
-  const lowest = (Object.entries(stats) as [keyof Stats, number][]).sort((a, b) => a[1] - b[1])[0][0];
-  const targeted = pool.filter((m) => m.need === lowest);
+  // 4. Determine lowest stat and highest stat
+  const sortedStats = (Object.entries(stats) as [keyof Stats, number][]).sort((a, b) => a[1] - b[1]);
+  const lowest = sortedStats[0];
+  const highest = sortedStats[2];
+
+  let targeted: Mission[] = [];
+
+  // If energy is high, we can give a task that burns energy
+  if (highest[0] === 'energy' && highest[1] > 60 && Math.random() > 0.5) {
+    targeted = pool.filter((m) => m.need === 'energy' && m.boost < 0);
+  }
+
+  // Otherwise target the lowest stat with a positive boost
+  if (targeted.length === 0) {
+    targeted = pool.filter((m) => m.need === lowest[0] && m.boost > 0);
+  }
   
   // 5. Select from targeted if possible, otherwise any in pool
   const from = targeted.length > 0 ? targeted : pool;
