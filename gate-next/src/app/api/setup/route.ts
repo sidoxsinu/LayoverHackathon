@@ -2,39 +2,41 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { lat, lon } = await req.json();
+    const { lat, lon, locationOverride } = await req.json();
 
-    if (!lat || !lon) {
-      return NextResponse.json({ error: 'Missing lat/lon' }, { status: 400 });
+    if (!locationOverride && (!lat || !lon)) {
+      return NextResponse.json({ error: 'Missing location data' }, { status: 400 });
     }
 
-    // 1. Precise Reverse Geocoding via Nominatim
-    let preciseLocation = `LAT ${lat.toFixed(4)}, LON ${lon.toFixed(4)}`;
-    let shortName = 'UNKNOWN LOCATION';
+    // 1. Precise Reverse Geocoding via Nominatim (if no override)
+    let preciseLocation = locationOverride || (lat && lon ? `LAT ${lat.toFixed(4)}, LON ${lon.toFixed(4)}` : 'UNKNOWN LOCATION');
+    let shortName = locationOverride || 'UNKNOWN LOCATION';
     
-    try {
-      const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`, {
-        headers: { 'User-Agent': 'GATE-Hackathon-App' }
-      });
-      if (geoRes.ok) {
-        const geoData = await geoRes.json();
-        if (geoData.address) {
-          const { amenity, aeroway, road, neighbourhood, suburb, city, town, village, state, country } = geoData.address;
-          const parts = [amenity || aeroway, road, neighbourhood || suburb, city || town || village, state, country].filter(Boolean);
-          if (parts.length > 0) {
-            preciseLocation = parts.join(', ');
-          } else if (geoData.display_name) {
-            preciseLocation = geoData.display_name;
-          }
-          
-          const primaryLoc = amenity || aeroway || neighbourhood || suburb || city || town || village;
-          if (primaryLoc) {
-            shortName = primaryLoc.toUpperCase();
+    if (!locationOverride && lat && lon) {
+      try {
+        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`, {
+          headers: { 'User-Agent': 'GATE-Hackathon-App (contact@layover-gate.app)' }
+        });
+        if (geoRes.ok) {
+          const geoData = await geoRes.json();
+          if (geoData.address) {
+            const { amenity, aeroway, road, neighbourhood, suburb, city, town, village, state, country } = geoData.address;
+            const parts = [amenity || aeroway, road, neighbourhood || suburb, city || town || village, state, country].filter(Boolean);
+            if (parts.length > 0) {
+              preciseLocation = parts.join(', ');
+            } else if (geoData.display_name) {
+              preciseLocation = geoData.display_name;
+            }
+            
+            const primaryLoc = amenity || aeroway || neighbourhood || suburb || city || town || village;
+            if (primaryLoc) {
+              shortName = primaryLoc.toUpperCase();
+            }
           }
         }
+      } catch (e) {
+        console.error('Reverse geocoding failed', e);
       }
-    } catch (e) {
-      console.error('Reverse geocoding failed', e);
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -48,7 +50,7 @@ export async function POST(req: Request) {
 
     const prompt = `
 You are an expert on global geography and local environments. The user is currently at this precise location: 
-"${preciseLocation}" (Coordinates: ${lat}, ${lon}).
+"${preciseLocation}" ${lat && lon ? `(Coordinates: ${lat}, ${lon}).` : ''}
 
 If this is an airport or transit hub, identify it by its official name and IATA code (e.g. "Kochi (COK)", "Dubai (DXB)"). 
 If it is a local area, neighborhood, or specific business, identify it precisely using the reverse-geocode data provided above (e.g. "Tinkerspace, Kochi", "Civic Center, San Francisco").

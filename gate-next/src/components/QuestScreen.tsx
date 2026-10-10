@@ -64,7 +64,7 @@ export default function QuestScreen({
   // Chime on phase transitions
   useEffect(() => {
     if (prevPhase.current !== phase) {
-      if (phase === 'headsup' || phase === 'urgent') {
+      if (phase === 'headsup') {
         import('@/lib/alarm').then(({ chime }) => chime());
       }
       prevPhase.current = phase;

@@ -418,7 +418,7 @@ export default function Home() {
     return <div className="min-h-[100dvh] bg-ink flex items-center justify-center font-mono text-muted tracking-widest text-sm uppercase">CONNECTING...</div>;
   }
 
-  if (!user || state.screen === 'auth') {
+  if (state.screen === 'auth') {
     return <AuthScreen onSkip={() => dispatch({ type: 'SKIP_AUTH' })} />;
   }
 

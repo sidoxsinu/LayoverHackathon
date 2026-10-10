@@ -63,6 +63,15 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
   const [error, setError] = useState('');
   const [airportName, setAirportName] = useState('LOCATING...');
   const [customMissions, setCustomMissions] = useState<any[]>([]);
+  const [draftLocation, setDraftLocation] = useState('');
+  const [showLocationConfirm, setShowLocationConfirm] = useState(false);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<'AUTO' | 'MANUAL' | 'DEFAULT'>('AUTO');
+
+  // Sync draftLocation when airportName changes via auto-detect
+  useEffect(() => {
+    setDraftLocation(airportName);
+  }, [airportName]);
 
   useEffect(() => {
     let active = true;
@@ -79,9 +88,12 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         if (!active) return;
         setAirportName(data.airport || 'UNKNOWN LOCATION');
         setCustomMissions(data.missions || []);
+        if (!data.airport) setLocationStatus('DEFAULT');
+        else setLocationStatus('AUTO');
       } catch (e) {
         if (!active) return;
         setAirportName('UNKNOWN LOCATION');
+        setLocationStatus('DEFAULT');
       }
     };
 
@@ -93,15 +105,56 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         () => {
           if (!active) return;
           setAirportName('LOCATION ACCESS DENIED');
+          setLocationStatus('DEFAULT');
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
       setAirportName('LOCATION UNSUPPORTED');
+      setLocationStatus('DEFAULT');
     }
 
     return () => { active = false; };
   }, []);
+
+  const handleLocationOverride = async () => {
+    if (!draftLocation || draftLocation === airportName) {
+      setShowLocationConfirm(false);
+      return;
+    }
+    setIsFetchingLocation(true);
+    try {
+      const res = await fetch('/api/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locationOverride: draftLocation })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAirportName(data.airport || draftLocation);
+        setCustomMissions(data.missions || []);
+      } else {
+        setAirportName(draftLocation);
+      }
+      setLocationStatus('MANUAL');
+    } catch (e) {
+      setAirportName(draftLocation);
+      setLocationStatus('MANUAL');
+    }
+    setIsFetchingLocation(false);
+    setShowLocationConfirm(false);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showLocationConfirm) {
+        setDraftLocation(airportName);
+        setShowLocationConfirm(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showLocationConfirm, airportName]);
 
   const now = useNow(1000);
 
@@ -178,6 +231,7 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
   });
 
   return (
+    <>
     <div
       style={{
         minHeight: '100dvh',
@@ -309,13 +363,6 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
           )}
         </Row>
 
-        <Row>
-          <Label>LOCATION (AUTO)</Label>
-          <div style={{ fontFamily: 'var(--font-plex), monospace', fontSize: '14px', color: '#8C887C', textTransform: 'uppercase' }}>
-            {airportName}
-          </div>
-        </Row>
-
         {/* Safe time preview */}
         {departureMs > 0 && (
           <Row>
@@ -346,12 +393,41 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         {/* Location */}
         <Row>
           <Label>LOCATION</Label>
-          <input
-            type="text"
-            value={airportName}
-            readOnly
-            style={{ ...inputStyle, color: '#8C887C', backgroundColor: '#181816' }}
-          />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input
+              type="text"
+              value={draftLocation}
+              onChange={(e) => setDraftLocation(e.target.value.toUpperCase())}
+              style={{ ...inputStyle, flex: 1, backgroundColor: draftLocation !== airportName ? '#181816' : '#101010', borderColor: draftLocation !== airportName ? '#F2A900' : '#34322C', height: '48px' }}
+            />
+            {draftLocation !== airportName && (
+              <button
+                onClick={() => setShowLocationConfirm(true)}
+                style={{
+                  backgroundColor: '#F2A900',
+                  color: '#101010',
+                  border: '1px solid #F2A900',
+                  width: '48px',
+                  height: '48px',
+                  fontFamily: 'var(--font-barlow), sans-serif',
+                  fontWeight: '700',
+                  letterSpacing: '0.1em',
+                  cursor: 'pointer',
+                  borderRadius: '2px',
+                  padding: 0,
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                APPLY
+              </button>
+            )}
+          </div>
+          <div style={{ marginTop: '6px', fontFamily: 'var(--font-plex), monospace', fontSize: '11px', color: '#8C887C', textTransform: 'uppercase' }}>
+            {locationStatus}
+          </div>
         </Row>
 
         {/* Gate */}
@@ -440,5 +516,37 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         </button>
       </div>
     </div>
+
+    {showLocationConfirm && (
+      <div 
+        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#101010', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '16px' }}
+      >
+        <div style={{ border: '1px solid #34322C', backgroundColor: '#181816', padding: '24px', maxWidth: '320px', width: '100%' }}>
+          <div style={{ fontFamily: 'var(--font-barlow), sans-serif', fontSize: '18px', fontWeight: '700', letterSpacing: '0.1em', color: '#F2A900', marginBottom: '16px' }}>
+            OVERRIDE LOCATION?
+          </div>
+          <div style={{ fontFamily: 'var(--font-plex), monospace', fontSize: '16px', color: '#E6E1D3', marginBottom: '24px', lineHeight: '1.4' }}>
+            Setting the location to {draftLocation} will regenerate local missions. Continue?
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              onClick={handleLocationOverride} 
+              disabled={isFetchingLocation}
+              style={{ flex: 1, backgroundColor: '#F2A900', color: '#101010', border: '1px solid #F2A900', height: '48px', fontFamily: 'var(--font-barlow), sans-serif', fontWeight: '700', letterSpacing: '0.1em' }}
+            >
+              {isFetchingLocation ? 'UPDATING' : 'CONFIRM'}
+            </button>
+            <button 
+              onClick={() => { setDraftLocation(airportName); setShowLocationConfirm(false); }} 
+              disabled={isFetchingLocation}
+              style={{ flex: 1, backgroundColor: 'transparent', color: '#8C887C', border: '1px solid #34322C', height: '48px', fontFamily: 'var(--font-barlow), sans-serif', fontWeight: '700', letterSpacing: '0.1em' }}
+            >
+              CANCEL
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
