@@ -6,22 +6,22 @@
 
 # Test info
 
-- Name: main.spec.ts >> GATE Layover Hackathon Tests >> 8. Refresh mid-session
-- Location: tests/main.spec.ts:160:7
+- Name: main.spec.ts >> GATE Layover Hackathon Tests >> 5. Stats drain
+- Location: tests/main.spec.ts:104:7
 
 # Error details
 
 ```
 Error: expect(locator).toBeVisible() failed
 
-Locator: locator('text=XP').locator('..').getByText('40', { exact: true })
+Locator: locator('text=HUNGER').locator('..').locator('text=60')
 Expected: visible
 Timeout: 5000ms
 Error: element(s) not found
 
 Call log:
-  - Expect "toBeVisible" locator('text=XP').locator('..').getByText('40', { exact: true }) with timeout 5000ms
-  - waiting for locator('text=XP').locator('..').getByText('40', { exact: true })
+  - Expect "toBeVisible" locator('text=HUNGER').locator('..').locator('text=60') with timeout 5000ms
+  - waiting for locator('text=HUNGER').locator('..').locator('text=60')
 
 ```
 
@@ -34,6 +34,61 @@ Call log:
 # Test source
 
 ```ts
+  12  |     await page.clock.setFixedTime(now);
+  13  | 
+  14  |     // 1a. Departure in the past with rollover shows "tomorrow"
+  15  |     await page.fill('input[type="time"]', '14:00');
+  16  |     await expect(page.getByText(/TOMORROW/i)).toBeVisible();
+  17  | 
+  18  |     // 1b. Safe time <= 0 blocks START with a message
+  19  |     await page.fill('input[type="time"]', '15:10');
+  20  |     await expect(page.getByText('HEAD TO GATE NOW')).toBeVisible();
+  21  |     const startBtn = page.getByRole('button', { name: /START LAYOVER/i });
+  22  |     await expect(startBtn).toBeDisabled();
+  23  | 
+  24  |     // 1c. Empty gate handled (defaults to TBA)
+  25  |     await page.fill('input[placeholder="B14 OR TBA"]', '');
+  26  |     await page.fill('input[type="time"]', '18:00'); 
+  27  |     await expect(startBtn).toBeEnabled();
+  28  |     await startBtn.click();
+  29  |     await expect(page.getByText('TBA')).toBeVisible(); 
+  30  |   });
+  31  | 
+  32  |   test('2. Demo Mode', async ({ page }) => {
+  33  |     const now = new Date('2026-10-10T15:00:00Z');
+  34  |     await page.clock.setFixedTime(now);
+  35  | 
+  36  |     const wordmark = page.locator('span:has-text("GATE")').first();
+  37  |     await wordmark.click(); await wordmark.click(); await wordmark.click();
+  38  | 
+  39  |     // Quest screen shown with DEMO chip
+  40  |     await expect(page.getByText('DEMO')).toBeVisible();
+  41  | 
+  42  |     // Advance 40s (20s left) - heads-up
+  43  |     await page.clock.fastForward(40000);
+  44  |     // Usually banner + chime, let's look for HEADS UP
+  45  |     await expect(page.getByText(/HEADS UP/i)).toBeVisible();
+  46  | 
+  47  |     // Advance 10s (10s left) - urgent
+  48  |     await page.clock.fastForward(10000);
+  49  |     await expect(page.getByText(/URGENT/i)).toBeVisible();
+  50  | 
+  51  |     // Advance 10s (0s left) - alarm
+  52  |     await page.clock.fastForward(10000);
+  53  |     await expect(page.getByRole('button', { name: 'I AM AT THE GATE' })).toBeVisible();
+  54  |   });
+  55  | 
+  56  |   test('3. Alarm', async ({ page }) => {
+  57  |     const now = new Date('2026-10-10T15:00:00Z');
+  58  |     await page.clock.setFixedTime(now);
+  59  | 
+  60  |     const wordmark = page.locator('span:has-text("GATE")').first();
+  61  |     await wordmark.click(); await wordmark.click(); await wordmark.click();
+  62  |     await page.clock.fastForward(60000);
+  63  |     
+  64  |     // Check alarm UI
+  65  |     const dismissBtn = page.getByRole('button', { name: 'I AM AT THE GATE' });
+  66  |     await expect(dismissBtn).toBeVisible();
   67  |     await dismissBtn.click();
   68  | 
   69  |     // Safe Travels
@@ -79,7 +134,8 @@ Call log:
   109 |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
   110 |     
   111 |     // Check hunger starts at 60
-  112 |     await expect(page.locator('text=HUNGER').locator('..').locator('text=60')).toBeVisible();
+> 112 |     await expect(page.locator('text=HUNGER').locator('..').locator('text=60')).toBeVisible();
+      |                                                                                ^ Error: expect(locator).toBeVisible() failed
   113 | 
   114 |     // Fast forward 10 minutes. Drain rate is 0.3/min => -3. Should be 57.
   115 |     await page.clock.fastForward(10 * 60000);
@@ -134,8 +190,7 @@ Call log:
   164 |     await page.getByRole('button', { name: /START LAYOVER/i }).click();
   165 | 
   166 |     await page.getByRole('button', { name: /COMPLETE/i }).click();
-> 167 |     await expect(page.locator('text=XP').locator('..').getByText('40', { exact: true })).toBeVisible();
-      |                                                                                          ^ Error: expect(locator).toBeVisible() failed
+  167 |     await expect(page.locator('text=XP').locator('..').getByText('40', { exact: true })).toBeVisible();
   168 | 
   169 |     // Reload page
   170 |     await page.reload();
@@ -181,8 +236,4 @@ Call log:
   210 |     // Return by is 45 mins before 00:40 => 23:55.
   211 |     // 23:55 is in the future.
   212 |     const startBtn = page.getByRole('button', { name: /START LAYOVER/i });
-  213 |     await expect(startBtn).toBeEnabled();
-  214 |   });
-  215 | });
-  216 | 
 ```

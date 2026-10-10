@@ -27,9 +27,9 @@ Call log:
 
 ```yaml
 - alert
-- text: GATE TBA RETURN TO GATE IN 18:40:00 HUNGER 70 SANITY 50 BATTERY 63 MOVE / MOVE M-43
-- paragraph: Walk one full terminal loop. Count the gates.
-- text: 20 MIN +45 SANITY +40 XP
+- text: GATE TBA RETURN TO GATE IN 18:40:00 HUNGER 70 SANITY 50 BATTERY 63 REST / REST M-45
+- paragraph: Find the quietest corner. Sit. Do nothing for 10 minutes.
+- text: 15 MIN +35 SANITY +40 XP
 - button "COMPLETE"
 - button "SKIP"
 - text: TOTAL XP 0
