@@ -110,7 +110,7 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...DEFAULT_STATE,
         ...action.payload,
-        airportName: 'DEMO AIRPORT (DMO)',
+        airportName: 'DEMO LOCATION (DMO)',
         gate: 'B14',
         customMissions: [],
         vibe: 'tired',
@@ -245,6 +245,9 @@ export default function Home() {
     if (restored.screen === 'quest' && restored.returnByMs <= Date.now()) {
       restored.screen = 'alarm';
       alarmFiredRef.current = true;
+    } else {
+      alarmFiredRef.current = false;
+      warningFiredRef.current = false;
     }
     dispatch({ type: 'RESTORE', payload: restored });
   }, []);
@@ -257,18 +260,34 @@ export default function Home() {
   }, [realBattery, state.screen]);
 
   
-  // Alarm latch
-
+  // Alarm latch & warning lifecycle
   useEffect(() => {
-    if (state.screen === 'quest' && !alarmFiredRef.current) {
+    if (state.screen === 'quest') {
       const phase = phaseFor(state.returnByMs - now, state.demo);
-      if (phase === 'urgent' && !warningFiredRef.current) {
-        warningFiredRef.current = true;
-        playWarning();
-      } else if (phase === 'alarm') {
-        alarmFiredRef.current = true;
-        dispatch({ type: 'ALARM' });
-      } else if (warningFiredRef.current) {
+      if (phase === 'alarm') {
+        stopWarning();
+        warningFiredRef.current = false;
+        if (!alarmFiredRef.current) {
+          alarmFiredRef.current = true;
+          dispatch({ type: 'ALARM' });
+        }
+      } else if (phase === 'urgent') {
+        alarmFiredRef.current = false;
+        if (!warningFiredRef.current) {
+          warningFiredRef.current = true;
+          playWarning();
+        }
+      } else {
+        // 'free' or 'headsup' - time is ok
+        alarmFiredRef.current = false;
+        if (warningFiredRef.current) {
+          warningFiredRef.current = false;
+          stopWarning();
+        }
+      }
+    } else {
+      // Not in quest
+      if (warningFiredRef.current) {
         warningFiredRef.current = false;
         stopWarning();
       }
@@ -352,6 +371,9 @@ export default function Home() {
         break;
       case 'add_minute':
         if (state.returnByMs) {
+          alarmFiredRef.current = false;
+          warningFiredRef.current = false;
+          stopWarning();
           dispatch({ type: 'RESTORE', payload: { ...state, returnByMs: state.returnByMs + 60000, departureMs: state.departureMs + 60000 } });
         }
         break;

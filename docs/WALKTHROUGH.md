@@ -175,6 +175,18 @@ This file is the **single source of truth** for where the project stands right n
 **What was done:** Updated the application logic to forcefully stop `warning.mp3` if the user gets extra time (dev tools) or if the timer crosses zero while the warning is still playing. Added `stopWarning()` to the `startAlarm()` sequence to prevent the two audio tracks from ever overlapping.
 **Why:** The user noticed some audio was not playing or stopping correctly. This ensures the warning audio strictly respects the bounds of the "urgent" timer phase.
 
+## [23:30] — Rebrand Airport to Location & Audio Synchronization
+**What was done:** 
+1. Replaced all occurrences of "AIRPORT" labels with "LOCATION" across the UI (`SetupScreen.tsx`, default fallbacks to `UNKNOWN LOCATION`, prompt updated to identify cities/locations/airports).
+2. Hardened audio phase lifecycle logic in `page.tsx`:
+   - Timer low (`urgent` phase, < 5m or < 10s demo): Plays `warning.mp3`.
+   - Timer ends (`alarm` phase, <= 0s): Immediately terminates warning track and triggers the continuous `Alarm.mp3` and screen latch.
+   - Timer ok (`headsup` / `free` phases or timer extended via `+1 MIN`): Automatically stops `warning.mp3` and resets trigger latch refs so audio can re-fire when the threshold is reached again.
+   - Leaving quest screen immediately cuts warning audio.
+
+## [23:41] — Fallback Location: TinkerSpace Calicut
+**What was done:** Set the default location fallback in both `SetupScreen.tsx` and the `/api/setup` route to `TINKERSPACE CALICUT` whenever geolocation is unavailable, denied, or during network errors.
+**Why:** Tailored directly for the hackathon venue and demo environment.
 
 ---
 

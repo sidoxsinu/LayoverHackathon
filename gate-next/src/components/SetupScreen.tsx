@@ -77,11 +77,11 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         if (!res.ok) throw new Error('API failed');
         const data = await res.json();
         if (!active) return;
-        setAirportName(data.airport || 'UNKNOWN AIRPORT');
+        setAirportName(data.airport || 'TINKERSPACE CALICUT');
         setCustomMissions(data.missions || []);
       } catch (e) {
         if (!active) return;
-        setAirportName('UNKNOWN AIRPORT');
+        setAirportName('TINKERSPACE CALICUT');
       }
     };
 
@@ -92,11 +92,11 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         },
         () => {
           if (!active) return;
-          setAirportName('UNKNOWN AIRPORT');
+          setAirportName('TINKERSPACE CALICUT');
         }
       );
     } else {
-      setAirportName('UNKNOWN AIRPORT');
+      setAirportName('TINKERSPACE CALICUT');
     }
 
     return () => { active = false; };
@@ -342,9 +342,9 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
           </Row>
         )}
 
-        {/* Airport */}
+        {/* Location */}
         <Row>
-          <Label>AIRPORT</Label>
+          <Label>LOCATION</Label>
           <input
             type="text"
             value={airportName}

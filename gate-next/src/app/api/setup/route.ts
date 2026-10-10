@@ -12,21 +12,21 @@ export async function POST(req: Request) {
     if (!apiKey) {
       console.warn('GEMINI_API_KEY missing, returning fallback');
       return NextResponse.json({
-        airport: 'UNKNOWN AIRPORT',
+        airport: 'TINKERSPACE CALICUT',
         missions: []
       });
     }
 
     const prompt = `
-You are an expert on global airports. The user is at location Latitude: ${lat}, Longitude: ${lon}.
-Identify the nearest major international airport.
-Provide the airport name and its 3-letter IATA code in the format "Name (CODE)".
-Generate 5 absurd but legal and achievable layover missions specific to this airport or general airports. 
+You are an expert on global geography and airports. The user is at location Latitude: ${lat}, Longitude: ${lon}.
+Identify the city, area, or nearest airport for this location.
+Provide the location name (e.g. "Kochi (COK)", "Dubai (DXB)", "San Francisco (SFO)") in short uppercase/title format.
+Generate 5 absurd but legal and achievable layover or waiting missions specific to this location or general transit/airports. 
 Examples of absurd tasks: 'Find a plug point near gate C and guard it with your life', 'Count how many people are wearing neck pillows', 'Take a selfie with the most expensive item in the duty-free shop'.
 Make sure they are safe, legal, and require no purchase.
 Output exactly and only a JSON object in this format:
 {
-  "airport": "Airport Name (CODE)",
+  "airport": "Location Name (CODE or CITY)",
   "missions": [
     { "id": "M-AI-1", "text": "...", "need": "energy", "boost": 30, "mins": 10, "when": [0, 9999], "icon": "MOVE", "type": "LOCAL" },
     ...
@@ -64,7 +64,7 @@ Output exactly and only a JSON object in this format:
   } catch (error) {
     console.error('Setup API Error:', error);
     return NextResponse.json({
-      airport: 'UNKNOWN AIRPORT',
+      airport: 'TINKERSPACE CALICUT',
       missions: []
     });
   }
