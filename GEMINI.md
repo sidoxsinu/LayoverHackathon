@@ -72,7 +72,9 @@ No router, no state library, no UI kit, no animation library. Do not add any dep
 
 ## Non-negotiables
 - Time is stored as epoch milliseconds. Never store Date objects. Derive everything from `Date.now()`, never count ticks.
-- The alarm path must have zero network or AI dependency. Trips never touch the alarm path.
+- The alarm path must have zero network, camera, or AI dependency. Trips and photo proof never touch the alarm path.
+- Proof never blocks mission completion, the ladder, or the alarm path. If upload, storage or migration fails, the mission completes and "PROOF NOT SAVED" displays.
+- The UI never shows VERIFIED unless status is strictly verified.
 - No sample, placeholder, seeded or fake data anywhere (UI, code, DB, in-app text). Empty states are plain text. Input placeholders show format only.
 - Audio is armed inside the START click handler (autoplay policy). Wake Lock, Vibration and Battery APIs are feature-detected and optional.
 - Demo Mode (triple-tap wordmark → returnBy = now + 60 s) must always work. Demo Mode ignores trips.
@@ -98,16 +100,24 @@ Routes: `/` (AUTH, SETUP, QUEST, ALARM, SAFE TRAVELS) · `/passport` · `/trips`
 
 3. QUEST
 - Countdown, draining stats, single mission card. Hidden from trips links.
+- Mission card COMPLETE opens full-screen PROOF screen (TAKE PHOTO, UPLOAD PHOTO, SKIP PROOF), shown only while phase is "free" or "headsup" and more than 5 minutes remain.
+- If phase is "urgent" or "alarm", or minutes left is 5 or less: COMPLETE completes directly with no proof, displaying muted line "PROOF OFF, LESS THAN 5 MIN LEFT" (native camera moves page to background).
+- If alarm triggers while PROOF screen is open: immediately unmounts PROOF screen and shows alarm.
+- Attaching photo awards +20 PROOF bonus XP (stored per row in `proof_xp`).
+- Non-photographable missions (rest, nap, pack bag) have `proof: "none"` and complete directly.
 
 4. ALARM
-- Immediate alarm screen takeover, zero network/auth/trip dependency.
+- Immediate alarm screen takeover, zero network/auth/trip/camera dependency.
 
 5. SAFE TRAVELS
 - Header links for signed-in users: TRIPS / PASSPORT / SIGN OUT.
-- Layover saved with trip_id and trip_name.
+- Layover saved with trip_id, trip_name, and mission proofs.
+- Totals display PHOTOS count and PROOF XP.
+- Displays 64px square photo thumbnails; tapping opens full-screen viewer with DELETE PHOTO action.
 
 6. /PASSPORT
-- Signed in only. Past layover cards show trip_name when present.
+- Signed in only. Past layover cards show trip_name when present, PHOTOS count, and 64px photo thumbnails.
+- Tapping thumbnail opens full-screen viewer with DELETE PHOTO action.
 
 7. /TRIPS
 - Signed-in only. Redirects to `/` if stored screen is quest or alarm.

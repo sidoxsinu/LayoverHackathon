@@ -25,6 +25,8 @@ export function SetupHeader() {
   };
 
   const handleSignOut = async () => {
+    const { clearPendingProofs } = await import('@/lib/proof');
+    await clearPendingProofs();
     const supabase = createBrowserClient();
     if (!supabase) return;
 

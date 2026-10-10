@@ -150,6 +150,8 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
     if (user) {
       clearTripsCache(user.id);
     }
+    const { clearPendingProofs } = await import('@/lib/proof');
+    await clearPendingProofs();
     const supabase = createBrowserClient();
     await supabase?.auth.signOut();
     window.location.reload();

@@ -248,8 +248,70 @@ Native `<input type="date">` and `<input type="time">` interpret input according
 `TIMES USE YOUR DEVICE TIME ZONE.`
 Departures are scheduled as absolute epoch milliseconds, ensuring time math remains identical regardless of local device timezone shifts.
 
+### Migration `0003_proofs.sql`
+Adds mission photo proof tracking, cloud storage, and security policies:
+1. **`mission_log` Alterations**:
+   - `proof_path text null` (path in storage bucket)
+   - `proof_status text not null default 'none' check (proof_status in ('none', 'unverified', 'pending', 'verified', 'rejected'))`
+   - `proof_checked_at timestamptz null`
+   - `proof_note text null`
+   - `proof_xp integer not null default 0`
+2. **Private Storage Bucket `proofs`**:
+   - `id: 'proofs'`, `public: false`, `file_size_limit: 1048576` (1 MB), `allowed_mime_types: array['image/jpeg']`.
+3. **Storage Row-Level Security (RLS)**:
+   - SELECT, INSERT, UPDATE, DELETE policies on `storage.objects` for bucket `proofs`:
+     ```sql
+     bucket_id = 'proofs' and (storage.foldername(name))[1] = auth.uid()::text
+     ```
+   - Path format: `{user_id}/{layover_id}/{log_id}.jpg`.
+   - Prevents any user from reading, uploading to, modifying, or deleting another user's proofs.
+4. **Storage Cascading Limitation**:
+   - Note: PostgreSQL foreign key constraints on `public.layovers` cannot automatically cascade delete files in Supabase's `storage.objects` table across schemas.
+   - Storage cleanup is implemented programmatically in `lib/proof.ts` via `deleteProof` and `deleteLayoverProofs`.
+
+### Client Image Pipeline (`lib/proof.ts`)
+- **Input Validation**: Accepts `image/jpeg`, `image/png`, `image/webp` (and decodeable `image/heic`). Rejects files over 10 MB.
+- **Canvas Stripping & Resizing**: Decodes onto an HTML5 canvas, resizes maintaining aspect ratio so the longest side is ≤ 1280px, and re-encodes using `canvas.toBlob(resolve, 'image/jpeg', 0.7)`. This guarantees total destruction of EXIF, GPS location tags, and device fingerprints.
+- **Payload Limits**: Rejects output blobs over 1 MB (target ~300 KB). Explicitly zeroes canvas dimensions and revokes object URLs.
+
+### IndexedDB Offline Retry Queue (`lib/proof.ts`)
+- **Database**: `gate_proofs_db`, store `pending_proofs`, key `logId`. Zero external dependencies.
+- **Capacity**: Strict maximum of 10 items. When queue reaches 10, oldest entries are evicted to prevent storage exhaustion.
+- **Retry Mechanism**: Automatically retries queued items on app mount and window `'online'` events.
+- **Sign-Out Eviction**: `clearPendingProofs()` purges all queued blobs on user sign-out.
+
+### Verifier Contract & Architecture (`lib/verify.ts` and `api/verify/route.ts`)
+- **Route**: `POST /api/verify` (requires authenticated user session or bearer token).
+- **Input Schema**:
+  ```json
+  {
+    "missionId": "string",
+    "missionTitle": "string",
+    "proofHint": "string",
+    "imagePath": "string",
+    "location": "string (optional)"
+  }
+  ```
+- **Output Schema**:
+  ```json
+  {
+    "status": "none | unverified | pending | verified | rejected",
+    "confidence": "number (optional)",
+    "note": "string (optional)"
+  }
+  ```
+- **Execution**: Non-blocking client call with 5-second timeout (`AbortSignal.timeout(5000)`). Network failure or timeout leaves status as `'unverified'` without throwing or blocking mission progression.
+- **Status Badges**:
+  - `none`: no display
+  - `unverified`: `PROOF SAVED, NOT CHECKED`
+  - `pending`: `CHECKING`
+  - `verified`: `VERIFIED`
+  - `rejected`: `NOT ACCEPTED`
+  - Strict UI invariant: Never display `VERIFIED` unless status is strictly `'verified'`.
+- **Proof Bonus XP**: Constant `PROOF_BONUS_XP = 20`. Under current placeholder stage, attaching a photo awards +20 XP stored per row in `proof_xp`. Once real AI vision checking is active, the bonus condition moves to status `'verified'` only.
+
 ## AI missions (P2)
-`api/missions.js` (Vercel function) calls Gemini with the key from `process.env.GEMINI_API_KEY` and model name from `process.env.GEMINI_MODEL`. Prompt: return JSON array of 6 missions with the same shape as above. Client: `Promise.race([fetch('/api/missions', ...), timeout(3000)])`, validate every field, merge into the pool, else ignore. Never needed for the alarm.
+`api/missions.js` (Vercel function) calls Gemini with the key from `process.env.GEMINI_API_KEY` and model name from `process.env.GEMINI_MODEL`. Prompt: return JSON array of 6 missions with the same shape as above, including `proofHint`. Client: `Promise.race([fetch('/api/missions', ...), timeout(3000)])`, validate every field, merge into the pool, else ignore. Never needed for the alarm.
 
 ## Deploy
 ```bash
@@ -268,4 +330,11 @@ Open on a real phone over HTTPS, press START in Demo Mode, and verify: sound, vi
 - [ ] Trips RLS blocks cross-user reads/writes
 - [ ] Trips offline fallback displays cached departures
 - [ ] Unmigrated trips table gracefully falls back to "TRIPS UNAVAILABLE"
+- [ ] Photo proof compression resizes 4000px image to ≤ 1280px and strips EXIF
+- [ ] Storage RLS blocks cross-user proof folder access
+- [ ] Mission complete with ≤ 5 min left bypasses camera with "PROOF OFF, LESS THAN 5 MIN LEFT"
+- [ ] Alarm trigger while proof modal is open closes modal immediately
+- [ ] Offline proofs queue in IndexedDB and upload when back online
+- [ ] Placeholder verifier returns "unverified" with badge "PROOF SAVED, NOT CHECKED"
+- [ ] Guest photo proof stays in memory only and shows "GUEST PHOTOS ARE NOT SAVED"
 

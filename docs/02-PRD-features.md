@@ -110,11 +110,54 @@ Upcoming flight departures management for signed-in users. Completely isolated f
 7. **Graceful Degradation**:
    - If trips table does not exist in DB or query fails, dropdown is hidden and displays single muted line: `TRIPS UNAVAILABLE`. App remains 100% functional.
 
+## F8. Photo proof (P1) — Mission Verification & Camera Proof
+Visual photographic evidence for completed layover missions with client-side EXIF stripping, offline resilience, and pluggable verification architecture.
+
+### Acceptance Criteria
+1. **Trigger & Flow**:
+   - Tapping `COMPLETE` on an eligible mission opens a full-screen PROOF screen while layover phase is `free` or `headsup` and more than 5 minutes remain.
+   - Non-photographable missions (rest, nap, bag packing) have `proof: "none"` and complete directly with standard XP.
+   - AI missions receive `proofHint` in generation prompt or default to `"PHOTO OF WHERE YOU ARE"` with `proof: "photo"`.
+2. **Phase & Safety Guards**:
+   - If layover phase is `urgent` or `alarm`, or safe time remaining is 5 minutes or less: proof screen is bypassed entirely. Mission completes immediately, displaying muted indicator: `PROOF OFF, LESS THAN 5 MIN LEFT`. (Rationale: native camera invocation backgrounding the tab could delay alert execution).
+   - If alarm fires while the PROOF modal is actively open: the modal unmounts immediately and the alarm screen takes over with zero delay, discarding draft photos.
+3. **Client-Side Image Processing (`lib/proof.ts`)**:
+   - Supported inputs: `image/jpeg`, `image/png`, `image/webp` (and decodeable `image/heic`).
+   - Files exceeding 10 MB are rejected with single muted error line.
+   - Image canvas pipeline decodes, resizes longest side to at most 1280px, and re-encodes as JPEG quality 0.7. Guarantees complete removal of EXIF, GPS, and device metadata.
+   - Output files must be under 1 MB. Object URLs revoked and canvas memory released immediately.
+4. **Storage & RLS Policy**:
+   - Private Supabase Storage bucket `proofs` (1 MB size limit, `image/jpeg` MIME).
+   - RLS strictly restricts access to object path prefix matching authenticated user: `{user_id}/{layover_id}/{log_id}.jpg`.
+   - Idempotent upserts ensure repeated uploads leave one storage object and one log record.
+5. **Offline Queue & Retries**:
+   - Signed-in users hold pending uploads in native IndexedDB (`gate_proofs_db`, store `pending_proofs`).
+   - Queue capped at 10 items (oldest evicted). Automatic background retries execute upon network restoration and app mount.
+   - Pending queue is purged on user sign-out.
+6. **Guest Mode Isolation**:
+   - Guest photos reside solely in browser memory for active session display (Safe Travels log). Photos are never uploaded or persisted to Supabase.
+   - Displays muted notice: `GUEST PHOTOS ARE NOT SAVED`.
+7. **Verification & Status Labels (`lib/verify.ts`)**:
+   - Attaching photo awards `+20` bonus XP, tracked distinctly in `proof_xp` (`PROOF_BONUS_XP = 20`). Card displays `+20 PROOF`.
+   - Placeholder verification endpoint `/api/verify` authenticates caller, validates input schema, and returns `{ status: "unverified", note: "VERIFICATION NOT ENABLED" }` with 5s timeout.
+   - Status mapping:
+     - `none`: no badge
+     - `unverified`: `PROOF SAVED, NOT CHECKED`
+     - `pending`: `CHECKING`
+     - `verified`: `VERIFIED`
+     - `rejected`: `NOT ACCEPTED`
+   - Strict UI rule: The text `VERIFIED` is never displayed unless proof status is strictly `'verified'`.
+8. **UI Presentation & Deletion**:
+   - Mission log, Safe Travels summary, and Passport rows render 64px square thumbnails using 60-minute cached signed URLs.
+   - Tapping thumbnail opens full-screen viewer. `DELETE PHOTO` action with confirmation popup permanently removes file from storage and clears database path.
+   - Safe Travels totals display `PHOTOS` count and `PROOF XP`. Passport past layovers indicate photo counts.
+   - Failure resilience: If storage, upload, or database migration fails, mission completion never blocks and one muted line displays `PROOF NOT SAVED`.
+
 ## Out of scope
 Maps, lounge data, push notifications, native app, multi-leg flights, social feeds.
 
 ## Guest Statement
-Guests can run full layovers with complete countdown, missions, alarm, and local persistence. Sign in with Google is required only to save upcoming trips and access the multi-session Layover Passport.
+Guests can run full layovers with complete countdown, missions, alarm, and local persistence. Sign in with Google is required only to save upcoming trips, store mission photo proofs to cloud storage, and access the multi-session Layover Passport.
 
 ## Edge cases
 | Case | Behavior |
@@ -127,4 +170,9 @@ Guests can run full layovers with complete countdown, missions, alarm, and local
 | Battery API missing (iOS/Firefox) | Manual battery stat |
 | Trips table missing or unmigrated | Hide dropdown, show TRIPS UNAVAILABLE, app runs manual entry normally |
 | Offline on /trips | Read from local cache with warning; block writes with error line |
+| Less than 5 min left on mission | Proof bypassed, shows PROOF OFF, LESS THAN 5 MIN LEFT |
+| Alarm fires while taking photo | Proof modal unmounts immediately, alarm screen takes over |
+| Unsupported image / over 10 MB | Muted error line, falls back cleanly without blocking flow |
+| Storage offline or upload fails | Queued in IndexedDB (signed in), mission still completes, shows PROOF NOT SAVED if unqueued |
+| Migration 0003 unrun | Mission log sync degrades gracefully without crashing |
 

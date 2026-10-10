@@ -9,7 +9,20 @@ export interface SavedState {
   vibe: string;
   walkMin: number;
   stats: { hunger: number; energy: number; battery: number };
-  log: { logId?: string; id: string; text: string; status: 'completed' | 'skipped'; xp: number; ts: number }[];
+  log: {
+    logId?: string;
+    id: string;
+    text: string;
+    status: 'completed' | 'skipped';
+    xp: number;
+    ts: number;
+    proofPath?: string | null;
+    proofStatus?: 'none' | 'unverified' | 'pending' | 'verified' | 'rejected';
+    proofCheckedAt?: string | null;
+    proofNote?: string | null;
+    proofXp?: number;
+    localPhotoUrl?: string;
+  }[];
   xp: number;
   screen: string;
   missionId: string | null;

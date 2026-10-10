@@ -43,6 +43,8 @@ This file is the **single source of truth** for where the project stands right n
 | Supabase Auth + Postgres | ✅ Done | Google sign in mandatory for passport, idempotent offline queueing, RLS enabled |
 | App Flow Audit | ✅ Done | Conforms to strict PRD state machine; warning.mp3 duplication fixed; Nominatim limits respected |
 | Gate arrival completion | ✅ Done | Replaces mission slot with "ENJOY YOUR JOURNEY" airport signage card; prevents further tasks; allows direct safe return |
+| Photo proof (F8 mission proofs) | ✅ Done | Camera & upload, client resize (1280px, JPEG 0.7, EXIF stripped), IndexedDB queue, 5-min/phase guard, placeholder verifier |
+| Migration 0003_proofs.sql | ✅ Done | Written to supabase/migrations/0003_proofs.sql (manual run in SQL Editor) |
 
 
 **Status legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⚠️ Done with caveats · ❌ Broken
@@ -58,6 +60,10 @@ This file is the **single source of truth** for where the project stands right n
 - **Offline Save Queueing** — `SafeTravels` pushes to a local queue. If the user never connects to the internet and closes the tab, the layover is lost until they return to the app online.
 - **Device Time Zone limitation** — Trip departure dates and times use native inputs locked to the device's local timezone. Labeled clearly: "TIMES USE YOUR DEVICE TIME ZONE".
 - **50-trip cap per user** — A database trigger hard-caps trips to 50 per user to prevent abuse.
+- **Guest photos kept in-memory only** — Guest mode photos are kept as object URLs for the session only, display in Safe Travels, but are not persisted to Supabase storage or IndexedDB. Clearly labeled "GUEST PHOTOS ARE NOT SAVED".
+- **Placeholder verifier** — Automatic verification returns `{ status: "unverified", note: "VERIFICATION NOT ENABLED" }`. Status displays "PROOF SAVED, NOT CHECKED" and never claims "VERIFIED".
+- **HEIC decoding browser dependency** — Canvas/browser native decode of HEIC photos depends on the client browser OS (supported on iOS Safari, may fail on older Android/desktop); gracefully falls back to "PHOTO FORMAT NOT SUPPORTED, TRY AGAIN".
+- **Storage cross-schema foreign key cascade limitation** — Supabase Storage files (`storage.objects`) cannot be automatically cascaded from PostgreSQL `public.layovers` deletions; file removal is handled programmatically in `lib/proof.ts`.
 
 ---
 
@@ -81,6 +87,8 @@ This file is the **single source of truth** for where the project stands right n
 | `lib/sync.ts` | Online check uses `navigator.onLine` | Simple check for demo purposes | Yes — should verify actual fetch success |
 | `supabase/migrations/0002_trips.sql` | 50 trips cap per user trigger | Protection against DB spam during hackathon | Acceptable behavior |
 | `src/app/trips/page.tsx` | Native date/time pickers use device local timezone | Timezone lookup library would add dependencies and complexity | Acceptable behavior |
+| `lib/verify.ts` `PROOF_BONUS_XP = 20` | Attaching photo grants +20 XP bonus on upload | Placeholder behavior until real AI vision model verifies proof | Yes — bonus moves to status "verified" only |
+| `lib/proof.ts` IndexedDB queue limit | Caps pending offline proof uploads at 10 items | Prevents unbounded browser storage growth while offline | Acceptable behavior |
 
 
 ---
@@ -98,12 +106,47 @@ This file is the **single source of truth** for where the project stands right n
 | 5 | Type error on `npm run build` | Added `layoverId` to state but `Omit` in `START` payload didn't exclude it | Added `layoverId` to `Omit` list in `page.tsx` | Yes |
 | 6 | Type error on `npm run build` for `logId` | `logId` missing from `SavedState` | Added `logId?: string` to `storage.ts` and mapped it in `page.tsx` | Yes |
 | 7 | First screen skips AUTH straight to SETUP | (1) `restored.screen === 'auth'` converted to `'setup'` in `page.tsx`; (2) existing `gate.v2` in localStorage had `'setup'`; (3) active Supabase session in browser auto-skips in `AuthScreen` | Versioned storage to `gate.v3`, prevented blank auth state saves, restored AUTH for unauthenticated users, fixed `/alarm.mp3` casing | Yes |
+| 8 | Type mismatch on `LogEntry.proofCheckedAt` | `proofCheckedAt` was missing in `MissionLog.tsx` type definition | Unified `LogEntry` interface with `proofCheckedAt?: string` and `logId?: string` | Yes |
+| 9 | Null-safety warning on `layovers.find()` in `passport/page.tsx` | Photo viewer state `viewingPhoto.path` accessed without null guard | Added null-safe optional chaining | Yes |
+| 10 | React error: `Render order of hooks changed` on sign-in | `useEffect` for pending proof upload retry was placed after conditional early returns (`userLoading`, `screen === 'auth'`) in `page.tsx` | Moved `useEffect` to top of `Home` component before any conditional early returns | Yes |
 
 ---
 
 ## Build Log
 
 > Add one entry per completed milestone. Include timestamp and what works/doesn't.
+
+---
+
+## [03:45] — Photo Proof (F8) with Camera, Upload & Placeholder Verifier
+**What was done:**
+1. **Database & Storage Migration (`0003_proofs.sql`)**:
+   - Extended `mission_log` with columns: `proof_path` (text), `proof_status` (check constraint in `'none','unverified','pending','verified','rejected'`), `proof_checked_at` (timestamptz), `proof_note` (text), `proof_xp` (int default 0).
+   - Created private Supabase Storage bucket `proofs` (1MB limit, `image/jpeg` allowed MIME types, `public: false`).
+   - Added `storage.objects` RLS policies for `select`, `insert`, `update`, `delete` strictly isolating paths to `{user_id}/{layover_id}/{log_id}.jpg` where `(storage.foldername(name))[1] = auth.uid()::text`.
+2. **Client-Side Image Processing (`lib/proof.ts`)**:
+   - Decodes `image/jpeg`, `png`, `webp` (and decodable `heic`); rejects input > 10 MB or unsupported formats with `"PHOTO FORMAT NOT SUPPORTED, TRY AGAIN"`.
+   - Strips EXIF / GPS location data by drawing to HTML5 Canvas and resizing longest dimension to <= 1280px.
+   - Re-encodes as JPEG quality 0.7 targeting ~300 KB, with hard ceiling rejection if compressed result exceeds 1 MB. Revokes object URLs and frees canvases.
+3. **Offline & Retry Queue (`gate_proofs_db`)**:
+   - Zero-dependency native IndexedDB storage (`pending_proofs` store) holds compressed blobs if offline or if storage upload fails.
+   - Capped at maximum 10 pending items; automatically retries on app start and window `online` event; purged on sign-out.
+   - Proof upload failure never blocks mission completion; displays single muted line `"PROOF NOT SAVED"`.
+4. **Placeholder Verifier (`lib/verify.ts` & `/api/verify/route.ts`)**:
+   - Defined strict types `ProofStatus`, `VerifyInput`, `VerifyResult`, and `verifyProof(input)` with 5s timeout and fallback to `"unverified"`.
+   - Route `/api/verify` validates input and Supabase session, returning `{ status: "unverified", note: "VERIFICATION NOT ENABLED" }` with an architecture contract comment for future vision AI integration.
+   - UI status labels: unverified displays `"PROOF SAVED, NOT CHECKED"`. The UI never displays `"VERIFIED"` unless status is strictly `'verified'`.
+   - Constant `PROOF_BONUS_XP = 20` defined in one place; stored in `mission_log.proof_xp` so totals never drift; card displays `+20 PROOF`.
+5. **Phase & Alarm Guard**:
+   - Proof screen (`ProofModal`) opens on mission COMPLETE only during `free` or `headsup` phases when minutes left > 5.
+   - If phase is `urgent` or `alarm`, or minutes left <= 5, COMPLETE bypasses photo capture immediately with notice `"PROOF OFF, LESS THAN 5 MIN LEFT"` (prevents backgrounding browser tab via mobile native camera near alarm).
+   - If alarm fires while `ProofModal` is open, modal immediately unmounts, draft photo is discarded, and full-screen alarm screen mounts without delay.
+6. **UI Integration**:
+   - Proof modal with hidden inputs (`capture="environment"` for TAKE PHOTO, standard file input for UPLOAD PHOTO), photo preview with dimensions, USE PHOTO (+20 XP), RETAKE, SKIP PROOF, and privacy notice `"NO FACES, ID OR BOARDING PASS."`.
+   - Static missions updated with `proof: 'photo' | 'none'` and `proofHint` (e.g. nap/rest set to `'none'`); AI mission generator prompt enhanced with `proofHint`.
+   - 64px square thumbnails rendered in `MissionLog`, `SafeTravels`, and `Passport`.
+   - Full-screen `PhotoViewerModal` with 60-minute signed URL display, status badge, and DELETE PHOTO confirmation popup.
+**What works:** Clean build (`npm run build` passes), all 42 automated tests pass, zero banned UI elements, 390px mobile responsive, alarm path mathematically unaffected.
 
 ---
 
@@ -331,6 +374,10 @@ This file is the **single source of truth** for where the project stands right n
 | Trips require authentication (Google sign-in) | Multi-tenant trips must be securely tied to a user across sessions/devices; guest mode is single-session and local only | Guests cannot save trips table entries |
 | No offline write queue for trips | Silently queueing departures risks silent failure or stale data at the airport; failing fast with a visible error line ensures reliability | User must have network to create or edit trips |
 | Device time zone for trip departures | Date/time pickers operate in device local time; avoiding complex IANA timezone lookups keeps time math simple and robust | Users must enter departure time matching their device clock |
+| Native `<input type="file" capture="environment">` over WebRTC | Works reliably across all mobile browsers without requiring complex camera stream management or permissions; preserves phone HDR/flash | Can briefly background browser tab |
+| 5-minute & urgent/alarm proof guard | Native camera moves browser tab to background on mobile OS, which can suspend JavaScript execution and delay alarms. Forcing immediate mission completion when under 5 mins ensures zero alarm interference | Proof cannot be attached in the final 5 minutes |
+| Honest verifier status labels ("PROOF SAVED, NOT CHECKED") | UI never claims "VERIFIED" until a real automated vision model confirms proof. Transparent communication to users and judges | Clear distinction between uploaded proof and verified proof |
+| Programmatic storage deletion | Postgres cannot cascade across schemas to `storage.objects`; deleting missions/layovers calls `deleteLayoverProofs` / `deleteProof` in code | Relies on application logic rather than database engine triggers |
 
 ---
 

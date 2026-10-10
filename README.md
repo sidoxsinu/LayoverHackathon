@@ -20,7 +20,11 @@ A Next.js (App Router) mobile-first web app for navigating airport layovers. Bui
 
    # Run 0002 (trips table, triggers, and layovers trip integration)
    cat gate-next/supabase/migrations/0002_trips.sql
+
+   # Run 0003 (proofs storage bucket, mission_log proof columns, and RLS policies)
+   cat gate-next/supabase/migrations/0003_proofs.sql
    ```
+   *Note: Migration 0003 creates the private `proofs` Storage bucket with 1MB size limit and strict user-folder RLS policies.*
 3. Enable Google Auth in Supabase:
    - Go to **Authentication > Providers** and enable Google.
    - You will need a Google Cloud OAuth Client ID and Secret (see below).

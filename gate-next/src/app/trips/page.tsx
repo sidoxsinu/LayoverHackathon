@@ -83,6 +83,8 @@ export default function TripsPage() {
     if (user) {
       clearTripsCache(user.id);
     }
+    const { clearPendingProofs } = await import('@/lib/proof');
+    await clearPendingProofs();
     const supabase = createBrowserClient();
     await supabase?.auth.signOut();
     router.replace('/');

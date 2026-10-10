@@ -150,9 +150,9 @@ Departure-board table displaying real user trips only. Signed-in only.
 │ HUNGER  [███░░░░░░░] 35%             │
 │ SANITY  [██████░░░░] 62%             │
 ├──────────────────────────────────────┤
-│ MISSION M-04 · REST                  │
-│ FIND THE QUIETEST CORNER. SIT.       │
-│ DO NOTHING FOR 10 MINUTES.           │
+│ MISSION M-04 · MOVE                  │
+│ EXPLORE TERMINAL SHOP WINDOWS        │
+│ +40 XP · +20 PROOF                   │
 │                                      │
 │ [ COMPLETE (48px) ]  [ SKIP (48px) ] │
 └──────────────────────────────────────┘
@@ -160,6 +160,35 @@ Departure-board table displaying real user trips only. Signed-in only.
 - Countdown in mono amber. Digits update cleanly without easing or blur.
 - Stats in segmented blocks (10 blocks).
 - Paper-colored mission card with dashed tear-line.
+- When photo proof is enabled, card displays `+20 PROOF`.
+- If 5 minutes or less remain or phase is urgent, card displays muted warning: `PROOF OFF, LESS THAN 5 MIN LEFT` and COMPLETE bypasses proof.
+
+### Proof Screen Modal (`ProofModal.tsx`)
+```
+┌──────────────────────────────────────┐
+│ MISSION PROOF               [CANCEL] │
+├──────────────────────────────────────┤
+│ EXPLORE TERMINAL SHOP WINDOWS        │
+│                                      │
+│ REQUIRED PROOF:                      │
+│ PHOTO OF THE STORE WINDOW DISPLAY    │
+│                                      │
+│ NO FACES, ID OR BOARDING PASS.       │
+│ (GUEST PHOTOS ARE NOT SAVED)         │
+│                                      │
+│ [ PHOTO PREVIEW BOX (WHEN CHOSEN)  ] │
+│ 1280x960 PX · 280 KB (JPEG 70%)      │
+├──────────────────────────────────────┤
+│ [ TAKE PHOTO (48px)                ] │
+│ [ UPLOAD PHOTO (48px)              ] │
+│ [ SKIP PROOF (48px)                ] │
+│ (OR: [USE PHOTO (+20 XP)] / [RETAKE])│
+└──────────────────────────────────────┘
+```
+- Full-screen takeover, `#101010` background, 1px solid borders.
+- Buttons 48px or taller, uppercase Barlow Condensed typography.
+- Camera trigger via hidden file input (`capture="environment"`). Upload via standard file input.
+- Instant alarm safety: If alarm phase begins while PROOF modal is visible, modal unmounts instantly and alarm triggers.
 
 ---
 
@@ -187,5 +216,10 @@ Departure-board table displaying real user trips only. Signed-in only.
 
 ## Screen 6: Safe Travels + Passport
 - Rotated stamp format in mono.
-- Displays flight name/trip name when present, layover duration, missions completed, and XP rank.
+- Displays flight name/trip name when present, layover duration, missions completed, `PHOTOS` count, and `PROOF XP` (+20 per photo).
 - Header links for signed-in users: `TRIPS`, `PASSPORT`, `SIGN OUT`.
+- 64px square thumbnails rendered for missions completed with photo proof.
+- Tapping any thumbnail opens full-screen `PhotoViewerModal`:
+  - Mission code, title, status badge (`PROOF SAVED, NOT CHECKED`, etc.).
+  - `DELETE PHOTO` action triggers airport-styled confirmation popup (`DELETE PHOTO? THIS CANNOT BE UNDONE.`).
+  - Confirm permanently removes object from storage and clears database path.

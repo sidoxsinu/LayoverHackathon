@@ -26,6 +26,9 @@
 **[0:35–1:05] Quest** (show countdown, stats, mission)
 > "This countdown tracks the last safe moment you can wander freely. While it runs, GATE gives you survival missions sized to your remaining time. Hungry? It suggests food. Twenty minutes left? It never suggests a sit-down meal. Finish a mission and your survival stats recover."
 
+*(Optional 10-second photo proof beat: Tap COMPLETE, take/upload a quick photo or preview, tap USE PHOTO (+20 XP).)*
+> "Missions ask for photo proof. Snap your coffee or the gate sign to earn bonus XP."
+
 *Tap Complete. Let the stat bar update.*
 > "Hunger restored."
 
@@ -35,7 +38,7 @@
 **[1:20–1:45] Alarm** (go silent when the screen turns red. Count three. Let the room react.)
 > "And then it takes over. No snooze. One button."
 
-*Tap I'M AT THE GATE. Show Safe Travels and the Passport card.*
+*Tap I'M AT THE GATE. Show Safe Travels, photo thumbnails, and the Passport card.*
 
 **[1:45–2:00] Close**
 > "GATE makes your layover structured, purposeful, and impossible to mess up. Built tonight, running live on a public URL. Scan the QR to try it."
@@ -51,7 +54,8 @@
 |---|---|
 | Why not just a phone alarm? | "A standard alarm is just a deadline. GATE structures the hours before it with missions sized to your available time, and warns you in progressive stages." |
 | Does it work if I lock my phone? | "Web apps cannot ring from a locked screen, so GATE keeps the screen awake and escalates visually, with sound and vibration. A native build with notifications is the next step." |
-| What if AI or network fails? | "The alarm path has zero network or AI dependency; missions and offline trips fall back seamlessly to local storage." |
+| How does photo proof work? | "Proof is captured and stored; automatic checking is a pluggable step, currently a placeholder. EXIF and location data are stripped client-side on canvas, and images are stored with strict user-isolated RLS." |
+| What if AI or network fails? | "The alarm path has zero network or AI dependency; missions, offline photos, and cached departures fall back seamlessly to local storage." |
 | What was hard? | "Reliability: time math across midnight, timestamp-based clocks so throttled tabs do not drift, and unlocking audio on the first tap." |
 | Business model? | Only if asked: airline or airport app partnership, lounge tie-ins. |
 

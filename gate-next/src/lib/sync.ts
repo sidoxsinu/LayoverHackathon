@@ -79,10 +79,10 @@ export async function flushSyncQueue() {
 
       // Upsert Missions
       if (state.log.length > 0) {
-        const { error: logError } = await supabase
+        let { error: logError } = await supabase
           .from('mission_log')
           .upsert(
-            state.log.map(l => ({
+            state.log.map((l) => ({
               id: (l as any).logId || crypto.randomUUID(), // fallback if legacy log
               layover_id: id,
               user_id: session.session.user.id,
@@ -90,14 +90,39 @@ export async function flushSyncQueue() {
               title: l.text,
               status: l.status === 'completed' ? 'done' : l.status,
               xp: l.xp,
-              created_at: new Date(l.ts).toISOString()
+              proof_path: (l as any).proofPath || null,
+              proof_status: (l as any).proofStatus || 'none',
+              proof_checked_at: (l as any).proofCheckedAt || null,
+              proof_note: (l as any).proofNote || null,
+              proof_xp: (l as any).proofXp || 0,
+              created_at: new Date(l.ts).toISOString(),
             }))
           );
-          
+
+        // Graceful fallback if migration 0003 has not yet been executed in Supabase
+        if (logError && (logError.message?.toLowerCase().includes('proof') || logError.code === 'PGRST204')) {
+          console.warn('Proof columns missing in mission_log, falling back to base columns:', logError.message);
+          const fallbackRes = await supabase
+            .from('mission_log')
+            .upsert(
+              state.log.map((l) => ({
+                id: (l as any).logId || crypto.randomUUID(),
+                layover_id: id,
+                user_id: session.session.user.id,
+                mission_code: l.id,
+                title: l.text,
+                status: l.status === 'completed' ? 'done' : l.status,
+                xp: l.xp,
+                created_at: new Date(l.ts).toISOString(),
+              }))
+            );
+          logError = fallbackRes.error;
+        }
+
         if (logError) {
           console.error('Failed to sync missions:', logError);
           // If we fail here, the layover is saved but missions aren't. We'll leave it in queue to retry.
-          continue; 
+          continue;
         }
       }
 

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Mission } from '@/lib/missions';
+import { PROOF_BONUS_XP } from '@/lib/verify';
 
 interface LogEntry {
   id: string;
@@ -18,12 +19,30 @@ interface Props {
   onSkip: () => void;
   gate?: string;
   onSafeReturn?: () => void;
+  isProofDisabled?: boolean;
+  onRequestProof?: () => void;
 }
 
-export default function MissionCard({ mission, xp, log, onComplete, onSkip, gate, onSafeReturn }: Props) {
+export default function MissionCard({
+  mission,
+  xp,
+  log,
+  onComplete,
+  onSkip,
+  gate,
+  onSafeReturn,
+  isProofDisabled = false,
+  onRequestProof,
+}: Props) {
   const [flash, setFlash] = useState<'complete' | null>(null);
 
   const handleComplete = () => {
+    // If photo proof is available and not disabled by phase/time guard, trigger proof modal
+    if (mission?.proof !== 'none' && !isProofDisabled && onRequestProof) {
+      onRequestProof();
+      return;
+    }
+
     setFlash('complete');
     setTimeout(() => {
       setFlash(null);
@@ -375,6 +394,17 @@ export default function MissionCard({ mission, xp, log, onComplete, onSkip, gate
           >
             +40 XP
           </span>
+          {mission.proof !== 'none' && (
+            <span
+              style={{
+                fontFamily: 'var(--font-plex), monospace',
+                fontSize: '11px',
+                color: '#F2A900',
+              }}
+            >
+              +{PROOF_BONUS_XP} PROOF
+            </span>
+          )}
         </div>
       </div>
 
@@ -386,6 +416,24 @@ export default function MissionCard({ mission, xp, log, onComplete, onSkip, gate
           margin: '0 12px',
         }}
       />
+
+      {/* Proof Disabled Banner if within 5 min or urgent */}
+      {isProofDisabled && mission.proof !== 'none' && (
+        <div
+          style={{
+            fontFamily: 'var(--font-plex), monospace',
+            fontSize: '10px',
+            color: '#8C887C',
+            textAlign: 'center',
+            padding: '6px 12px',
+            backgroundColor: '#181816',
+            borderBottom: '1px solid #34322C',
+            letterSpacing: '0.05em',
+          }}
+        >
+          PROOF OFF, LESS THAN 5 MIN LEFT
+        </div>
+      )}
 
       {/* Action buttons */}
       <div style={{ display: 'flex' }}>

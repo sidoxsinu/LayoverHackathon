@@ -64,11 +64,12 @@ Output exactly and only a JSON object in this format:
 {
   "airport": "Location Name (CODE or CITY)",
   "missions": [
-    { "id": "M-AI-1", "text": "...", "need": "energy", "boost": 30, "mins": 10, "when": [0, 9999], "icon": "MOVE", "type": "LOCAL" },
+    { "id": "M-AI-1", "text": "...", "need": "energy", "boost": 30, "mins": 10, "when": [0, 9999], "icon": "MOVE", "type": "LOCAL", "proof": "photo", "proofHint": "PHOTO OF..." },
     ...
   ]
 }
 "need" must be one of: "hunger", "energy", "battery".
+"proofHint" must be a concise uppercase instruction describing what photo to take as proof (e.g. "PHOTO OF THE PLUG POINT", "PHOTO OF YOUR SURROUNDINGS").
     `.trim();
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -97,7 +98,21 @@ Output exactly and only a JSON object in this format:
     }
 
     const parsed = JSON.parse(resultText);
-    return NextResponse.json(parsed);
+    const validatedMissions = Array.isArray(parsed.missions)
+      ? parsed.missions.map((m: any, idx: number) => ({
+          ...m,
+          id: m.id || `M-AI-${idx + 1}`,
+          proof: 'photo' as const,
+          proofHint: typeof m.proofHint === 'string' && m.proofHint.trim().length > 0
+            ? m.proofHint.trim().toUpperCase()
+            : 'PHOTO OF WHERE YOU ARE'
+        }))
+      : [];
+
+    return NextResponse.json({
+      airport: parsed.airport || 'TINKERSPACE CALICUT',
+      missions: validatedMissions
+    });
   } catch (error) {
     console.error('Setup API Error:', error);
     return NextResponse.json({

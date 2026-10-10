@@ -8,13 +8,13 @@ A layover companion: enter your flight → get time-fitted survival missions →
 - **Screens (in `/` SPA flow)**:
   1. **Auth** — live clock, sound toggle, wordmark, guest start or sign-in
   2. **Setup** — departure, gate, walk time, vibe, trip selector (signed-in) → START
-  3. **Quest** — countdown, 3 draining stats, active mission card
+  3. **Quest** — countdown, 3 draining stats, active mission card, photo proof flow (camera + upload)
   4. **Alarm** — full-red takeover, sound, vibration, gate number
-  5. **Safe Travels** — Layover Passport card, return to gate
+  5. **Safe Travels** — Layover Passport card, return to gate, photo proof gallery
 - **Dedicated Routes**:
-  - `/passport` — saved layover history (signed-in only)
+  - `/passport` — saved layover history & photo proofs (signed-in only)
   - `/trips` — departure board table of upcoming trips, add/edit/delete (signed-in only)
-- **Guest Statement**: Guests can run layovers. Sign in to save trips and your Passport.
+- **Guest Statement**: Guests can run layovers. Sign in to save trips, cloud photo proofs, and your Passport.
 
 ## Core math (all in epoch ms, never Date objects in state)
 ```

@@ -1,25 +1,19 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Countdown from './Countdown';
 import StatBar from './StatBar';
 import MissionCard from './MissionCard';
-import MissionLog from './MissionLog';
+import MissionLog, { LogEntry } from './MissionLog';
+import ProofModal from './ui/ProofModal';
 import { Mission } from '@/lib/missions';
 import { phaseFor } from '@/lib/time';
+import { ProcessedPhoto } from '@/lib/proof';
 import GlobalMuteButton from './GlobalMuteButton';
 
 interface Stats {
   hunger: number;
   energy: number;
   battery: number;
-}
-
-interface LogEntry {
-  id: string;
-  text: string;
-  status: 'completed' | 'skipped';
-  xp: number;
-  ts: number;
 }
 
 interface Props {
@@ -34,10 +28,12 @@ interface Props {
   demo: boolean;
   now: number;
   realBattery: number | null;
-  onComplete: () => void;
+  onComplete: (photo?: ProcessedPhoto) => void;
   onSkip: () => void;
   onSafeReturn: () => void;
   onStatChange?: (key: keyof Stats, value: number) => void;
+  isGuest?: boolean;
+  onUpdateLog?: (updated: LogEntry[]) => void;
 }
 
 export default function QuestScreen({
@@ -56,10 +52,22 @@ export default function QuestScreen({
   onSkip,
   onSafeReturn,
   onStatChange,
+  isGuest = false,
+  onUpdateLog,
 }: Props) {
   const msLeft = returnByMs - now;
   const phase = phaseFor(msLeft, demo);
+  const minsLeft = Math.max(0, Math.floor(msLeft / 60000));
+  const isProofDisabled = phase === 'urgent' || phase === 'alarm' || minsLeft <= 5;
+  const [isProofModalOpen, setIsProofModalOpen] = useState(false);
   const prevPhase = useRef(phase);
+
+  // Instant alarm guard: Close proof modal immediately if alarm triggers
+  useEffect(() => {
+    if (phase === 'alarm' && isProofModalOpen) {
+      setIsProofModalOpen(false);
+    }
+  }, [phase, isProofModalOpen]);
 
   // Chime on phase transitions
   useEffect(() => {
@@ -216,13 +224,33 @@ export default function QuestScreen({
           mission={mission}
           xp={xp}
           log={log}
-          onComplete={onComplete}
+          onComplete={() => onComplete()}
           onSkip={onSkip}
           gate={gate}
           onSafeReturn={onSafeReturn}
+          isProofDisabled={isProofDisabled}
+          onRequestProof={() => setIsProofModalOpen(true)}
         />
-        <MissionLog log={log} xp={xp} />
+        <MissionLog log={log} xp={xp} onUpdateLog={onUpdateLog} />
       </div>
+
+      {/* Proof Modal */}
+      {isProofModalOpen && mission && (
+        <ProofModal
+          missionTitle={mission.text}
+          proofHint={mission.proofHint || 'PHOTO OF WHERE YOU ARE'}
+          isGuest={Boolean(isGuest)}
+          onUsePhoto={(photo) => {
+            setIsProofModalOpen(false);
+            onComplete(photo);
+          }}
+          onSkipProof={() => {
+            setIsProofModalOpen(false);
+            onComplete();
+          }}
+          onCancel={() => setIsProofModalOpen(false)}
+        />
+      )}
 
       {/* Safe return button */}
       <div style={{ padding: '12px 16px', borderTop: '1px solid #34322C' }}>

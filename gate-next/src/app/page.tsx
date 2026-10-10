@@ -14,16 +14,11 @@ import DebugOverlay from '@/components/DebugOverlay';
 import AuthScreen from '@/components/AuthScreen';
 import { useUser } from '@/hooks/useUser';
 
-type Screen = 'auth' | 'setup' | 'quest' | 'alarm' | 'safe';
+import { ProcessedPhoto, uploadProofBlob, retryPendingProofUploads } from '@/lib/proof';
+import { ProofStatus, PROOF_BONUS_XP, verifyProof } from '@/lib/verify';
+import { LogEntry } from '@/components/MissionLog';
 
-interface LogEntry {
-  logId: string;
-  id: string;
-  text: string;
-  status: 'completed' | 'skipped';
-  xp: number;
-  ts: number;
-}
+type Screen = 'auth' | 'setup' | 'quest' | 'alarm' | 'safe';
 
 interface AppState {
   screen: Screen;
@@ -54,8 +49,10 @@ type Action =
   | { type: 'DISMISS_ALARM' }
   | { type: 'SAFE_RETURN' }
   | { type: 'NEW_LAYOVER' }
-  | { type: 'MISSION_COMPLETE' }
+  | { type: 'MISSION_COMPLETE'; payload?: { photo?: ProcessedPhoto; logId?: string; proofPath?: string | null } }
   | { type: 'MISSION_SKIP' }
+  | { type: 'UPDATE_LOG'; log: LogEntry[] }
+  | { type: 'UPDATE_LOG_PROOF'; logId: string; proofPath?: string | null; proofStatus?: ProofStatus; proofNote?: string | null }
   | { type: 'DRAIN_STATS' }
   | { type: 'SET_BATTERY'; value: number }
   | { type: 'SET_STAT'; key: keyof AppState['stats']; value: number }
@@ -183,9 +180,31 @@ function reducer(state: AppState, action: Action): AppState {
       if (m.need === 'hunger' && m.boost > 0) {
         boostedStats.energy = clamp(boostedStats.energy + Math.floor(m.boost / 2));
       }
-      const newXp = state.xp + 40;
+
+      // Bonus XP for photo proof: +20 XP
+      // Under placeholder verification, attaching a photo grants this bonus.
+      // Once real AI vision verification exists, this bonus moves to status 'verified' only.
+      const hasPhoto = Boolean(action.payload?.photo);
+      const proofXp = hasPhoto ? PROOF_BONUS_XP : 0;
+      const earnedXp = 40 + proofXp;
+      const newXp = state.xp + earnedXp;
+      const logId = action.payload?.logId || crypto.randomUUID();
+
       const newLog: LogEntry[] = [
-        { logId: crypto.randomUUID(), id: m.id, text: m.text, status: 'completed', xp: 40, ts: Date.now() },
+        {
+          logId,
+          id: m.id,
+          text: m.text,
+          status: 'completed',
+          xp: earnedXp,
+          proofPath: action.payload?.proofPath || null,
+          proofStatus: hasPhoto ? 'unverified' : 'none',
+          proofCheckedAt: null,
+          proofNote: hasPhoto ? 'VERIFICATION NOT ENABLED' : null,
+          proofXp,
+          localPhotoUrl: action.payload?.photo?.previewUrl,
+          ts: Date.now(),
+        },
         ...state.log,
       ];
       const newRecent = [m.id, ...state.recent].slice(0, 3);
@@ -212,11 +231,40 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'UPDATE_LOG':
+      return { ...state, log: action.log };
+
+    case 'UPDATE_LOG_PROOF': {
+      const updatedLog = state.log.map((item) =>
+        item.logId === action.logId
+          ? {
+              ...item,
+              proofPath: action.proofPath !== undefined ? action.proofPath : item.proofPath,
+              proofStatus: action.proofStatus !== undefined ? action.proofStatus : item.proofStatus,
+              proofNote: action.proofNote !== undefined ? action.proofNote : item.proofNote,
+            }
+          : item
+      );
+      return { ...state, log: updatedLog };
+    }
+
     case 'MISSION_SKIP': {
       if (!state.mission) return state;
       const m = state.mission;
       const newLog: LogEntry[] = [
-        { logId: crypto.randomUUID(), id: m.id, text: m.text, status: 'skipped', xp: 0, ts: Date.now() },
+        {
+          logId: crypto.randomUUID(),
+          id: m.id,
+          text: m.text,
+          status: 'skipped',
+          xp: 0,
+          proofPath: null,
+          proofStatus: 'none',
+          proofCheckedAt: null,
+          proofNote: null,
+          proofXp: 0,
+          ts: Date.now(),
+        },
         ...state.log,
       ];
       const newRecent = [m.id, ...state.recent].slice(0, 3);
@@ -292,7 +340,16 @@ export default function Home() {
         ? (pickMission({ minsLeft: Math.max(0, Math.floor((saved.returnByMs - Date.now()) / 60000)), stats: saved.stats, recent: saved.recent, customPool: saved.customMissions || [] }) )
         : null,
       recent: saved.recent,
-      log: saved.log.map((l: any) => ({ ...l, logId: l.logId || crypto.randomUUID() })),
+      log: saved.log.map((l: any) => ({
+        ...l,
+        logId: l.logId || crypto.randomUUID(),
+        proofPath: l.proofPath || null,
+        proofStatus: l.proofStatus || 'none',
+        proofCheckedAt: l.proofCheckedAt || null,
+        proofNote: l.proofNote || null,
+        proofXp: l.proofXp || 0,
+        localPhotoUrl: l.localPhotoUrl,
+      })),
       xp: saved.xp,
       demo: saved.demo,
       startedMs: saved.startedMs,
@@ -407,6 +464,14 @@ export default function Home() {
     if (state.screen === 'setup') alarmFiredRef.current = false;
   }, [state.screen]);
 
+  // Retry any pending proof uploads on mount and when connection restores
+  useEffect(() => {
+    retryPendingProofUploads();
+    const onOnline = () => retryPendingProofUploads();
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, []);
+
   const handleDemo = useCallback(async () => {
     await arm();
     const sched = demoSchedule(state.walkMin || 10, Date.now());
@@ -512,6 +577,59 @@ export default function Home() {
     );
   }
 
+  const handleMissionComplete = async (photo?: ProcessedPhoto) => {
+    if (!state.mission) return;
+    const currentMission = state.mission;
+    const logId = crypto.randomUUID();
+
+    dispatch({
+      type: 'MISSION_COMPLETE',
+      payload: { photo, logId },
+    });
+
+    if (photo && user) {
+      try {
+        const uploadRes = await uploadProofBlob({
+          userId: user.id,
+          layoverId: state.layoverId,
+          logId,
+          blob: photo.blob,
+        });
+
+        if (uploadRes.success && uploadRes.path) {
+          dispatch({
+            type: 'UPDATE_LOG_PROOF',
+            logId,
+            proofPath: uploadRes.path,
+            proofStatus: 'unverified',
+          });
+
+          // Non-blocking placeholder verification (5s timeout)
+          verifyProof({
+            missionId: currentMission.id,
+            missionTitle: currentMission.text,
+            proofHint: currentMission.proofHint || 'PHOTO OF WHERE YOU ARE',
+            imagePath: uploadRes.path,
+            location: state.airportName,
+          })
+            .then((res) => {
+              dispatch({
+                type: 'UPDATE_LOG_PROOF',
+                logId,
+                proofStatus: res.status,
+                proofNote: res.note,
+              });
+            })
+            .catch(() => {});
+        } else if (!uploadRes.success && uploadRes.error !== 'OFFLINE_QUEUED') {
+          console.warn('Proof upload failed:', uploadRes.error);
+        }
+      } catch (err) {
+        console.warn('Async proof handling error:', err);
+      }
+    }
+  };
+
   if (state.screen === 'quest') {
     return (
       <>
@@ -527,10 +645,12 @@ export default function Home() {
         demo={state.demo}
         now={now}
         realBattery={realBattery}
-        onComplete={() => dispatch({ type: 'MISSION_COMPLETE' })}
+        onComplete={handleMissionComplete}
         onSkip={() => dispatch({ type: 'MISSION_SKIP' })}
         onSafeReturn={() => dispatch({ type: 'SAFE_RETURN' })}
         onStatChange={(key, value) => dispatch({ type: 'SET_STAT', key, value })}
+        isGuest={!user}
+        onUpdateLog={(updated) => dispatch({ type: 'UPDATE_LOG', log: updated })}
       />
       <DebugOverlay onAction={handleDebugAction} />
       </>
