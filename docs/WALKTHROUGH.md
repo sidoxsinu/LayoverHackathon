@@ -171,6 +171,10 @@ This file is the **single source of truth** for where the project stands right n
 **What was done:** Refactored the `GlobalMuteButton` to remove its absolute/fixed positioning. It is now properly injected directly into the Flexbox header layout of the Setup, Quest, Alarm, and Safe Travels screens. 
 **Why:** The button was overlapping text on narrow screens. It now respects standard DOM flow and has proper spacing alongside other header elements.
 
+## [23:25] — Audio Lifecycle Fix
+**What was done:** Updated the application logic to forcefully stop `warning.mp3` if the user gets extra time (dev tools) or if the timer crosses zero while the warning is still playing. Added `stopWarning()` to the `startAlarm()` sequence to prevent the two audio tracks from ever overlapping.
+**Why:** The user noticed some audio was not playing or stopping correctly. This ensures the warning audio strictly respects the bounds of the "urgent" timer phase.
+
 
 ---
 
