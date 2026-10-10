@@ -132,6 +132,11 @@ export function silenceAlarm(): void {
     a.pause();
     a.currentTime = 0;
   } catch {}
+  try {
+    const w = getWarningAudio();
+    w.pause();
+    w.currentTime = 0;
+  } catch {}
   clearInterval(beepLoop);
   clearInterval(vibLoop);
   try { navigator.vibrate?.(0); } catch {}

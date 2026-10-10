@@ -143,6 +143,10 @@ This file is the **single source of truth** for where the project stands right n
 **What was done:** Added an `isPlaying` flag to `alarm.ts` to prevent the `arm()` function from accidentally pausing the audio if `startAlarm()` has already begun playback. 
 **Why:** Because `arm()` is asynchronous (it awaits `play()`), if the alarm triggers while `arm()` is still resolving, it would immediately call `pause()`, resulting in the audio playing for only a single millisecond before going silent.
 
+## [23:04] — Warning Phase Audio
+**What was done:** Configured the application to play `warning.mp3` once when the countdown timer hits the "urgent" phase (under 5 minutes left in real time, or under 10 seconds in demo mode).
+**Why:** User requested a specific sound to play when the timer is about to end as a heads-up before the final alarm triggers.
+
 
 ---
 
