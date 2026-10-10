@@ -1,6 +1,6 @@
 'use client';
-import { useEffect } from 'react';
-import { stopAlarm } from '@/lib/alarm';
+import { useState, useEffect } from 'react';
+import { stopAlarm, silenceAlarm } from '@/lib/alarm';
 import { fmt } from '@/lib/time';
 
 interface Props {
@@ -11,6 +11,8 @@ interface Props {
 }
 
 export default function GateAlarm({ gate, departureMs, now, onDismiss }: Props) {
+  const [muted, setMuted] = useState(false);
+
   useEffect(() => {
     return () => stopAlarm();
   }, []);
@@ -77,8 +79,32 @@ export default function GateAlarm({ gate, departureMs, now, onDismiss }: Props) 
         )}
       </div>
 
-      {/* Dismiss button */}
-      <div className="px-6 pb-12">
+      {/* Dismiss buttons */}
+      <div className="px-6 pb-12 flex flex-col gap-4">
+        {!muted && (
+          <button
+            onClick={() => {
+              silenceAlarm();
+              setMuted(true);
+            }}
+            style={{
+              width: '100%',
+              backgroundColor: 'transparent',
+              color: 'rgba(255,255,255,0.9)',
+              border: '1px solid rgba(255,255,255,0.4)',
+              fontFamily: 'var(--font-barlow), sans-serif',
+              fontSize: '18px',
+              fontWeight: '600',
+              letterSpacing: '0.1em',
+              padding: '14px',
+              borderRadius: '2px',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+            }}
+          >
+            SILENCE ALARM
+          </button>
+        )}
         <button
           onClick={onDismiss}
           style={{

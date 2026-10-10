@@ -124,9 +124,14 @@ This file is the **single source of truth** for where the project stands right n
 
 ## [22:35] — Energy Renaming & Adjustable StatBar
 **What was done:** Renamed 'sanity' to 'energy' across all TS/TSX files and state interfaces. Updated the `StatBar` component to accept an `onChange` prop and passed it down to `StatRow`, making the individual stat blocks clickable (setting the value to `(index + 1) * 10`). Wired this up in `page.tsx` via a new `SET_STAT` action.
-**What works:** Clicking any block on the stat bars correctly updates the state in increments of 10. `sanity` is gone, `energy` is the new stat.
+**What works:** Clicking any block on the stat bars correctly updates the state in increments of 10. `sanity` is gone, `energy` is the new stat. Mission boosts correctly support negative values, and doing active/moving tasks when energy is high now successfully drains energy. Eating also restores a bit of energy.
 **What doesn't yet:** Same deployment pending status.
 **Immediate next step:** Deploy to Vercel and test.
+
+## [22:50] — Demo & Debug Overlay
+**What was done:** Created a `DebugOverlay.tsx` floating DEV button at the bottom right of the screen. When clicked, it opens a quick-access menu with useful debug/demo tools: Trigger Alarm (sets return time to now + 10s), Fast Forward (-1 Hour), Fill Stats, Drain Stats, and Hard Reset (clears localStorage and reloads).
+**Why:** To make testing edges cases (like alarm audio, low battery behavior, and safe travels states) possible without waiting hours.
+**Styling:** Follows the strict design guidelines (no radius, no shadows, uses Barlow and IBM Plex Mono).
 
 
 ---

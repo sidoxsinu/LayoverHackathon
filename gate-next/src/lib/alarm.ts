@@ -92,7 +92,7 @@ export function startAlarm(): void {
   vibLoop = setInterval(buzz, 1500);
 }
 
-export function stopAlarm(): void {
+export function silenceAlarm(): void {
   try {
     const a = getAudio();
     a.pause();
@@ -101,6 +101,10 @@ export function stopAlarm(): void {
   clearInterval(beepLoop);
   clearInterval(vibLoop);
   try { navigator.vibrate?.(0); } catch {}
+}
+
+export function stopAlarm(): void {
+  silenceAlarm();
   try { wakeLock?.release(); } catch {}
   wakeLock = undefined;
 }
