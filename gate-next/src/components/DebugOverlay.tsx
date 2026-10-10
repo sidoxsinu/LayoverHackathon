@@ -57,11 +57,15 @@ export default function DebugOverlay({ onAction }: { onAction: (action: string) 
           }}>
             DEMO / DEV
           </span>
-          <button onClick={() => { onAction('trigger_alarm'); setOpen(false); }} style={btnStyle}>TRIGGER ALARM</button>
-          <button onClick={() => { onAction('fast_forward'); setOpen(false); }} style={btnStyle}>-1 HOUR</button>
-          <button onClick={() => { onAction('fill_stats'); setOpen(false); }} style={btnStyle}>FILL STATS</button>
-          <button onClick={() => { onAction('drain_stats'); setOpen(false); }} style={btnStyle}>DRAIN STATS</button>
-          <button onClick={() => { onAction('reset'); setOpen(false); }} style={btnStyle}>HARD RESET</button>
+          <button onClick={() => onAction('trigger_alarm')} style={btnStyle}>TRIGGER ALARM</button>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button onClick={() => onAction('sub_minute')} style={{...btnStyle, flex: 1}}>-1 MIN</button>
+            <button onClick={() => onAction('add_minute')} style={{...btnStyle, flex: 1}}>+1 MIN</button>
+          </div>
+          <button onClick={() => onAction('fast_forward')} style={btnStyle}>-1 HOUR</button>
+          <button onClick={() => onAction('fill_stats')} style={btnStyle}>FILL STATS</button>
+          <button onClick={() => onAction('drain_stats')} style={btnStyle}>DRAIN STATS</button>
+          <button onClick={() => onAction('reset')} style={btnStyle}>HARD RESET</button>
         </div>
       )}
     </>

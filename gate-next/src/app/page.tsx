@@ -341,6 +341,16 @@ export default function Home() {
           dispatch({ type: 'RESTORE', payload: { ...state, returnByMs: state.returnByMs - 3600000, departureMs: state.departureMs - 3600000 } });
         }
         break;
+      case 'sub_minute':
+        if (state.returnByMs) {
+          dispatch({ type: 'RESTORE', payload: { ...state, returnByMs: state.returnByMs - 60000, departureMs: state.departureMs - 60000 } });
+        }
+        break;
+      case 'add_minute':
+        if (state.returnByMs) {
+          dispatch({ type: 'RESTORE', payload: { ...state, returnByMs: state.returnByMs + 60000, departureMs: state.departureMs + 60000 } });
+        }
+        break;
       case 'fill_stats':
         ['hunger', 'energy', 'battery'].forEach(k => dispatch({ type: 'SET_STAT', key: k as any, value: 100 }));
         break;

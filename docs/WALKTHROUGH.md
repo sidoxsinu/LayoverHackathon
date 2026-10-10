@@ -151,6 +151,10 @@ This file is the **single source of truth** for where the project stands right n
 **What was done:** Updated the `silenceAlarm()` function to explicitly pause the newly added `warning.mp3` audio in addition to the main `Alarm.mp3`.
 **Why:** If the warning audio was triggered right before the main alarm, pressing "SILENCE ALARM" would only silence the main alarm but leave the warning audio playing. Now it kills all active audio tracks instantly.
 
+## [23:07] — Browser Audio Unlock Fix
+**What was done:** Wired up the `arm()` function to the `START LAYOVER` button in the Setup screen (`page.tsx`). 
+**Why:** Browsers strictly block any audio playback that didn't originate from a direct user gesture. By making sure `arm()` fires exactly when the user clicks "START LAYOVER", the audio engine successfully initializes and pre-authorizes background playback for later.
+
 
 ---
 
