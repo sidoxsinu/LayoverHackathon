@@ -10,30 +10,44 @@ export interface Mission {
 }
 
 export const MISSIONS: Mission[] = [
-  // 3+ HOURS (LONG LAYOVER, HUNGER/REST)
-  { id: 'meal',     icon: 'FOOD', type: 'FEAST',     text: 'Find a real sit-down restaurant. Order something you have never tried before.', mins: 60, need: 'hunger', boost: 80, when: [180, 9999] },
-  { id: 'lounge',   icon: 'REST', type: 'LOUNGE',    text: 'Attempt to find a paid lounge. Check the entry price, but do not actually go in.', mins: 20, need: 'energy', boost: 20, when: [180, 9999] },
-  { id: 'walk_end', icon: 'MOVE', type: 'EXPLORE',   text: 'Walk to the absolute furthest gate in this terminal and touch the window.', mins: 30, need: 'energy', boost: -40, when: [120, 9999] },
+  { id: "terminal_feast", icon: "FOOD", type: "FEAST", text: "Find a proper sit-down restaurant and order something you have never tried before. Your taste buds deserve a vacation too.", mins: 45, need: "hunger", boost: 75, when: [180, 9999] },
+  { id: "coffee_quest", icon: "FOOD", type: "CAFFEINE", text: "Track down a coffee shop and order your preferred caffeine potion. Sip like someone who definitely has their life together.", mins: 15, need: "hunger", boost: 25, when: [45, 9999] },
+  { id: "snack_heist", icon: "FOOD", type: "SNACK", text: "Acquire a snack from an airport shop. Pretend the price tag is a currency conversion error.", mins: 10, need: "hunger", boost: 20, when: [10, 9999] },
+  { id: "local_flavor", icon: "FOOD", type: "TASTE", text: "Find a snack or drink associated with your destination or departure city. Eat like a local without leaving the terminal.", mins: 25, need: "hunger", boost: 40, when: [60, 9999] },
+  { id: "hydration_station", icon: "FOOD", type: "HYDRATE", text: "Find a drinking water station and refill your bottle if permitted. Congratulations, you have defeated the overpriced water economy.", mins: 5, need: "hunger", boost: 15, when: [5, 9999] },
+  { id: "dessert_detour", icon: "FOOD", type: "DESSERT", text: "Find a small dessert or sweet treat. This is not emotional spending if you call it a side quest.", mins: 15, need: "hunger", boost: 30, when: [30, 9999] },
+  { id: "breakfast_champion", icon: "FOOD", type: "BRUNCH", text: "Build a balanced mini-meal from available airport food options. Assemble a plate that says, 'I make excellent decisions occasionally.'", mins: 25, need: "hunger", boost: 45, when: [60, 9999] },
+  { id: "mystery_munch", icon: "FOOD", type: "MYSTERY", text: "Choose an affordable packaged snack with a flavor you have never tried. Read the ingredients like you are investigating a crime.", mins: 10, need: "hunger", boost: 20, when: [15, 9999] },
+  
+  { id: "quiet_corner", icon: "REST", type: "RECOVER", text: "Find a quiet seat away from the busiest foot traffic. Sit down, relax your shoulders, and stop speedrunning your existence.", mins: 15, need: "energy", boost: 30, when: [20, 9999] },
+  { id: "power_nap", icon: "REST", type: "NAP", text: "Set an alarm and take a short nap in a safe, permitted seating area near your gate. Your boarding call is not a lullaby.", mins: 25, need: "energy", boost: 45, when: [45, 240] },
+  { id: "window_watching", icon: "REST", type: "OBSERVE", text: "Find a window with a view of the runway and watch the aircraft for a while. Imagine your flight is the celebrity you came to see.", mins: 15, need: "energy", boost: 20, when: [15, 9999] },
+  { id: "eyes_closed", icon: "REST", type: "RESET", text: "Sit comfortably, close your eyes, and take ten slow breaths. Do not accidentally turn mindfulness into a three-hour nap.", mins: 10, need: "energy", boost: 20, when: [10, 9999] },
+  { id: "lounge_lizard", icon: "REST", type: "LOUNGE", text: "Find a comfortable public seating area and relax without blocking walkways. Look so peaceful that even your unread emails give up.", mins: 20, need: "energy", boost: 35, when: [30, 9999] },
+  { id: "stretch_session", icon: "REST", type: "STRETCH", text: "Perform gentle seated shoulder rolls, ankle circles, and neck movements without invading anyone else's space. Your spine has filed a formal complaint.", mins: 8, need: "energy", boost: 20, when: [10, 9999] },
+  
+  { id: "gate_marathon", icon: "MOVE", type: "EXPLORE", text: "Walk toward a distant public area of the terminal and return at a comfortable pace. Do not cross security boundaries or wander away from your departure area.", mins: 30, need: "energy", boost: -35, when: [120, 9999] },
+  { id: "terminal_tour", icon: "MOVE", type: "EXPLORE", text: "Explore a different public section of the terminal, then retrace your route. You are now a tourist with excellent luggage management.", mins: 25, need: "energy", boost: -25, when: [75, 9999] },
+  { id: "step_counter", icon: "MOVE", type: "FITNESS", text: "Walk around your nearby gate area for a few minutes and check your step counter. Every step counts, including the ones taken while looking confused.", mins: 10, need: "energy", boost: -15, when: [15, 9999] },
+  { id: "shop_window", icon: "MOVE", type: "BROWSE", text: "Browse two airport shop windows without buying anything. Test your willpower against a miniature perfume bottle that costs more than lunch.", mins: 15, need: "energy", boost: -15, when: [30, 9999] },
+  { id: "art_detective", icon: "MOVE", type: "DISCOVER", text: "Find a piece of public art, an interesting display, or unusual terminal architecture. Inspect it like an art critic who has misplaced their glasses.", mins: 20, need: "energy", boost: -20, when: [45, 9999] },
+  { id: "sign_safari", icon: "MOVE", type: "SCAVENGE", text: "Follow the public directional signs to identify a restroom, water station, and information desk. Congratulations, you have unlocked the airport survival map.", mins: 15, need: "energy", boost: -15, when: [30, 9999] },
+  { id: "gate_neighbor", icon: "MOVE", type: "RELOCATE", text: "Take a short walk to another nearby seating area and compare the views. Return to your assigned gate area before boarding becomes urgent.", mins: 10, need: "energy", boost: -12, when: [15, 90] },
+  
+  { id: "charging_hunt", icon: "PLUG", type: "RECHARGE", text: "Find a designated charging outlet or charging station and connect your device with your own compatible cable. Guard your battery percentage like a national treasure.", mins: 20, need: "battery", boost: 40, when: [30, 9999] },
+  { id: "battery_saver", icon: "PLUG", type: "CONSERVE", text: "Enable battery saver, reduce screen brightness, and close unnecessary apps. Your phone has officially entered its budget era.", mins: 5, need: "battery", boost: 20, when: [5, 9999] },
+  { id: "outlet_claim", icon: "PLUG", type: "CAMP", text: "Locate a designated public charging point and settle nearby while your phone charges. Keep cables tidy and leave room for other travelers.", mins: 15, need: "battery", boost: 30, when: [20, 9999] },
+  { id: "cable_audit", icon: "PLUG", type: "ORGANIZE", text: "Check that your charging cable, adapter, and power bank are packed and accessible. Untangle the cable before it becomes modern art.", mins: 5, need: "battery", boost: 10, when: [5, 9999] },
+  { id: "power_bank", icon: "PLUG", type: "BACKUP", text: "If you carry a charged power bank, connect it and check your charging status. If you do not own one, admire the travelers who planned ahead.", mins: 10, need: "battery", boost: 25, when: [10, 9999] },
+  { id: "offline_ready", icon: "PLUG", type: "OFFLINE", text: "Save your boarding pass for offline access and download any permitted entertainment over Wi-Fi. Future you will appreciate this when the signal disappears.", mins: 10, need: "battery", boost: 15, when: [15, 9999] },
+  
+  { id: "bag_tetris", icon: "PREP", type: "ORGANIZE", text: "Reorganize your personal bag so your passport, boarding pass, and essentials are easy to reach. Achieve luggage Tetris without removing every object you own.", mins: 10, need: "energy", boost: 10, when: [15, 9999] },
+  { id: "freshen_up", icon: "PREP", type: "REFRESH", text: "Visit a restroom and freshen up before boarding. Wash your hands, fix your hair, and transform from airport goblin to presentable passenger.", mins: 10, need: "energy", boost: 20, when: [15, 9999] },
+  { id: "boarding_audit", icon: "PREP", type: "CHECKLIST", text: "Verify your gate, boarding time, seat, and travel documents using official airport or airline information. Trust the display, not the stranger who looks confident.", mins: 5, need: "energy", boost: 15, when: [5, 9999] },
+  { id: "departure_ready", icon: "PREP", type: "FINALIZE", text: "Secure your loose belongings, put your essentials somewhere accessible, and get ready to board when instructed. Your mission is complete when nothing important is left behind.", mins: 8, need: "energy", boost: 15, when: [10, 60] },
 
-  // 1-3 HOURS (MID LAYOVER, ACTIVITY)
-  { id: 'souv',     icon: 'MOVE', type: 'HUNT',      text: 'Find the most overpriced, absurd souvenir. Do not buy it. Take a photo.', mins: 15, need: 'energy', boost: -20, when: [60, 9999] },
-  { id: 'quiet',    icon: 'REST', type: 'ZEN',       text: 'Locate the quietest, most abandoned corner of the airport. Sit and do nothing for 10 minutes.', mins: 15, need: 'energy', boost: 35, when: [45, 9999] },
-  { id: 'plug',     icon: 'PLUG', type: 'CAMP',      text: 'Find a working wall outlet. Plug in your device and guard your territory.', mins: 20, need: 'battery', boost: 40, when: [30, 9999] },
-  { id: 'coffee',   icon: 'FOOD', type: 'CAFFEINE',  text: 'Secure a coffee, tea, or local beverage. Sit somewhere facing the tarmac.', mins: 15, need: 'energy', boost: 30, when: [40, 240] },
-  { id: 'art',      icon: 'MOVE', type: 'CULTURE',   text: 'Find a piece of airport art or an installation. Stare at it until you understand it.', mins: 15, need: 'energy', boost: -15, when: [60, 240] },
-  { id: 'stretch',  icon: 'MOVE', type: 'HEALTH',    text: 'Find an empty gate area and do some shameless stretches for 5 minutes.', mins: 10, need: 'energy', boost: -10, when: [40, 9999] },
-  { id: 'flight',   icon: 'REST', type: 'SPY',       text: 'Look at the departure board. Find a flight to a city you cannot pronounce.', mins: 10, need: 'energy', boost: 20, when: [40, 9999] },
-  { id: 'snack',    icon: 'FOOD', type: 'SUPPLY',    text: 'Hunt down a convenience store and secure a tactical flight snack.', mins: 10, need: 'hunger', boost: 30, when: [20, 120] },
-
-  // < 1 HOUR (SHORT LAYOVER, PREP)
-  { id: 'water',    icon: 'FOOD', type: 'HYDRATE',   text: 'Find a water fountain. Fill your bottle or drink directly. Hydration is survival.', mins: 5, need: 'hunger', boost: 15, when: [15, 60] },
-  { id: 'wash',     icon: 'REST', type: 'PREP',      text: 'Head to the restroom. Splash water on your face. Become a new person.', mins: 10, need: 'energy', boost: 20, when: [15, 60] },
-  { id: 'charge',   icon: 'PLUG', type: 'JUICE',     text: 'Find a charging station. Stand there and get 5% more battery. Every drop counts.', mins: 10, need: 'battery', boost: 15, when: [15, 60] },
-  { id: 'pack',     icon: 'PREP', type: 'GEAR',      text: 'Repack your bags. Ensure your boarding pass and passport are immediately accessible.', mins: 5, need: 'energy', boost: -15, when: [10, 40] },
-  { id: 'trash',    icon: 'PREP', type: 'CLEAN',     text: 'Find a trash can and throw away any receipts or garbage you collected.', mins: 5, need: 'energy', boost: -10, when: [10, 40] },
-
-  // FINAL
-  { id: 'go',       icon: 'MOVE', type: 'FINAL',     text: 'Your safe time is almost up. Start walking toward your gate now.', mins: 5, need: 'energy', boost: -10, when: [0, 20] },
+  // FINAL (Fallback)
+  { id: 'go', icon: 'MOVE', type: 'FINAL', text: 'Your safe time is almost up. Start walking toward your gate now.', mins: 5, need: 'energy', boost: -10, when: [0, 20] },
 ];
 
 export interface Stats {

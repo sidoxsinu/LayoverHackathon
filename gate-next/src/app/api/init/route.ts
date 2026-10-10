@@ -24,10 +24,15 @@ Return a JSON object with this EXACT structure:
   ]
 }`;
 
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      throw new Error('GROQ_API_KEY is not defined in environment variables');
+    }
+
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer GROQ_API_KEY_PLACEHOLDER`,
+        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({

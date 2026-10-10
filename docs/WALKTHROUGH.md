@@ -57,7 +57,8 @@ This file is the **single source of truth** for where the project stands right n
 | Location | What's hardcoded / hacked | Why | Should be fixed later? |
 |----------|--------------------------|-----|------------------------|
 | `lib/time.ts` `demoSchedule()` | `returnByMs = now + 60_000` (60-second alarm) | Demo Mode needs a predictable, short alarm window for the pitch | Yes — real usage reads from departure input |
-| `lib/missions.ts` | All 10 missions are static strings | No time to build a full mission CMS overnight | Yes — AI-generated missions are P2 |
+| `src/app/api/init/route.ts` | `GROQ_API_KEY` read from `.env.local` | Secure server-side call for mission generation | No — standard pattern |
+| `lib/missions.ts` | All 10 missions are static strings | Fallback missions if Groq AI is unavailable | Yes — AI-generated missions are P2 |
 | `lib/alarm.ts` `arm()` | Audio is pre-played and paused on START to bypass autoplay policy | iOS/Android block audio that doesn't originate from a user gesture | No — this is the correct production pattern |
 | Setup screen | "in X h Y m" mode is a toggle, not auto-detected from locale/timezone | Timezone detection adds complexity | Yes |
 | Stat drain | Drain rates are magic numbers tuned for a 4-hour demo | Not validated against real user feel | Yes |
