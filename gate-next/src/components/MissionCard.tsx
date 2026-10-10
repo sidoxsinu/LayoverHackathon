@@ -155,7 +155,18 @@ export default function MissionCard({ mission, xp, log, onComplete, onSkip }: Pr
           >
             {mission.mins} MIN
           </span>
-          {mission.boost > 0 && (
+          {mission.boost !== 0 && (
+            <span
+              style={{
+                fontFamily: 'var(--font-plex), monospace',
+                fontSize: '11px',
+                color: mission.boost > 0 ? '#3F9B5B' : '#C8201A',
+              }}
+            >
+              {mission.boost > 0 ? '+' : ''}{mission.boost} {mission.need.toUpperCase()}
+            </span>
+          )}
+          {mission.need === 'hunger' && mission.boost > 0 && (
             <span
               style={{
                 fontFamily: 'var(--font-plex), monospace',
@@ -163,7 +174,7 @@ export default function MissionCard({ mission, xp, log, onComplete, onSkip }: Pr
                 color: '#3F9B5B',
               }}
             >
-              +{mission.boost} {mission.need.toUpperCase()}
+              +{Math.floor(mission.boost / 2)} ENERGY
             </span>
           )}
           <span

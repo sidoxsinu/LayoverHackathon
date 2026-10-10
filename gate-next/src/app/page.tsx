@@ -155,6 +155,10 @@ function reducer(state: AppState, action: Action): AppState {
         ...state.stats,
         [m.need]: clamp(state.stats[m.need] + m.boost),
       };
+      
+      if (m.need === 'hunger' && m.boost > 0) {
+        boostedStats.energy = clamp(boostedStats.energy + Math.floor(m.boost / 2));
+      }
       const newXp = state.xp + 40;
       const newLog: LogEntry[] = [
         { id: m.id, text: m.text, status: 'completed', xp: 40, ts: Date.now() },
