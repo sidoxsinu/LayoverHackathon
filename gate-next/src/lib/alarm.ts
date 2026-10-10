@@ -114,9 +114,18 @@ export function playWarning(): void {
   } catch {}
 }
 
+export function stopWarning(): void {
+  try {
+    const w = getWarningAudio();
+    w.pause();
+    w.currentTime = 0;
+  } catch {}
+}
+
 export function startAlarm(): void {
   if (isPlaying) return;
   isPlaying = true;
+  stopWarning();
   const a = getAudio();
   a.muted = globalMute;
   a.play().catch((err) => {

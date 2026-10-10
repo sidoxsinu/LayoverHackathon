@@ -167,6 +167,10 @@ This file is the **single source of truth** for where the project stands right n
 **What was done:** Set the `volume` of the audio tracks to `0` during the `arm()` initialization sequence that fires when clicking "START LAYOVER", and then restored the volume immediately after.
 **Why:** When clicking start, the browser unlocks the audio by playing and instantly pausing it. This was causing a tiny, split-second audio "blip" to be heard by the user. Lowering the volume to 0 makes the unlock sequence completely silent.
 
+## [23:18] — Inline Mute Layout
+**What was done:** Refactored the `GlobalMuteButton` to remove its absolute/fixed positioning. It is now properly injected directly into the Flexbox header layout of the Setup, Quest, Alarm, and Safe Travels screens. 
+**Why:** The button was overlapping text on narrow screens. It now respects standard DOM flow and has proper spacing alongside other header elements.
+
 
 ---
 

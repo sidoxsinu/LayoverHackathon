@@ -4,7 +4,7 @@ import { useNow } from '@/hooks/useNow';
 import { useBattery } from '@/hooks/useBattery';
 import { phaseFor, demoSchedule } from '@/lib/time';
 import { pickMission, startStats, DRAIN_30S, Mission, Stats } from '@/lib/missions';
-import { arm, playWarning } from '@/lib/alarm';
+import { arm, playWarning, stopWarning } from '@/lib/alarm';
 import { load, save, clear, SavedState } from '@/lib/storage';
 import SetupScreen from '@/components/SetupScreen';
 import QuestScreen from '@/components/QuestScreen';
@@ -268,6 +268,9 @@ export default function Home() {
       } else if (phase === 'alarm') {
         alarmFiredRef.current = true;
         dispatch({ type: 'ALARM' });
+      } else if (warningFiredRef.current) {
+        warningFiredRef.current = false;
+        stopWarning();
       }
     }
   }, [now, state.returnByMs, state.screen, state.demo]);
