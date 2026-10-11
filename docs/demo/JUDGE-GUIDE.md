@@ -37,3 +37,6 @@ GATE is not a generic to-do list with an airport skin. Every single system is de
    - At 10 seconds remaining: Urgent warning triggers with audio alert and vibration (`WALK TO GATE NOW`).
    - At 0 seconds remaining: Full-screen red alarm takeover latches with maximum volume.
 5. Tap **"I AM AT THE GATE"**: View the Safe Travels completion card with stamped level rank and print options.
+
+---
+*Last verified against commit `83f76bc` on Oct 11, 2026.*

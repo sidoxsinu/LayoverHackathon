@@ -1,6 +1,6 @@
 # GATE — Serverless API Routes Contract
 
-**Last Verified:** 2026-10-11 · **Commit:** `98bad9e`
+**Last Verified:** 2026-10-11 · **Commit:** `83f76bc`
 
 ---
 

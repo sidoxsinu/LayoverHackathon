@@ -39,23 +39,25 @@ This file is the **single source of truth** for where the project stands right n
 | Migration 0002_trips.sql | ✅ Done | Written to supabase/migrations/0002_trips.sql (manual run in SQL Editor) |
 | Mission log (collapsible) | ✅ Done | Collapsible DONE/SKIP list with XP per entry |
 | Battery API hook | ✅ Done | useBattery.ts — null on iOS/Firefox, manual stat fallback |
-42: | AI missions (Groq proxy) | ✅ Done | Replaced multi-call Gemini with single background Groq call to /api/venue-missions; pure Nominatim geocode |
-43: | Precise Geolocation | ✅ Done | Uses Nominatim API for reverse geocoding to exact neighborhood/amenity |
-44: | Location Override Modal | ✅ Done | Custom styled popup to confirm manual location changes |
-45: | Supabase Auth + Postgres | ✅ Done | Google sign in mandatory for passport, idempotent offline queueing, RLS enabled |
-46: | App Flow Audit | ✅ Done | Conforms to strict PRD state machine; warning.mp3 duplication fixed; Nominatim limits respected |
-47: | Gate arrival completion | ✅ Done | Replaces mission slot with "ENJOY YOUR JOURNEY" airport signage card; prevents further tasks; allows direct safe return |
-48: | Photo proof (F8 mission proofs) | ✅ Done | Camera & upload, client resize (1280px, JPEG 0.7, EXIF stripped), IndexedDB queue, 5-min/phase guard, placeholder verifier |
-49: | Migration 0003_proofs.sql | ✅ Done | Written to supabase/migrations/0003_proofs.sql (manual run in SQL Editor) |
-50: | Rank & Level Model | ✅ Done | `src/lib/rank.ts`: MISSION_XP = 40, PROOF_BONUS_XP = 20, 10 progressive tiers scaling to 6500 XP, mission estimates, 20 unit tests |
-51: | Rank Explainer | ✅ Done | Shared `RankInfoSheet.tsx` with 10-tier departure-board ladder, reached/current/locked states, integrated into /passport & SafeTravels |
-52: | Spotlight Onboarding Tour | ✅ Done | `Tour.tsx` & `lib/tour.ts`: 4-box flat ink dimming, 2px amber frame, emergency unmount on urgent/alarm, HOW IT WORKS replay |
-53: | Context Hints | ✅ Done | `InfoTip.tsx`: 48px square "?" button, single-active listener, click-outside/escape dismiss across all primary screens |
-54: | Printable Completion Passport | ✅ Done | `/passport/print` & `lib/passport.ts`: A4/Letter print CSS, certificate stamp, aggregate metrics, 10-tier ladder strip |
-55: | Transit Waiting Types & Labels | ✅ Done | `lib/labels.ts`: flight, train, bus, other with dynamic place labels across all screens |
-56: | Venue Missions (Single Groq Call) | ✅ Done | `/api/venue-missions`: single non-blocking LLM call on START, 17 static fallbacks, prompt defense, 12h cache |
-57: 
-58: **Status legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⚠️ Done with caveats · ❌ Broken
+| AI missions (Groq proxy) | ✅ Done | Replaced multi-call Gemini with single background Groq call to /api/venue-missions; pure Nominatim geocode |
+| Precise Geolocation | ✅ Done | Uses Nominatim API for reverse geocoding to exact neighborhood/amenity |
+| Location Override Modal | ✅ Done | Custom styled popup to confirm manual location changes |
+| Supabase Auth + Postgres | ✅ Done | Google sign in mandatory for passport, idempotent offline queueing, RLS enabled |
+| App Flow Audit | ✅ Done | Conforms to strict PRD state machine; warning.mp3 duplication fixed; Nominatim limits respected |
+| Gate arrival completion | ✅ Done | Replaces mission slot with "ENJOY YOUR JOURNEY" airport signage card; prevents further tasks; allows direct safe return |
+| Photo proof (F8 mission proofs) | ✅ Done | Camera & upload, client resize (1280px, JPEG 0.7, EXIF stripped), IndexedDB queue, 5-min/phase guard, placeholder verifier |
+| Migration 0003_proofs.sql | ✅ Done | Written to supabase/migrations/0003_proofs.sql (manual run in SQL Editor) |
+| Rank & Level Model | ✅ Done | `src/lib/rank.ts`: MISSION_XP = 40, PROOF_BONUS_XP = 20, 10 progressive tiers scaling to 6500 XP, mission estimates, 20 unit tests |
+| Rank Explainer | ✅ Done | Shared `RankInfoSheet.tsx` with 10-tier departure-board ladder, reached/current/locked states, integrated into /passport & SafeTravels |
+| Spotlight Onboarding Tour | ✅ Done | `Tour.tsx` & `lib/tour.ts`: 4-box flat ink dimming, 2px amber frame, emergency unmount on urgent/alarm, HOW IT WORKS replay |
+| Context Hints | ✅ Done | `InfoTip.tsx`: 48px square "?" button, single-active listener, click-outside/escape dismiss across all primary screens |
+| Printable Completion Passport | ✅ Done | `/passport/print` & `lib/passport.ts`: A4/Letter print CSS, certificate stamp, aggregate metrics, 10-tier ladder strip |
+| Transit Waiting Types & Labels | ✅ Done | `lib/labels.ts`: flight, train, bus, other with dynamic place labels across all screens |
+| Venue Missions (Single Groq Call) | ✅ Done | `/api/venue-missions`: single non-blocking LLM call on START, 36 static fallbacks, prompt defense, 12h cache |
+| Clean Repo & Judging Structure | ✅ Done | Organized into `docs/{prd,engineering,demo,logs,archive}`, dead files safely removed, 61/61 tests |
+| Master Visual README | ✅ Done | 13 judge-focused sections, 7 Mermaid diagrams, real screenshots, rubric alignment |
+
+**Status legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⚠️ Done with caveats · ❌ Broken
 
 ---
 
@@ -638,3 +640,60 @@ Run this at **6:45 AM**, 15 minutes before judges start.
 - 38/38 Playwright tests pass (10/10 core/ladder, 22/22 rank & memories, 6/6 onboarding & print).
 - Zero banned UI elements (no emojis, gradients, shadows, glows, rounded > 2px, or em dashes).
 - Production build succeeds cleanly (`npm run build`).
+
+## [06:10] — Expansion to 10 Progressive Ranks & Extended Unit Tests
+**What was done:**
+- Extended `src/lib/rank.ts` progression model from 5 to 10 progressive tiers scaling up to 6500 XP:
+  - Level 1: `GATE ROOKIE` (0 XP)
+  - Level 2: `TERMINAL NOMAD` (50 XP)
+  - Level 3: `CONCOURSE RUNNER` (150 XP)
+  - Level 4: `GATE GUARDIAN` (300 XP)
+  - Level 5: `TRANSIT LEGEND` (500 XP)
+  - Level 6: `TARMAC VETERAN` (1000 XP)
+  - Level 7: `AIRSPACE NAVIGATOR` (1800 XP)
+  - Level 8: `FLIGHT COMMANDER` (3000 XP)
+  - Level 9: `STRATOSPHERE ELITE` (4600 XP)
+  - Level 10: `APEX VOYAGER` (6500 XP)
+- Updated `RankInfoSheet.tsx` to render all 10 tiers with progressive difficulty and dynamic missions remaining calculation.
+- Added 6 additional unit tests covering upper boundaries (1000 XP, 1800 XP, 3000 XP, 4600 XP, 6500 XP, 10000 XP clamp).
+
+## [06:45] — Transit Waiting Types & Single Background Groq Call
+**What was done:**
+- Introduced universal transit waiting type selector (`FLIGHT`, `TRAIN`, `BUS`, `OTHER`) via `lib/labels.ts`.
+- Mapped dynamic signage vocabulary (`GATE`, `PLATFORM`, `BUS STOP OR BAY`, `MEETING POINT`).
+- Replaced multiple AI calls with a single background Groq call (`/api/venue-missions`) triggered on START.
+- Added strict prompt injection defense, server rate limiting (5 req / 10 min), 12s abort timeout, and 12h client-side localStorage caching.
+- Maintained 100% decoupling from the core countdown and alarm paths.
+
+## [07:00] — Hackathon Judging Preparation: Repository Structure, Removal Proofs & Master README
+**What was done:**
+1. **Phase 0 Baseline Verification**:
+   - Clean verification of baseline commit (`a999262`): `npm ci`, Turbopack production build, 61/61 Playwright tests passed.
+   - Performed security scan, identifying past commits containing API credentials; ensured working tree is fully sanitized.
+2. **Phase 2 Safe Removals with Proof**:
+   - Safely removed provably unused files: `.DS_Store`, root `test-results.json`, scratch files (`dom.html`, `patch_*.js`, `update_missions.js`, `update_page.py`, `tests/runner.js`, `tests/e2e.mjs`).
+   - Safely removed unused `SetupHeader.tsx` and dead imports in `venueMissions.ts`, `main.spec.ts`, `venue.spec.ts`, and `venueMissions.spec.ts`.
+   - All 61 E2E tests and production build re-verified after each batch.
+3. **Phase 3 Restructure**:
+   - Cleanly organized docs into structured directories:
+     - `docs/prd/`: Original product requirements documents (00 through 06).
+     - `docs/engineering/`: Deep architecture and technical specifications (`ARCHITECTURE.md`, `ALARM-DESIGN.md`, `DATABASE-AND-RLS.md`, `API-ROUTES.md`, `TESTING.md`).
+     - `docs/demo/`: Live judging presentation materials (`JUDGE-GUIDE.md`, `DEMO-SCRIPT.md`).
+     - `docs/logs/`: Living project state (`WALKTHROUGH.md`, `ERROR-LOG.md`).
+     - `docs/archive/`: Legacy documentation.
+     - `tools/`: Automated screenshot capture utility (`capture-screenshots.mjs`).
+   - Replaced `gate-next/README.md` with a clean pointer to the root README and dev commands.
+   - Moved `AGENTS.md` to root and updated `.env.example`.
+4. **Phase 4 Screenshots & Master README**:
+   - Built and ran `tools/capture-screenshots.mjs` using headless Chrome mobile viewport (390 × 844) against a local production server.
+   - Captured real screenshots of all 7 key screens: Setup, Quest, Urgent Banner, Alarm Takeover, Safe Travels, Passport with Rank Sheet, and Trips Board.
+   - Composed a high-resolution 1600 × 900 composite banner (`docs/assets/hero.png`).
+   - Completely rewrote root `README.md` featuring 13 exact judge-focused sections, 7 Mermaid architecture diagrams, rubric alignment table, zero-network alarm guarantee, and quick start guide.
+   - Added standard MIT `LICENSE` file.
+
+**Verification**:
+- 61/61 Playwright tests pass consistently.
+- Production build succeeds with 0 errors.
+- Working tree clean, zero functional or style regression.
+- Last verified against commit `83f76bc` on Oct 11, 2026.
+
