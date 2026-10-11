@@ -21,20 +21,21 @@
 ### **[0:00–0:20] Hook** (phone in hand, facing you)
 > "You land in Dubai. Your connection is in six hours. You are exhausted, but terrified of dozing off and missing your flight. So you sit at the gate for six hours, doing nothing. Every traveler has lived this."
 
-### **[0:20–0:35] Setup, Dynamic Location & Trips** (show Setup screen)
-> "GATE automatically pinpoints your exact building - right now it detected our venue, **TinkerSpace, Calicut** with building-level GPS precision.
-> First-time travelers get an interactive spotlight tour and context tips explaining Safe Time. Tap SKIP TOUR in one click - it never gets in your way.
-> Plan ahead with saved trips, or let GATE pick it up on arrival. Setup takes 10 seconds. GATE calculates the last safe moment to wander."
-*(Optional: mention or tap the location input to show the `[AUTO]` badge or a quick override).*
-*(Tap START)*
-
-### **[0:35–1:05] Quest & Photo Proof** (show countdown, stats, mission)
-> "This countdown tracks the last safe moment you can wander freely. While it runs, GATE gives you survival missions sized to your remaining time.
-> Hungry? It suggests food. Twenty minutes left? It never suggests a sit-down meal. Finish a mission and your survival stats recover."
-
-*(Photo proof beat: Tap COMPLETE, pick a demo photo, tap USE PHOTO (+20 XP))*
-> "Missions ask for photo proof. Snap your coffee, charger, or departure board to earn bonus XP. All photos are compressed client-side on canvas, and personal EXIF metadata is stripped automatically."
-> "Hunger restored. +20 Proof XP awarded."
+24: ### **[0:20–0:35] Setup, Dynamic Location & Trips** (show Setup screen)
+25: > "GATE automatically pinpoints your exact building - right now it detected our venue, **TinkerSpace, Calicut** with building-level GPS precision.
+26: > First-time travelers get an interactive spotlight tour and context tips explaining Safe Time. Tap SKIP TOUR in one click - it never gets in your way.
+27: > Notice the WAITING FOR selector: whether you are waiting for a flight, train, or bus, GATE adapts all terminology.
+28: > Setup takes 10 seconds. GATE calculates the last safe moment to wander."
+29: *(Demo beat: Venue is TinkerSpace, Calicut. Tap START LAYOVER / START WAIT)*
+30: 
+31: ### **[0:35–1:05] Quest, Venue Missions & Photo Proof** (show countdown, stats, mission)
+32: > "This countdown tracks the last safe moment you can wander freely. The moment you tap START, GATE begins instantly with zero lag. In the background, a single Groq call generates venue-grounded quests specific to TinkerSpace - like spotting a maker project or tech gear.
+33: > Notice the 'AT TINKERSPACE' badge on venue-relevant missions!
+34: > Hungry? It suggests food. Twenty minutes left? It never suggests a sit-down meal. Finish a mission and your survival stats recover."
+35: 
+36: *(Photo proof beat: Tap COMPLETE, pick a demo photo, tap USE PHOTO (+20 XP))*
+37: > "Missions ask for photo proof. Snap your coffee, charger, or tech project to earn bonus XP. All photos are compressed client-side on canvas, and personal EXIF metadata is stripped automatically."
+38: > "Stats restored. +20 Proof XP awarded."
 
 ### **[1:05–1:20] Ladder** (banner and chime appear around here; Demo thresholds 20 s / 10 s)
 > "As time runs out, it escalates: first a heads-up chime at 15 minutes, then an urgent warning at 5 minutes with warning audio and vibration."
@@ -129,8 +130,9 @@ To prove to judges that GATE has **bulletproof offline architecture** and cannot
 | Why not just a phone alarm? | "A standard alarm is just a deadline. GATE structures the hours before it with missions sized to your available time, and warns you in progressive stages." |
 | Does it work if I lock my phone? | "Web apps cannot ring from a locked screen, so GATE keeps the screen awake and escalates visually, with sound and vibration. A native build with notifications is the next step." |
 | How does photo proof work? | "Proof is captured via camera or gallery and processed client-side. EXIF and location metadata are stripped on canvas, images are compressed under 1 MB, and offline photos are queued in IndexedDB." |
-| What if AI or network fails? | "The alarm path has zero network or AI dependency. By design, if you comment out `#` every API key in `.env.local`, missions, offline photos, and cached departures fall back seamlessly to local storage." |
-| How do you get building-level location? | "We query OpenStreetMap Nominatim with `zoom=18` and `extratags=1`, extracting specific building, leisure, and venue tags, combined with a 500m venue proximity safety net." |
+132: | What if AI or network fails? | "The alarm path has zero network or AI dependency. By design, if you comment out `#` every API key in `.env.local`, missions, offline photos, and cached departures fall back seamlessly to local storage." |
+133: | How do venue missions work? | "One call at start, validated, with local fallbacks. We make exactly one non-blocking Groq API call when the user starts, validated strictly server and client side, with code-derived stats. If the call is slow or fails, the quest runs on 17 local fallbacks with zero user disruption." |
+134: | How do you get building-level location? | "We query OpenStreetMap Nominatim with `zoom=18` and `extratags=1`, extracting specific building, leisure, and venue tags, combined with a 500m venue proximity safety net." |
 | What was hard? | "Reliability: time math across midnight, timestamp-based clocks so throttled tabs do not drift, and unlocking audio on the first tap." |
 | Business model? | Only if asked: airline or airport app partnership, duty-free/lounge tie-ins. |
 

@@ -57,134 +57,146 @@
 ---
 
 ## Screen 2: Setup Screen (Trip Integration)
-```
-┌──────────────────────────────────────┐
-│ [TRIPS]    [PASSPORT]     [SIGN OUT] │
-├──────────────────────────────────────┤
-│ GATE                                 │
-│ SETUP DEPARTURE                      │
-│                                      │
-│ TRIP SELECTOR (Signed-in)            │
-│ [ 11 OCT 18:45 / FLIGHT TO TOKYO   ▾]│
-│ FROM TRIP: FLIGHT TO TOKYO           │
-│ TRIP LOCATION: DOH TERMINAL 1        │
-│                                      │
-│ DEPARTURE TIME                       │
-│ [ 18:45 ]                            │
-│                                      │
-│ GATE                                 │
-│ [ TBA ]                              │
-│                                      │
-│ WALK TO GATE                         │
-│ [ 2 MIN ] [ 5 MIN ] [ 10 MIN*] [15]  │
-│                                      │
-│ VIBE                                 │
-│ [ WIRED ] [ TIRED ] [ HUNGRY ]       │
-├──────────────────────────────────────┤
-│ SAFE TIME: 4H 22M                    │
-│ [ START SURVIVAL (48px)            ] │
-└──────────────────────────────────────┘
-```
-- **Trip Dropdown**: Square 48px native `<select>`. Lists "MANUAL ENTRY" followed by upcoming trips. Preselects nearest upcoming trip within 24 hours.
-- Selecting fills departure, gate, walk time; fields remain editable without mutating saved trip.
-- Shows muted line "FROM TRIP: NAME". Trip location displayed as static text; does not re-run AI or Nominatim geocoding.
-- If trips table is unmigrated or fails: dropdown is hidden and displays single muted line "TRIPS UNAVAILABLE".
-
----
-
-## Screen 3: Trips Route (`/trips`)
-Departure-board table displaying real user trips only. Signed-in only.
-```
-┌──────────────────────────────────────┐
-│ < BACK                    [+ ADD TRIP│
-├──────────────────────────────────────┤
-│ DEPARTS       TRIP            STATUS │
-├──────────────────────────────────────┤
-│ 11 OCT        FLIGHT TO TYO     IN 3D│
-│ 18:45         DOH · QR812 · TBA      │
-├──────────────────────────────────────┤
-│ [ USE (48px) ] [ EDIT ] [ DELETE ]   │
-├──────────────────────────────────────┤
-│ 12 OCT        FLIGHT TO LHR     IN 4D│
-│ 06:10         LHR · BA118 · A12      │
-├──────────────────────────────────────┤
-│ [SHOW PAST (2) ▾]                    │
-└──────────────────────────────────────┘
-```
-- **Header**: DEPARTS / TRIP / STATUS in muted uppercase.
-- **Row**: Left = date & time in mono amber (11 OCT over 18:45); middle = name over muted location, flight, gate; right = status (IN 3D, IN 5H, TODAY, PAST).
-- **Row selection**: Tapping a row reveals three 48px square buttons: `USE` (loads trip into Setup and navigates to `/`), `EDIT`, and `DELETE`.
-- **Empty state**: Plain text "NO TRIPS SAVED. ADD YOUR NEXT DEPARTURE." with 48px `ADD TRIP` button.
-- **Offline indicator**: Muted line "OFFLINE, SHOWING SAVED TRIPS" when reading from cache.
-
-### Delete Confirmation Popup
-```
-┌──────────────────────────────────────┐
-│ DELETE TRIP                          │
-│ DELETE "FLIGHT TO TYO"?              │
-│ THIS ACTION CANNOT BE UNDONE.        │
-│                                      │
-│ [ CONFIRM DELETE (48px red)        ] │
-│ [ CANCEL (48px panel)              ] │
-└──────────────────────────────────────┘
-```
-- Flat panel surface with 1px border in `#34322C`. No blur or modal backdrop animations.
-
-### Add / Edit Trip Form (Full Screen)
-- Inputs: NAME (required, 1 to 60 characters), LOCATION (max 60), FLIGHT NO (max 12), GATE (max 8, TBA allowed), DEPARTURE DATE and TIME (native inputs with dark color scheme), WALK TO GATE segmented 2/5/10/15 (default 10).
-- Label: `TIMES USE YOUR DEVICE TIME ZONE.`
-- Validation error: One line in alarm red (`#C8201A`).
-- Save button: 48px tall, idempotent upsert with client-generated UUID.
-
----
-
-## Screen 4: Quest Screen
-```
-┌──────────────────────────────────────┐
-│ GATE A12                      XP 120 │
-├──────────────────────────────────────┤
-│ RETURN TO GATE IN                    │
-│ 03:42:17                             │
-├──────────────────────────────────────┤
-│ BATTERY [████████░░] 78%             │
-│ HUNGER  [███░░░░░░░] 35%             │
-│ SANITY  [██████░░░░] 62%             │
-├──────────────────────────────────────┤
-│ MISSION M-04 · MOVE                  │
-│ EXPLORE TERMINAL SHOP WINDOWS        │
-│ +40 XP · +20 PROOF                   │
-│                                      │
-│ [ COMPLETE (48px) ]  [ SKIP (48px) ] │
-└──────────────────────────────────────┘
-```
-- Countdown in mono amber. Digits update cleanly without easing or blur.
-- Stats in segmented blocks (10 blocks).
-- Paper-colored mission card with dashed tear-line.
-- When photo proof is enabled, card displays `+20 PROOF`.
-- If 5 minutes or less remain or phase is urgent, card displays muted warning: `PROOF OFF, LESS THAN 5 MIN LEFT` and COMPLETE bypasses proof.
-
-### Proof Screen Modal (`ProofModal.tsx`)
-```
-┌──────────────────────────────────────┐
-│ MISSION PROOF               [CANCEL] │
-├──────────────────────────────────────┤
-│ EXPLORE TERMINAL SHOP WINDOWS        │
-│                                      │
-│ REQUIRED PROOF:                      │
-│ PHOTO OF THE STORE WINDOW DISPLAY    │
-│                                      │
-│ NO FACES, ID OR BOARDING PASS.       │
-│ (GUEST PHOTOS ARE NOT SAVED)         │
-│                                      │
-│ [ PHOTO PREVIEW BOX (WHEN CHOSEN)  ] │
-│ 1280x960 PX · 280 KB (JPEG 70%)      │
-├──────────────────────────────────────┤
-│ [ TAKE PHOTO (48px)                ] │
-│ [ UPLOAD PHOTO (48px)              ] │
-│ [ SKIP PROOF (48px)                ] │
-│ (OR: [USE PHOTO (+20 XP)] / [RETAKE])│
-└──────────────────────────────────────┘
-```
+60: ```
+61: ┌──────────────────────────────────────┐
+62: │ [TRIPS]    [PASSPORT]     [SIGN OUT] │
+63: ├──────────────────────────────────────┤
+64: │ GATE                                 │
+65: │ SETUP DEPARTURE                      │
+66: │                                      │
+67: │ WAITING FOR                          │
+68: │ [ FLIGHT ▾] [TRAIN] [BUS] [OTHER]    │
+69: │                                      │
+70: │ VENUE (OPTIONAL)                     │
+71: │ [ TINKERSPACE, CALICUT             ] │
+72: │                                      │
+73: │ TRIP SELECTOR (Signed-in)            │
+74: │ [ 11 OCT 18:45 / FLIGHT TO TOKYO   ▾]│
+75: │ FROM TRIP: FLIGHT TO TOKYO           │
+76: │ TRIP LOCATION: DOH TERMINAL 1        │
+77: │                                      │
+78: │ DEPARTURE TIME                       │
+79: │ [ 18:45 ]                            │
+80: │                                      │
+81: │ GATE / PLATFORM / STOP               │
+82: │ [ TBA ]                              │
+83: │                                      │
+84: │ WALK TIME                            │
+85: │ [ 2 MIN ] [ 5 MIN ] [ 10 MIN*] [15]  │
+86: │                                      │
+87: │ VIBE                                 │
+88: │ [ WIRED ] [ TIRED ] [ HUNGRY ]       │
+89: ├──────────────────────────────────────┤
+90: │ SAFE TIME: 4H 22M                    │
+91: │ [ START LAYOVER / START WAIT (48px)] │
+92: └──────────────────────────────────────┘
+93: ```
+94: - **WAITING FOR Selector**: Native `ThemeDropdown` offering `FLIGHT`, `TRAIN`, `BUS`, `OTHER`. Maps dynamic place labels (`GATE`, `PLATFORM`, `BUS STOP OR BAY`, `MEETING POINT`). Universal 30-minute buffer applies across all types.
+95: - **VENUE Field**: Optional editable input (max 60 chars), prefilled from geolocation reverse geocoding when permission is granted.
+96: - **Dynamic Start Button**: `START LAYOVER` for flight, `START WAIT` for train, bus, and other. Triggers exactly ONE non-blocking Groq call in the background without delaying quest start.
+97: - **Trip Dropdown**: Square 48px native `<select>`. Lists "MANUAL ENTRY" followed by upcoming trips. Preselects nearest upcoming trip within 24 hours.
+98: - Selecting fills departure, gate, walk time; fields remain editable without mutating saved trip.
+99: - Shows muted line "FROM TRIP: NAME". Trip location displayed as static text; does not re-run AI or Nominatim geocoding.
+100: - If trips table is unmigrated or fails: dropdown is hidden and displays single muted line "TRIPS UNAVAILABLE".
+101: 
+102: ---
+103: 
+104: ## Screen 3: Trips Route (`/trips`)
+105: Departure-board table displaying real user trips only. Signed-in only.
+106: ```
+107: ┌──────────────────────────────────────┐
+108: │ < BACK                    [+ ADD TRIP│
+109: ├──────────────────────────────────────┤
+110: │ DEPARTS       TRIP            STATUS │
+111: ├──────────────────────────────────────┤
+112: │ 11 OCT        FLIGHT TO TYO     IN 3D│
+113: │ 18:45         DOH · QR812 · TBA      │
+114: ├──────────────────────────────────────┤
+115: │ [ USE (48px) ] [ EDIT ] [ DELETE ]   │
+116: ├──────────────────────────────────────┤
+117: │ 12 OCT        FLIGHT TO LHR     IN 4D│
+118: │ 06:10         LHR · BA118 · A12      │
+119: ├──────────────────────────────────────┤
+120: │ [SHOW PAST (2) ▾]                    │
+121: └──────────────────────────────────────┘
+122: ```
+123: - **Header**: DEPARTS / TRIP / STATUS in muted uppercase.
+124: - **Row**: Left = date & time in mono amber (11 OCT over 18:45); middle = name over muted location, flight, gate; right = status (IN 3D, IN 5H, TODAY, PAST).
+125: - **Row selection**: Tapping a row reveals three 48px square buttons: `USE` (loads trip into Setup and navigates to `/`), `EDIT`, and `DELETE`.
+126: - **Empty state**: Plain text "NO TRIPS SAVED. ADD YOUR NEXT DEPARTURE." with 48px `ADD TRIP` button.
+127: - **Offline indicator**: Muted line "OFFLINE, SHOWING SAVED TRIPS" when reading from cache.
+128: 
+129: ### Delete Confirmation Popup
+130: ```
+131: ┌──────────────────────────────────────┐
+132: │ DELETE TRIP                          │
+133: │ DELETE "FLIGHT TO TYO"?              │
+134: │ THIS ACTION CANNOT BE UNDONE.        │
+135: │                                      │
+136: │ [ CONFIRM DELETE (48px red)        ] │
+137: │ [ CANCEL (48px panel)              ] │
+138: └──────────────────────────────────────┘
+139: ```
+140: - Flat panel surface with 1px border in `#34322C`. No blur or modal backdrop animations.
+141: 
+142: ### Add / Edit Trip Form (Full Screen)
+143: - Inputs: NAME (required, 1 to 60 characters), LOCATION (max 60), FLIGHT NO (max 12), GATE (max 8, TBA allowed), DEPARTURE DATE and TIME (native inputs with dark color scheme), WALK TO GATE segmented 2/5/10/15 (default 10).
+144: - Label: `TIMES USE YOUR DEVICE TIME ZONE.`
+145: - Validation error: One line in alarm red (`#C8201A`).
+146: - Save button: 48px tall, idempotent upsert with client-generated UUID.
+147: 
+148: ---
+149: 
+150: ## Screen 4: Quest Screen
+151: ```
+152: ┌──────────────────────────────────────┐
+153: │ GATE / PLATFORM A12           XP 120 │
+154: ├──────────────────────────────────────┤
+155: │ RETURN TO GATE / PLATFORM IN         │
+156: │ 03:42:17                             │
+157: ├──────────────────────────────────────┤
+158: │ BATTERY [████████░░] 78%             │
+159: │ HUNGER  [███░░░░░░░] 35%             │
+160: │ SANITY  [██████░░░░] 62%             │
+161: ├──────────────────────────────────────┤
+162: │ MISSION M-04 · MOVE · AT TINKERSPACE │
+163: │ EXPLORE TERMINAL SHOP WINDOWS        │
+164: │ +40 XP · +20 PROOF                   │
+165: │                                      │
+166: │ [ COMPLETE (48px) ]  [ SKIP (48px) ] │
+167: └──────────────────────────────────────┘
+168: ```
+169: - Countdown in mono amber with dynamic label (`RETURN TO GATE IN`, `RETURN TO PLATFORM IN`, `RETURN TO BUS STOP IN`, `RETURN TO MEETING POINT IN`).
+170: - Mission tag displays category (`FOOD`, `MOVE`, `REST`, `PLUG`, `PREP`, `MEET`, `SPOT`).
+171: - Venue missions display small muted tag `AT {VENUE}` (e.g. `AT TINKERSPACE`). Static missions show no such tag.
+172: - Stats in segmented blocks (10 blocks).
+173: - Paper-colored mission card with dashed tear-line.
+174: - When photo proof is enabled, card displays `+20 PROOF`.
+175: - If 5 minutes or less remain or phase is urgent, card displays muted warning: `PROOF OFF, LESS THAN 5 MIN LEFT` and COMPLETE bypasses proof.
+176: 
+177: ### Proof Screen Modal (`ProofModal.tsx`)
+178: ```
+179: ┌──────────────────────────────────────┐
+180: │ MISSION PROOF               [CANCEL] │
+181: ├──────────────────────────────────────┤
+182: │ EXPLORE TERMINAL SHOP WINDOWS        │
+183: │                                      │
+184: │ REQUIRED PROOF:                      │
+185: │ PHOTO OF THE STORE WINDOW DISPLAY    │
+186: │                                      │
+187: │ NO FACES, ID OR BOARDING PASS.       │
+188: │ (OR: ONLY PEOPLE WHO AGREE TO BE IN  │
+189: │  THE PHOTO FOR SOCIAL MISSIONS)      │
+190: │                                      │
+191: │ [ PHOTO PREVIEW BOX (WHEN CHOSEN)  ] │
+192: │ 1280x960 PX · 280 KB (JPEG 70%)      │
+193: ├──────────────────────────────────────┤
+194: │ [ TAKE PHOTO (48px)                ] │
+195: │ [ UPLOAD PHOTO (48px)              ] │
+196: │ [ SKIP PROOF (48px)                ] │
+197: │ (OR: [USE PHOTO (+20 XP)] / [RETAKE])│
+198: └──────────────────────────────────────┘
+199: ```
 - Full-screen takeover, `#101010` background, 1px solid borders.
 - Buttons 48px or taller, uppercase Barlow Condensed typography.
 - Camera trigger via hidden file input (`capture="environment"`). Upload via standard file input.
