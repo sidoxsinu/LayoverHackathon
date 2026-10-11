@@ -28,7 +28,10 @@ dist-ssr/
 .env.*
 !.env.example
 
-# Next.js
+# Next.js & Testing
 .next/
 out/
-demo_images/
+test-results/
+test-results.json
+*.pyc
+__pycache__/
