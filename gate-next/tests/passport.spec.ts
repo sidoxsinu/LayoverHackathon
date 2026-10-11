@@ -11,7 +11,7 @@ test.describe('Passport & Trip Memories E2E Tests', () => {
 
     await expect(page.getByText('NO LAYOVERS YET. COMPLETE ONE TO GET YOUR FIRST STAMP.')).toBeVisible();
     await expect(page.getByText('TOTAL XP')).toBeVisible();
-    await expect(page.getByText('GATE ROOKIE')).toBeVisible();
+    await expect(page.getByText('GATE ROOKIE').first()).toBeVisible();
   });
 
   test('Rank system: 160 XP correctly shows Concourse Runner and progress bar', async ({ page }) => {

@@ -223,3 +223,120 @@ Departure-board table displaying real user trips only. Signed-in only.
   - Mission code, title, status badge (`PROOF SAVED, NOT CHECKED`, etc.).
   - `DELETE PHOTO` action triggers airport-styled confirmation popup (`DELETE PHOTO? THIS CANNOT BE UNDONE.`).
   - Confirm permanently removes object from storage and clears database path.
+- Rank Title and "LEVEL x OF 5" stamp displayed in mono.
+- Safe Travels includes square 48px "?" button that opens `RankInfoSheet`.
+- Passport summary card displays rank title, "LEVEL x OF 5", TOTAL XP, 10-block segmented bar, and "WHAT IS THIS?" button (48px) opening `RankInfoSheet`.
+
+---
+
+## Screen 7: Rank & XP Explainer Sheet (`RankInfoSheet.tsx`)
+```
+┌──────────────────────────────────────┐
+│ RANKS AND XP                 [CLOSE] │
+├──────────────────────────────────────┤
+│ TRAVELER SUMMARY                     │
+│ CONCOURSE RUNNER        LEVEL 3 OF 5 │
+│ 160 XP · 140 XP TO GATE GUARDIAN     │
+│ [███░░░░░░░] 7% INTO RANK            │
+│ ABOUT 4 MISSIONS, OR 3 WITH PHOTO    │
+│ PROOF                                │
+├──────────────────────────────────────┤
+│ HOW TO EARN XP                       │
+│ COMPLETE A MISSION              +40  │
+│ ADD A PHOTO PROOF               +20  │
+│ SKIP A MISSION                    0  │
+│ XP IS NEVER LOST                     │
+├──────────────────────────────────────┤
+│ RANK LADDER                          │
+│ LV  TITLE       XP      STATUS       │
+│ 01  ROOKIE      0       REACHED      │
+│ 02  NOMAD       50      REACHED      │
+│ 03  RUNNER      150     YOU ARE HERE │
+│ 04  GUARDIAN    300     LOCKED       │
+│ 05  LEGEND      500     LOCKED       │
+├──────────────────────────────────────┤
+│ [ CLOSE (48px)                     ] │
+└──────────────────────────────────────┘
+```
+- Full-screen sheet with dense departure-board aesthetic.
+- Ranks marked with `REACHED` (green), `YOU ARE HERE` (amber border), or muted text for locked.
+- Shows required missions to advance: calculated without proof (`ceil(xpToNext / 40)`) and with proof (`ceil(xpToNext / 60)`).
+
+---
+
+## Screen 8: Spotlight Onboarding Tour (`Tour.tsx`)
+```
+┌──────────────────────────────────────┐
+│ [4 solid ink dimming rectangles 80%] │
+│        ┌──────────────────┐          │
+│        │ [2px amber frame]│          │
+│        │  TARGET ELEMENT  │          │
+│        └──────────────────┘          │
+│                                      │
+│ ┌──────────────────────────────────┐ │
+│ │ STEP 1 / 6           [SKIP TOUR] │ │
+│ │ DEPARTURE TIME                   │ │
+│ │ SET YOUR SCHEDULED BOARDING OR   │ │
+│ │ DEPARTURE TIME.                  │ │
+│ │                                  │ │
+│ │ [ BACK (48px) ] [ NEXT (48px) ]  │ │
+│ └──────────────────────────────────┘ │
+└──────────────────────────────────────┘
+```
+- Flat 4-rectangle dimming in solid ink at 80% opacity (`rgba(16, 16, 16, 0.8)`).
+- 2px amber outline frame with 4px padding around focused element. Zero shadows or blurs.
+- Target auto-scrolls into view with safety padding.
+- Re-measuring on resize, scroll, and orientation change.
+- "HOW IT WORKS" replay link restarts the tour at any time.
+- Emergency unmount: Instant unmount if alarm phase becomes urgent or alarm.
+
+---
+
+## Screen 9: Context InfoTips (`InfoTip.tsx`)
+```
+┌──────────────────────────────────────┐
+│ SAFE TIME [?]                        │
+│ ┌──────────────────────────────────┐ │
+│ │ SAFE TIME EXPLAINER      [CLOSE] │ │
+│ │ SAFE TIME = DEPARTURE MINUS      │ │
+│ │ (30 MIN BOARDING + WALK + 5 MIN) │ │
+│ └──────────────────────────────────┘ │
+└──────────────────────────────────────┘
+```
+- 48px square touch button labeled `?`.
+- Popover panel rendered with 1px solid line border `#34322C` and solid `#181816` panel background.
+- Single-active listener: opening any tip dismisses other active tips.
+- Dismisses on click-outside, close button tap, or Escape key.
+
+---
+
+## Screen 10: Printable Passport Route (`/passport/print`)
+```
+┌──────────────────────────────────────┐
+│ GATE LAYOVER PASSPORT                │
+│ TRAVELER: GUEST TRAVELER             │
+│ ISSUED: 11 OCT 2026                  │
+│                                      │
+│ [ LEVEL 3 OF 5 - CONCOURSE RUNNER ]  │
+│                                      │
+│ TOTAL XP: 160 (120 MISSION / 40 PROOF)
+│ SURVIVED: 2 · MISSIONS: 3 · PHOTOS: 2│
+├──────────────────────────────────────┤
+│ RANK LADDER PROGRESSION              │
+│ 01 ROOKIE [✓]  02 NOMAD [✓]          │
+│ 03 RUNNER [*]  04 GUARDIAN [ ]       │
+│ 05 LEGEND [ ]                        │
+├──────────────────────────────────────┤
+│ LAYOVER 1: DXB TERMINAL 3            │
+│ TIME: 3H 45M · MISSIONS: 2 · PHOTOS:1│
+│ M-04 EXPLORE SHOPS · +40 XP · [PHOTO]│
+│ M-12 COFFEE TIME   · +40 XP          │
+├──────────────────────────────────────┤
+│ [ PRINT PASSPORT / SAVE PDF ]        │
+└──────────────────────────────────────┘
+```
+- Standalone print-optimized layout on `#E6E1D3` paper background.
+- Configured with `@page { margin: 12mm; }` and `-webkit-print-color-adjust: exact`.
+- Cards prevent page break cuts via `break-inside: avoid; page-break-inside: avoid;`.
+- Query param support: `/passport/print` prints all layovers; `/passport/print?layover=<id>` prints single certificate.
+- On-screen helper text: "THE BROWSER PRINT DIALOG DOUBLES AS 'SAVE AS PDF'."

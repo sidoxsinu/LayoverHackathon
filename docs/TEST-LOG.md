@@ -19,11 +19,27 @@
 **Test 15: Grep src for banned items** - PASS
 **Test 16: Build succeeds** - PASS
 
-## Iteration 5 (Trip Memories sheet & lightbox layering, portal isolation, hit-testing, and scroll lock)
+## Iteration 6 (First-time user onboarding tour, rank explainer, context hints, and printable passport)
 
-- **Passport & Trip Memories E2E Tests (`tests/passport.spec.ts`)**: PASS (8/8 tests pass: hit-testing confirms passport header covered, sheet computed background `#101010` opacity 1, inert page behind, body scroll locked & restored, singular "1 PHOTO" / plural "3 PHOTOS", Lightbox close returns to sheet, 360x640 and 390x844 zero horizontal scroll).
-- **Core Regression E2E Tests (`tests/main.spec.ts`)**: PASS (10/10 tests pass).
-- **Rank System Unit Tests (`tests/rank.spec.ts`)**: PASS (12/12 boundary tests pass).
-- **Banned UI & Storage Proofs Audit (`scripts/verify-proofs.mjs`)**: PASS (42/42 checks pass: 0 emojis, 0 gradients, 0 shadows, 0 blur, 0 rounded corners > 2px, 0 em dashes).
-- **Production Build (`npm run build`)**: PASS (0 errors, optimized static routes).
+- **Test 1: Setup validation**: PASS
+- **Test 2: Demo Mode (alarm at 60s, ladder stages)**: PASS
+- **Test 3: Alarm takeover and Safe Travels reset**: PASS
+- **Test 4: Normal mode ladder**: PASS
+- **Test 5: Stats drain**: PASS
+- **Test 6: Mission engine (no repeat, lowest stat target, <= minsLeft - 5)**: PASS
+- **Test 7: Complete adds boost and XP, rapid taps resiliency**: PASS
+- **Test 8: Refresh mid-session & post-returnBy alarm direct mount**: PASS
+- **Test 9: Background simulation (catch-up with no stuck state)**: PASS
+- **Test 10: Departure past midnight rollover**: PASS
+- **Test 11: Audio blocked fallback (oscillator)**: PASS
+- **Test 12: Missing platform APIs resiliency**: PASS
+- **Test 13: Corrupted localStorage recovery to Setup**: PASS
+- **Test 14: Responsive viewports (360x640, 390x844, zero horizontal scroll, >=48px targets)**: PASS
+- **Test 15: Grep src for banned items (0 emojis, 0 gradients, 0 shadows, 0 blur, 0 radius > 2px, 0 em dashes)**: PASS
+- **Test 16: Zero console errors & production build (`npm run build`)**: PASS
+- **Test 17: Spotlight Tour (auto-start, step progression, SKIP TOUR, HOW IT WORKS replay, Demo Mode isolation)**: PASS
+- **Test 18: Rank Explainer & Sheet (`/passport` ladder, tiers 1-5, mission estimates, Safe Travels "?" button)**: PASS
+- **Test 19: Context InfoTips (popover open, close on click outside or escape, single-active listener)**: PASS
+- **Test 20: Printable Passport (`/passport/print` CSS @page margin, rank stamps, photo cards, single layover `?layover=<id>`)**: PASS
+- **Overall Suite**: 38/38 Playwright E2E and unit tests PASS. Production build succeeds with 0 errors.
 

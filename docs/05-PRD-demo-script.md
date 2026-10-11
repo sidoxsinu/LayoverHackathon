@@ -22,7 +22,8 @@
 > "You land in Dubai. Your connection is in six hours. You are exhausted, but terrified of dozing off and missing your flight. So you sit at the gate for six hours, doing nothing. Every traveler has lived this."
 
 ### **[0:20–0:35] Setup, Dynamic Location & Trips** (show Setup screen)
-> "GATE automatically pinpoints your exact building — right now it detected our venue, **TinkerSpace, Calicut** with building-level GPS precision.
+> "GATE automatically pinpoints your exact building - right now it detected our venue, **TinkerSpace, Calicut** with building-level GPS precision.
+> First-time travelers get an interactive spotlight tour and context tips explaining Safe Time. Tap SKIP TOUR in one click - it never gets in your way.
 > Plan ahead with saved trips, or let GATE pick it up on arrival. Setup takes 10 seconds. GATE calculates the last safe moment to wander."
 *(Optional: mention or tap the location input to show the `[AUTO]` badge or a quick override).*
 *(Tap START)*
@@ -41,8 +42,10 @@
 ### **[1:20–1:45] Alarm** (go silent when the screen turns red. Count three. Let the room react.)
 > "And then it takes over. Hard-stepping alarm, maximum volume, zero snooze. One button."
 
-*Tap I'M AT THE GATE. Show Safe Travels, photo thumbnails, and the Passport card.*
-*(Camera shutter audio feedback plays as the report prints).*
+*Tap I'M AT THE GATE. Show Safe Travels, rank level stamp (e.g. LEVEL 1 OF 5), and "?" button.*
+*(Tap "?" or "WHAT IS THIS?" on Passport: show the full 5-tier Rank Ladder from Gate Rookie to Transit Legend).*
+*(Tap "PRINT PASSPORT": show print preview / PDF generation).*
+> "Every minute spent surviving builds your rank from Gate Rookie to Transit Legend. You can print or save your official boarding passport and layover certificate with one click."
 
 ### **[1:45–2:00] Close**
 > "GATE makes your layover structured, purposeful, and impossible to mess up. Built tonight, running live on a public URL with zero-dependency offline safety. Scan the QR to try it."

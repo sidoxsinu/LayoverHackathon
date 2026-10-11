@@ -310,31 +310,80 @@ Adds mission photo proof tracking, cloud storage, and security policies:
   - Strict UI invariant: Never display `VERIFIED` unless status is strictly `'verified'`.
 - **Proof Bonus XP**: Constant `PROOF_BONUS_XP = 20`. Under current placeholder stage, attaching a photo awards +20 XP stored per row in `proof_xp`. Once real AI vision checking is active, the bonus condition moves to status `'verified'` only.
 
-## AI missions (P2)
-`api/missions.js` (Vercel function) calls Gemini with the key from `process.env.GEMINI_API_KEY` and model name from `process.env.GEMINI_MODEL`. Prompt: return JSON array of 6 missions with the same shape as above, including `proofHint`. Client: `Promise.race([fetch('/api/missions', ...), timeout(3000)])`, validate every field, merge into the pool, else ignore. Never needed for the alarm.
+## Rank and XP Architecture (`lib/rank.ts`)
+- **Constants**:
+  - `MISSION_XP = 40` (earned on mission completion)
+  - `PROOF_BONUS_XP = 20` (earned when valid photo proof is attached)
+- **Rank Tiers**:
+  1. Level 1: `GATE ROOKIE` (0 XP) - "JUST LANDED. YOUR FIRST LAYOVER."
+  2. Level 2: `TERMINAL NOMAD` (50 XP) - "YOU KNOW HOW TO FILL AN AIRPORT HOUR."
+  3. Level 3: `CONCOURSE RUNNER` (150 XP) - "YOU OWN THE CONCOURSE."
+  4. Level 4: `GATE GUARDIAN` (300 XP) - "YOU NEVER MISS A BOARDING CALL."
+  5. Level 5: `TRANSIT LEGEND` (500 XP) - "TOP RANK. THE TERMINAL KNOWS YOUR NAME."
+- **Invariants**:
+  - Rank is never stored in DB or session state. Derived dynamically from total XP at render time.
+  - Total XP = sum of completed mission XP (40 per mission) + proof XP (20 per photo).
+  - Negative XP, `NaN`, and `undefined` are guarded and clamped to 0 (`GATE ROOKIE`).
+  - Estimates to next rank: `missionsToNext` = `Math.ceil(xpToNext / 40)` (without proof) and `Math.ceil(xpToNext / 60)` (with proof).
 
-## Deploy
-```bash
-npm run build && npx vercel --prod
-```
-Open on a real phone over HTTPS, press START in Demo Mode, and verify: sound, vibration (Android), screen stays on, alarm fires with screen on and tab foregrounded.
+## Spotlight Tour Architecture (`components/Tour.tsx`, `lib/tour.ts`)
+- **Storage**: `gate.tour.v1` in `localStorage`.
+  - Schema: `{ setupSeen: boolean, questSeen: boolean, safeTravelsSeen: boolean, passportSeen: boolean }`.
+  - Replay button "HOW IT WORKS" resets target screen's seen state and remounts tour.
+- **Visual Dimming Engine**:
+  - Four absolutely positioned solid panels (`rgba(16, 16, 16, 0.8)`) surround the target bounding box (top, bottom, left, right).
+  - Target framed with 2px solid amber border with 4px padding. Zero blur, box-shadow, or backdrop-filter.
+  - Auto-scrolls target into view with safety margin. Re-measures on window resize, scroll, and orientation change.
+  - Centered fallback: If element with `data-tour="id"` is missing from DOM, card renders centered without frame.
+- **Alarm Safety Invariant**:
+  - Tour immediately unmounts if `phase === 'urgent'` or `phase === 'alarm'`.
+  - Alarm layer has `z-index: 100`, strictly above Tour layer (`z-index: 70`).
+  - Tour never calls `arm()` or triggers WebAudio. Audio arming remains exclusive to user's START tap.
+  - Safe time <= 15 min guard on Quest screen displays "TOUR SKIPPED, LESS THAN 15 MIN LEFT" without marking seen.
+  - Demo Mode (triple-tap wordmark) never triggers tour.
+
+## Context InfoTips (`components/InfoTip.tsx`)
+- 48px square touch button labeled `?`.
+- Single-active listener: broadcasts `gate:infotip-opened` so opening one tip closes any other open tip.
+- Closes on click outside, Escape key, or close button tap.
+- Targets: Safe Time, Walk Time, Vibe, Stats, Proof, Scheduled Trips, and Passport empty state.
+
+## Printable Passport Route (`/passport/print`, `lib/passport.ts`)
+- Standalone print-optimized route (`/passport/print` or `/passport/print?layover=<id>`).
+- Print CSS:
+  - `@page { size: auto; margin: 12mm; }`
+  - `-webkit-print-color-adjust: exact; print-color-adjust: exact;`
+  - Solid paper `#E6E1D3` background, `#101010` ink text, 1px solid borders.
+  - Cards enforce `break-inside: avoid; page-break-inside: avoid;`.
+- Render Layout:
+  - Header: `GATE LAYOVER PASSPORT`, traveler name, print date, square rank stamp with `LEVEL x OF 5`.
+  - Summary metrics: TOTAL XP (with mission/proof split), SURVIVED count, MISSIONS count, PHOTOS count, LONGEST layover.
+  - Rank ladder strip showing all 5 ranks with `REACHED`, `CURRENT`, and `LOCKED` states.
+  - Layover cards with mission logs, flight/gate details, and photo frames.
+  - Empty state: "NO LAYOVERS TO PRINT." with disabled print button.
+  - Screen guidance: "THE BROWSER PRINT DIALOG DOUBLES AS 'SAVE AS PDF'."
 
 ## Test checklist
 - [ ] Alarm fires within 1 s of returnBy
 - [ ] Refresh mid-session restores
 - [ ] Departure past midnight
-- [ ] Safe time ≤ 0 is blocked
-- [ ] Audio blocked → fallback works
-- [ ] Background tab 60 s then return → ladder catches up
+- [ ] Safe time <= 0 is blocked
+- [ ] Audio blocked -> fallback works
+- [ ] Background tab 60 s then return -> ladder catches up
 - [ ] Mission never exceeds remaining time
 - [ ] Trips RLS blocks cross-user reads/writes
 - [ ] Trips offline fallback displays cached departures
 - [ ] Unmigrated trips table gracefully falls back to "TRIPS UNAVAILABLE"
-- [ ] Photo proof compression resizes 4000px image to ≤ 1280px and strips EXIF
+- [ ] Photo proof compression resizes 4000px image to <= 1280px and strips EXIF
 - [ ] Storage RLS blocks cross-user proof folder access
-- [ ] Mission complete with ≤ 5 min left bypasses camera with "PROOF OFF, LESS THAN 5 MIN LEFT"
+- [ ] Mission complete with <= 5 min left bypasses camera with "PROOF OFF, LESS THAN 5 MIN LEFT"
 - [ ] Alarm trigger while proof modal is open closes modal immediately
 - [ ] Offline proofs queue in IndexedDB and upload when back online
 - [ ] Placeholder verifier returns "unverified" with badge "PROOF SAVED, NOT CHECKED"
 - [ ] Guest photo proof stays in memory only and shows "GUEST PHOTOS ARE NOT SAVED"
+- [ ] Rank derives purely from XP (160 XP = level 3 Concourse Runner, 140 XP to Gate Guardian)
+- [ ] Tour dismisses instantly on urgent or alarm phase
+- [ ] Quest screen with <= 15 min left skips tour with "TOUR SKIPPED, LESS THAN 15 MIN LEFT"
+- [ ] InfoTips close on click outside or Escape
+- [ ] Printable passport prints single layover or full history with page-break-inside avoid
 

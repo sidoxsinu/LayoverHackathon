@@ -61,5 +61,39 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 2. In the Vercel project settings, add the Environment Variables (`GEMINI_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
 3. Deploy!
 
+## Testing
+Run the complete automated Playwright test suite (38/38 tests covering core flow, alert ladder, missions, resilience, edge cases, rank boundaries, photo memories, onboarding tour, and print route):
+```bash
+cd gate-next
+npm run test:e2e
+# or
+npx playwright test
+```
+
+## Core Features & Architecture
+
+### 1. First-Time Onboarding Tour & Context InfoTips
+- **Spotlight Tour**: Sequential 4-box flat ink dimming (`rgba(16, 16, 16, 0.8)`) with 2px amber target framing. Automatically introduces new users to Setup, Quest, Safe Travels, and Passport screens. Can be skipped anytime in one tap.
+- **Replay**: Tap "HOW IT WORKS" on Setup or Passport at any time to replay the tour.
+- **Alarm Isolation**: The tour automatically unmounts immediately if the alert ladder enters urgent or alarm phase. The alarm layer has `z-index: 100`, strictly above the tour (`z-index: 70`).
+- **Context InfoTips**: Flat `?` buttons beside critical inputs (Safe Time, Walk Time, Vibe, Stats, Proof, Scheduled Trips) that explain airport concepts without clutter.
+
+### 2. Rank & Level Progression Model
+- **Centralized XP constants**: `MISSION_XP = 40`, `PROOF_BONUS_XP = 20`.
+- **Dynamic Rank Derivation**: Ranks are derived dynamically from total XP and never stored as a database enum or state variable.
+- **5 Canonical Tiers**:
+  1. Level 1: `GATE ROOKIE` (0 XP) - "JUST LANDED. YOUR FIRST LAYOVER."
+  2. Level 2: `TERMINAL NOMAD` (50 XP) - "YOU KNOW HOW TO FILL AN AIRPORT HOUR."
+  3. Level 3: `CONCOURSE RUNNER` (150 XP) - "YOU OWN THE CONCOURSE."
+  4. Level 4: `GATE GUARDIAN` (300 XP) - "YOU NEVER MISS A BOARDING CALL."
+  5. Level 5: `TRANSIT LEGEND` (500 XP) - "TOP RANK. THE TERMINAL KNOWS YOUR NAME."
+- **Rank Explainer Sheet**: Tap "WHAT IS THIS?" on Passport or "?" on Safe Travels to open the departure-board ladder showing reached, current, and locked tiers with calculated missions to next rank (with and without proof).
+
+### 3. Printable Passport & Layover Certificate (`/passport/print`)
+- Standalone print-optimized document supporting full passport history or single layover certificate (`/passport/print?layover=<id>`).
+- Airport typography, paper `#E6E1D3` background, A4/Letter margin settings (`@page { margin: 12mm; }`), and `page-break-inside: avoid;` to prevent clipped cards.
+- Compatible with browser "Save as PDF" and physical printers.
+
 ## Security Check (RLS)
 Row Level Security (RLS) is enabled on all tables (`profiles`, `layovers`, `mission_log`, `trips`). The policies explicitly use `auth.uid() = user_id`, meaning it is mathematically impossible for a user to read, update, or delete any rows belonging to another user. Furthermore, the `layovers` table verifies that any assigned `trip_id` must belong to the active authenticated user (`trips.user_id = auth.uid()`), preventing cross-user data tampering.
+

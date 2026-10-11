@@ -64,15 +64,19 @@ export default function QuestScreen({
   const isProofDisabled = phase === 'urgent' || phase === 'alarm' || minsLeft <= 5;
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [showTourSkippedNotice, setShowTourSkippedNotice] = useState(false);
   const prevPhase = useRef(phase);
 
   // Auto-start tour once for first time users if safe time > 15m and not demo
   useEffect(() => {
     if (demo) return;
-    if (minsLeft <= 15) return;
     if (phase === 'urgent' || phase === 'alarm') return;
 
     if (!isTourCompleted('quest')) {
+      if (minsLeft <= 15) {
+        setShowTourSkippedNotice(true);
+        return;
+      }
       const timer = setTimeout(() => {
         setShowTour(true);
       }, 400);
@@ -174,11 +178,32 @@ export default function QuestScreen({
           >
             {gate}
           </span>
-          <GlobalMuteButton />
+          <div data-tour="quest-mute">
+            <GlobalMuteButton />
+          </div>
         </div>
       </div>
 
+      {showTourSkippedNotice && (
+        <div
+          style={{
+            backgroundColor: '#181816',
+            borderBottom: '1px solid #34322C',
+            padding: '8px 16px',
+            textAlign: 'center',
+            fontFamily: 'var(--font-plex), monospace',
+            fontSize: '11px',
+            color: '#8C887C',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          TOUR SKIPPED, LESS THAN 15 MIN LEFT
+        </div>
+      )}
+
       {/* Heads-up banner */}
+      <div data-tour="quest-alerts">
       {headsUpBanner && (
         <div
           style={{
@@ -236,6 +261,7 @@ export default function QuestScreen({
           </span>
         </div>
       )}
+      </div>
 
       {/* Countdown */}
       <div data-tour="quest-countdown">
@@ -292,7 +318,7 @@ export default function QuestScreen({
       )}
 
       {/* Safe return button */}
-      <div style={{ padding: '12px 16px', borderTop: '1px solid #34322C' }}>
+      <div data-tour="quest-gate-arrival" style={{ padding: '12px 16px', borderTop: '1px solid #34322C' }}>
         <button
           onClick={onSafeReturn}
           style={{

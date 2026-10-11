@@ -247,7 +247,7 @@ export default function Tour({
       >
         <div className="flex justify-between items-center font-mono text-[11px] text-muted uppercase">
           <span className="text-amber font-bold">
-            STEP {currentStep + 1} OF {steps.length}
+            STEP {currentStep + 1} / {steps.length}
           </span>
           <button
             onClick={handleSkip}
@@ -284,7 +284,7 @@ export default function Tour({
             style={{ minHeight: '48px', minWidth: '48px' }}
             className="flex-1 bg-amber text-ink font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center rounded-[2px] focus:outline-none focus:ring-1 focus:ring-paper active:opacity-90"
           >
-            {currentStep === steps.length - 1 ? 'GOT IT' : 'NEXT'}
+            {currentStep === steps.length - 1 ? 'DONE' : 'NEXT'}
           </button>
         </div>
       </div>

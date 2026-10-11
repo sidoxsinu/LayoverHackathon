@@ -319,7 +319,7 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
 
       {/* Stamp block */}
       <div
-        data-tour="safe-summary"
+        data-tour="safe-stamp"
         style={{
           border: '2px solid #E6E1D3',
           padding: '32px 28px',
@@ -372,6 +372,7 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
             </div>
           </div>
 
+          <div data-tour="safe-summary">
           <div style={{ borderTop: '1px solid #34322C', paddingTop: '12px', display: 'flex', gap: '24px' }}>
             <div>
               <div
@@ -464,6 +465,7 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
                 +{proofXpTotal}
               </div>
             </div>
+          </div>
           </div>
 
           <div style={{ borderTop: '1px solid #34322C', paddingTop: '12px' }}>

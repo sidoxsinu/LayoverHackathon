@@ -45,6 +45,7 @@
 - [ ] Works offline after first load
 - [ ] Passport card looks good in a screenshot
 - [x] Trips management (saved departures table, Setup integration, offline cache, RLS)
+- [x] First-time onboarding spotlight tour, context tips, rank explainer, and printable passport
 - [ ] README with screenshots
 
 

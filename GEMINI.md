@@ -77,13 +77,16 @@ No router, no state library, no UI kit, no animation library. Do not add any dep
 - The UI never shows VERIFIED unless status is strictly verified.
 - No sample, placeholder, seeded or fake data anywhere (UI, code, DB, in-app text). Empty states are plain text. Input placeholders show format only.
 - Audio is armed inside the START click handler (autoplay policy). Wake Lock, Vibration and Battery APIs are feature-detected and optional.
-- Demo Mode (triple-tap wordmark → returnBy = now + 60 s) must always work. Demo Mode ignores trips.
+- Demo Mode (triple-tap wordmark → returnBy = now + 60 s) must always work. Demo Mode ignores trips and never auto-runs the tour.
 - Alarm screen: instant mount, no animation, no dismiss except "I'M AT THE GATE", text computed from real timestamps.
 - Mobile portrait first (`max-w-sm`, 48px touch targets, 16px+ text, `100dvh`).
 - Every state change persists to localStorage; refresh must restore the session.
+- Tour and hints never block or delay the alarm path. If phase becomes "urgent" or "alarm", tour unmounts immediately and alarm shows on top (alarm z-index 100 above tour z-index 70). Never call arm() from the tour.
+- Rank is always derived from total XP, never stored in state or database. Guard against NaN, negative, and undefined.
+- XP constants live in one place: `MISSION_XP = 40`, `PROOF_BONUS_XP = 20`. Nothing else may hardcode these numbers.
 
 ## APP FLOW & Routes
-Routes: `/` (AUTH, SETUP, QUEST, ALARM, SAFE TRAVELS) · `/passport` · `/trips`.
+Routes: `/` (AUTH, SETUP, QUEST, ALARM, SAFE TRAVELS) · `/passport` · `/passport/print` · `/trips`.
 
 1. AUTH (fresh session)
 - Wordmark GATE vertically centered in free space.
@@ -95,31 +98,49 @@ Routes: `/` (AUTH, SETUP, QUEST, ALARM, SAFE TRAVELS) · `/passport` · `/trips`
 - Header links for signed-in users: TRIPS / PASSPORT / SIGN OUT.
 - If signed in with upcoming trips: TRIP dropdown (native select, square, 48px) above departure fields. Options: "MANUAL ENTRY", then upcoming trips as "11 OCT 18:45 / NAME". Preselects nearest upcoming trip departing within next 24 hours.
 - Selecting a trip fills departure (absolute departureMs passed straight into schedule()), gate, and walk time. Fields stay editable and edits never change saved trip. Displays "FROM TRIP: NAME" and label "TRIP LOCATION: ...".
+- Context hints (48px square "?" buttons) on Safe Time, Walk Time, Vibe.
+- Spotlight tour (6 steps: welcome, departure, gate, walk, vibe, start) auto-starts on fresh session. Replay via "HOW IT WORKS" in footer.
 - If trips table does not exist or request fails: show muted line "TRIPS UNAVAILABLE" and continue manual flow.
 - START blocked if safe time <= 0. Passes tripId and tripName into state and saves to `layovers.trip_id` and `trip_name`.
 
 3. QUEST
 - Countdown, draining stats, single mission card. Hidden from trips links.
+- Context hints on vitals and stats.
+- Spotlight tour (8 steps) auto-starts if phase is "free" and > 15 min safe time; if <= 15 min, shows "TOUR SKIPPED, LESS THAN 15 MIN LEFT".
 - Mission card COMPLETE opens full-screen PROOF screen (TAKE PHOTO, UPLOAD PHOTO, SKIP PROOF), shown only while phase is "free" or "headsup" and more than 5 minutes remain.
 - If phase is "urgent" or "alarm", or minutes left is 5 or less: COMPLETE completes directly with no proof, displaying muted line "PROOF OFF, LESS THAN 5 MIN LEFT" (native camera moves page to background).
-- If alarm triggers while PROOF screen is open: immediately unmounts PROOF screen and shows alarm.
+- If alarm triggers while PROOF screen or tour is open: immediately unmounts PROOF screen/tour and shows alarm.
 - Attaching photo awards +20 PROOF bonus XP (stored per row in `proof_xp`).
 - Non-photographable missions (rest, nap, pack bag) have `proof: "none"` and complete directly.
 
 4. ALARM
-- Immediate alarm screen takeover, zero network/auth/trip/camera dependency.
+- Immediate alarm screen takeover, zero network/auth/trip/camera dependency. No tour or tips, ever.
 
 5. SAFE TRAVELS
 - Header links for signed-in users: TRIPS / PASSPORT / SIGN OUT.
 - Layover saved with trip_id, trip_name, and mission proofs.
 - Totals display PHOTOS count and PROOF XP.
+- Rank stamp with "?" button opening Rank Explainer modal sheet.
 - Displays 64px square photo thumbnails; tapping opens full-screen viewer with DELETE PHOTO action.
+- "PRINT PASSPORT" button opens `/passport/print?layover={id}`.
 
 6. /PASSPORT
-- Signed in only. Past layover cards show trip_name when present, PHOTOS count, and 64px photo thumbnails.
-- Tapping thumbnail opens full-screen viewer with DELETE PHOTO action.
+- Signed in only. Traveler summary card shows LEVEL x OF 5, 10-block progress bar, and "WHAT IS THIS?" button opening Rank Explainer sheet.
+- "HOW IT WORKS" button in header restarts tour.
+- Past layover cards show trip_name when present, PHOTOS count, and 64px photo thumbnails.
+- Empty state shows muted guidance: "NO LAYOVERS YET. COMPLETE ONE TO GET YOUR FIRST STAMP. RANKS START AT GATE ROOKIE."
+- "PRINT FULL PASSPORT" button opens `/passport/print`.
 
-7. /TRIPS
+7. /PASSPORT/PRINT
+- Printable Completion Passport formatted for A4 and US Letter portrait via `@page { margin: 12mm }` with `print-color-adjust: exact` and paper `#E6E1D3` background.
+- Certificate header with traveler name, issue date, and square outlined rank stamp (`LEVEL x OF 5`).
+- Summary table: TOTAL XP, MISSION XP, PROOF XP, SURVIVED, MISSIONS, PHOTOS, LONGEST.
+- Rank ladder strip with REACHED, CURRENT, and LOCKED states.
+- Layover cards with non-breaking entries (`break-inside: avoid`), mission logs, XP split, and photo frames.
+- Empty state: "NO LAYOVERS TO PRINT." with disabled print button.
+- On-screen muted line: "THE BROWSER PRINT DIALOG DOUBLES AS 'SAVE AS PDF'."
+
+8. /TRIPS
 - Signed-in only. Redirects to `/` if stored screen is quest or alarm.
 - Guests see "SIGN IN TO SAVE TRIPS" and back button.
 - Departure-board table (DEPARTS / TRIP / STATUS) sorted ascending for upcoming trips. Past trips behind "SHOW PAST (n)" toggle.

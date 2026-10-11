@@ -11,6 +11,8 @@ import { getSignedProofUrl, deleteProof } from '@/lib/proof';
 import { ProofStatus, getProofStatusLabel } from '@/lib/verify';
 import RankInfoSheet from '@/components/RankInfoSheet';
 import InfoTip from '@/components/InfoTip';
+import Tour from '@/components/Tour';
+import { PASSPORT_STEPS, isTourCompleted, resetTourState } from '@/lib/tour';
 
 interface MissionLogRecord {
   id: string;
@@ -288,6 +290,7 @@ export default function PassportPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showRankSheet, setShowRankSheet] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   // DOM Refs for scroll lock and focus management
   const passportPageRef = useRef<HTMLDivElement>(null);
@@ -299,6 +302,12 @@ export default function PassportPage() {
 
   useEffect(() => {
     setMounted(true);
+    if (!isTourCompleted('passport')) {
+      const timer = setTimeout(() => {
+        setShowTour(true);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   useEffect(() => {
@@ -691,7 +700,10 @@ export default function PassportPage() {
           </button>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push('/?replay=setup')}
+              onClick={() => {
+                resetTourState();
+                setShowTour(true);
+              }}
               style={{ minHeight: '48px' }}
               className="min-h-[48px] px-2 text-muted hover:text-amber font-mono text-xs tracking-wider uppercase flex items-center focus:outline-none focus:ring-1 focus:ring-paper rounded-[2px]"
             >
@@ -714,6 +726,7 @@ export default function PassportPage() {
 
           {/* Traveler Summary Card */}
           <section
+            data-tour="passport-summary"
             style={{ backgroundColor: '#181816', borderColor: '#34322C' }}
             className="border border-line p-5 mb-6 bg-panel rounded-[2px]"
           >
@@ -732,6 +745,7 @@ export default function PassportPage() {
 
               {/* Rotated Rank Stamp with WHAT IS THIS affordance */}
               <button
+                data-tour="passport-rank"
                 type="button"
                 onClick={() => setShowRankSheet(true)}
                 aria-label="WHAT IS THIS?"
@@ -805,6 +819,7 @@ export default function PassportPage() {
             {/* Print Full Passport Button */}
             <div className="mt-4 pt-4 border-t border-line">
               <button
+                data-tour="passport-print"
                 onClick={() => router.push('/passport/print')}
                 style={{
                   minHeight: '48px',
@@ -819,7 +834,7 @@ export default function PassportPage() {
           </section>
 
           {/* Past Layovers Section */}
-          <section className="flex-1 pb-8">
+          <section data-tour="passport-history" className="flex-1 pb-8">
             <div className="font-sans text-[11px] tracking-[0.2em] text-muted font-bold uppercase mb-3">
               PAST LAYOVERS
             </div>
@@ -829,7 +844,7 @@ export default function PassportPage() {
                 style={{ backgroundColor: '#181816', borderColor: '#34322C' }}
                 className="border border-line p-8 text-center text-muted font-mono text-xs uppercase bg-panel rounded-[2px] flex flex-col items-center gap-3"
               >
-                <span>NO LAYOVERS YET. COMPLETE ONE TO GET YOUR FIRST STAMP.</span>
+                <span>NO LAYOVERS YET. COMPLETE ONE TO GET YOUR FIRST STAMP. RANKS START AT GATE ROOKIE.</span>
                 <InfoTip
                   text="COMPLETE LAYOVERS TO FILL YOUR PASSPORT WITH STAMPS AND XP."
                   label="Passport empty information"
@@ -1347,6 +1362,14 @@ export default function PassportPage() {
         isOpen={showRankSheet}
         onClose={() => setShowRankSheet(false)}
         xp={totalXp}
+      />
+
+      <Tour
+        screen="passport"
+        steps={PASSPORT_STEPS}
+        isActive={showTour}
+        onComplete={() => setShowTour(false)}
+        onDismiss={() => setShowTour(false)}
       />
     </>
   );

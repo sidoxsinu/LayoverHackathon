@@ -565,7 +565,7 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         )}
 
         {/* Departure input mode toggle */}
-        <div data-tour="setup-flight">
+        <div data-tour="setup-departure">
           <Row>
             <Label>DEPARTURE</Label>
             <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
@@ -695,17 +695,19 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         </Row>
 
         {/* Gate */}
-        <Row>
-          <Label>GATE</Label>
-          <input
-            type="text"
-            value={gate}
-            onChange={(e) => setGate(e.target.value.toUpperCase())}
-            placeholder="TBA"
-            maxLength={6}
-            style={inputStyle}
-          />
-        </Row>
+        <div data-tour="setup-gate">
+          <Row>
+            <Label>GATE</Label>
+            <input
+              type="text"
+              value={gate}
+              onChange={(e) => setGate(e.target.value.toUpperCase())}
+              placeholder="TBA"
+              maxLength={6}
+              style={inputStyle}
+            />
+          </Row>
+        </div>
 
         {/* Walk time */}
         <div data-tour="setup-walk">
@@ -775,7 +777,7 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
       </div>
 
       {/* Start button */}
-      <div style={{ padding: '16px', borderTop: '1px solid #34322C' }}>
+      <div data-tour="setup-start" style={{ padding: '16px', borderTop: '1px solid #34322C' }}>
         <button
           onClick={handleStart}
           disabled={!safeOk && departureMs > 0}

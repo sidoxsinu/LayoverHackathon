@@ -12,28 +12,28 @@ test.describe('Onboarding, Tour, Rank Explainer & Printable Passport', () => {
       await page.getByRole('button', { name: 'CONTINUE AS GUEST' }).click({ timeout: 1000 });
     } catch {}
 
-    // Tour should appear on fresh session in Setup screen
-    await expect(page.getByText('STEP 1 OF 4')).toBeVisible({ timeout: 3000 });
-    await expect(page.getByText('DEPARTURE AND GATE')).toBeVisible();
+    // Tour should appear on fresh session in Setup screen (Step 1 of 6)
+    await expect(page.getByText('STEP 1 / 6')).toBeVisible({ timeout: 3000 });
+    await expect(page.getByText('WELCOME TO GATE')).toBeVisible();
 
     // Click NEXT
     const nextBtn = page.getByRole('button', { name: 'NEXT' });
     await nextBtn.click();
-    await expect(page.getByText('STEP 2 OF 4')).toBeVisible();
-    await expect(page.getByText('WALK TIME')).toBeVisible();
+    await expect(page.getByText('STEP 2 / 6')).toBeVisible();
+    await expect(page.getByText('DEPARTURE TIME')).toBeVisible();
 
     // Click BACK
     const backBtn = page.getByRole('button', { name: 'BACK' });
     await backBtn.click();
-    await expect(page.getByText('STEP 1 OF 4')).toBeVisible();
-    await expect(page.getByText('DEPARTURE AND GATE')).toBeVisible();
+    await expect(page.getByText('STEP 1 / 6')).toBeVisible();
+    await expect(page.getByText('WELCOME TO GATE')).toBeVisible();
 
     // Click SKIP TOUR
     const skipTourBtn = page.getByRole('button', { name: 'SKIP TOUR' });
     await skipTourBtn.click();
 
     // Tour overlay should disappear
-    await expect(page.getByText('STEP 1 OF 4')).not.toBeVisible();
+    await expect(page.getByText('STEP 1 / 6')).not.toBeVisible();
 
     // Check localStorage has marked setup tour as completed
     const tourState = await page.evaluate(() => localStorage.getItem('gate.tour.v1'));
@@ -54,7 +54,7 @@ test.describe('Onboarding, Tour, Rank Explainer & Printable Passport', () => {
     } catch {}
 
     // Tour is not visible because it was marked completed
-    await expect(page.getByText('STEP 1 OF 4')).not.toBeVisible();
+    await expect(page.getByText('STEP 1 / 6')).not.toBeVisible();
 
     // Click HOW IT WORKS in footer
     const howItWorksBtn = page.getByRole('button', { name: 'HOW IT WORKS' });
@@ -62,12 +62,12 @@ test.describe('Onboarding, Tour, Rank Explainer & Printable Passport', () => {
     await howItWorksBtn.click();
 
     // Tour restarts at Step 1
-    await expect(page.getByText('STEP 1 OF 4')).toBeVisible();
-    await expect(page.getByText('DEPARTURE AND GATE')).toBeVisible();
+    await expect(page.getByText('STEP 1 / 6')).toBeVisible();
+    await expect(page.getByText('WELCOME TO GATE')).toBeVisible();
 
     // Skip to dismiss
     await page.getByRole('button', { name: 'SKIP TOUR' }).click();
-    await expect(page.getByText('STEP 1 OF 4')).not.toBeVisible();
+    await expect(page.getByText('STEP 1 / 6')).not.toBeVisible();
   });
 
   test('3. Spotlight Tour: Demo Mode does not auto-run tour', async ({ page }) => {
@@ -105,7 +105,7 @@ test.describe('Onboarding, Tour, Rank Explainer & Printable Passport', () => {
 
     // Quest tour should NEVER appear in DEMO mode
     await page.waitForTimeout(600);
-    await expect(page.getByText('STEP 1 OF 3')).not.toBeVisible();
+    await expect(page.getByText('STEP 1 / 8')).not.toBeVisible();
   });
 
   test('4. Rank Explainer in /passport: ladder, tiers, meanings and missions estimate', async ({ page }) => {
@@ -241,11 +241,11 @@ test.describe('Onboarding, Tour, Rank Explainer & Printable Passport', () => {
     await page.reload();
 
     // Official passport header and certificate details
-    await expect(page.getByText('OFFICIAL TRANSIT DOCUMENT')).toBeVisible();
-    await expect(page.getByText('GATE PASSPORT')).toBeVisible();
+    await expect(page.getByText('GATE LAYOVER PASSPORT')).toBeVisible();
     await expect(page.getByText('CONCOURSE CLEARED')).toBeVisible();
-    await expect(page.getByText('CONCOURSE RUNNER')).toBeVisible();
+    await expect(page.getByText('CONCOURSE RUNNER').first()).toBeVisible();
     await expect(page.getByText('LEVEL 3 OF 5')).toBeVisible();
+    await expect(page.getByText('PASSPORT SUMMARY')).toBeVisible();
 
     // Stats table
     await expect(page.getByText('EK501 DUBAI')).toBeVisible();

@@ -153,6 +153,44 @@ Visual photographic evidence for completed layover missions with client-side EXI
    - Safe Travels totals display `PHOTOS` count and `PROOF XP`. Passport past layovers indicate photo counts.
    - Failure resilience: If storage, upload, or database migration fails, mission completion never blocks and one muted line displays `PROOF NOT SAVED`.
 
+## F9. First-Time Onboarding Tour, Rank Explainer & Printable Passport (P1)
+1. **Spotlight Onboarding Tour (`lib/tour.ts`, `components/Tour.tsx`)**:
+   - Flat 4-rectangle ink dimming at 80% opacity (`rgba(16,16,16,0.8)`), 2px amber outline frame with 4px padding. Zero blur, box-shadow, or glow effects.
+   - Sequential step cards with `STEP x / y`, Barlow Condensed title, IBM Plex Mono body, and `BACK`, `NEXT` (last step: `DONE`), `SKIP TOUR` actions ($\ge 48$px targets).
+   - Covers Setup (6 steps), Quest (8 steps), Safe Travels (3 steps), Passport (4 steps).
+   - Stored in plain JSON key `gate.tour.v1 = { setup, quest, safe, passport }`.
+   - Auto-starts once on fresh screen visit after 400ms delay.
+   - Quest tour skips if safe time $\le 15$ min, showing `TOUR SKIPPED, LESS THAN 15 MIN LEFT` once without marking seen.
+   - Instant alarm safety: Unmounts immediately if phase becomes `urgent` or `alarm`. Alarm `z-index: 100` strictly supersedes tour `z-index: 70`. Demo Mode triple-tap never auto-runs the tour.
+   - "HOW IT WORKS" replay button on Setup footer and Passport header resets all flags and restarts the tour.
+2. **Context Hints (`components/InfoTip.tsx`)**:
+   - 48px square "?" button triggering a flat popover panel.
+   - Single-active listener (`gate:infotip-opened`) ensures only one tip is open at a time.
+   - Dismisses cleanly on click-outside or `Escape`.
+   - Attached to Safe Time, Walk Time, Vibe, Stats, Proof, Scheduled Trips, and Passport empty state.
+3. **Rank & Level Model (`lib/rank.ts`) & Explainer Sheet (`components/RankInfoSheet.tsx`)**:
+   - Centralized XP constants: `MISSION_XP = 40`, `PROOF_BONUS_XP = 20`.
+   - 5 canonical tiers with exact spec meanings and levels 1–5:
+     1. Gate Rookie (0 XP)
+     2. Terminal Nomad (50 XP)
+     3. Concourse Runner (150 XP)
+     4. Gate Guardian (300 XP)
+     5. Transit Legend (500 XP)
+   - Rank is derived strictly from total XP at render time, never stored in state or database. Guard against NaN, negative, and undefined.
+   - Everywhere rank title appears, displays `LEVEL x OF 5` in muted mono.
+   - Accessible full-screen modal with departure-board table: `LV`, `TITLE`, `XP NEEDED`, `MEANING`. Current rank highlighted with `YOU ARE HERE`; reached ranks tagged `REACHED`.
+   - Computes mission estimates to next rank both without proof (`ceil(xpToNext / 40)`) and with proof (`ceil(xpToNext / 60)`).
+   - Triggered via "WHAT IS THIS?" in `/passport` and "?" button in `SafeTravels.tsx`.
+4. **Printable Completion Passport (`src/app/passport/print/page.tsx` & `lib/passport.ts`)**:
+   - Dedicated print-ready route supporting full passport or single layover certificate (`?layover=<id>`).
+   - Clean `@page { margin: 12mm }` styling with `print-color-adjust: exact` and `#E6E1D3` paper background.
+   - Certificate header with traveler name, issue date, and square outlined rank stamp (`LEVEL x OF 5`).
+   - Summary table: TOTAL XP, MISSION XP, PROOF XP, SURVIVED, MISSIONS, PHOTOS, LONGEST.
+   - Rank ladder strip with REACHED, CURRENT, and LOCKED states.
+   - Layover cards with non-breaking entries (`break-inside: avoid`), mission logs, XP split, and photo frames.
+   - Empty state: `NO LAYOVERS TO PRINT.` with disabled print button.
+   - On-screen muted line: `THE BROWSER PRINT DIALOG DOUBLES AS "SAVE AS PDF".`
+
 ## Out of scope
 Maps, lounge data, push notifications, native app, multi-leg flights, social feeds.
 
