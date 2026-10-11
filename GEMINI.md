@@ -6,7 +6,7 @@ trigger: always_on
 
 ## Living Walkthrough Document
 
-A file `docs/WALKTHROUGH.md` exists in this project and must be kept up to date.
+A file `docs/logs/WALKTHROUGH.md` exists in this project and must be kept up to date.
 
 ### When to update it:
 - After completing any milestone or feature (update the "Current State" status table)
@@ -62,13 +62,13 @@ Build GATE, a mobile-first layover companion web app.
 Judged on a LIVE DEMO. Reliability beats features. If it can't be demoed, don't build it.
 
 ## Before coding
-1. Read `docs/00-QUICKREF.md`, then `02-PRD-features.md` and `03-PRD-technical.md`. These are the source of truth.
+1. Read `docs/prd/00-QUICKREF.md`, then `docs/prd/02-PRD-features.md` and `docs/prd/03-PRD-technical.md`. These are the source of truth.
 2. Reply with a 5-line plan and the P0 task list. Wait for my "go".
 3. If anything is ambiguous or conflicts with the docs, ask. Do not guess.
 
 ## Stack (fixed)
-React + Vite (JavaScript, not TypeScript) + Tailwind v4 (`@tailwindcss/vite`, theme in `index.css` via `@theme`, NO `tailwind.config.js`).
-No router, no state library, no UI kit, no animation library. Do not add any dependency without asking.
+Next.js 16 (App Router) + TypeScript + Tailwind v4 (`@tailwindcss/turbopack`, theme in `globals.css` via `@theme`).
+No external UI kit, no animation library. Do not add any dependency without asking.
 
 ## Non-negotiables
 - Time is stored as epoch milliseconds. Never store Date objects. Derive everything from `Date.now()`, never count ticks.
@@ -159,14 +159,14 @@ Finish and verify each P0 item before starting the next.
 ## Code style
 - Small files, one component per file, hooks in `hooks/`, pure logic in `lib/`.
 - Plain readable code, meaningful names, no abstractions "for later", no unused code or comments restating code.
-- Handle errors and edge cases listed in `02-PRD-features.md` (midnight rollover, safe time ≤ 0, blocked audio).
-- No secrets in the client bundle. AI calls only via a serverless proxy, with a 3 s timeout and hardcoded fallback.
+- Handle errors and edge cases listed in `docs/prd/02-PRD-features.md` (midnight rollover, safe time ≤ 0, blocked audio).
+- No secrets in the client bundle. AI calls only via a serverless proxy, with a 12 s timeout and hardcoded fallback.
 
 ## Workflow
 - Work in small steps; after each, tell me what to test on the phone in one or two lines.
 - Commit after each checkpoint with a clear message.
 - When a bug appears: state the root cause in one sentence, then fix. Don't rewrite unrelated code.
-- Phases: BUILD (P0 only, in docs/06 order) until I say "freeze". After "freeze": bug fixes only, no new features, no refactors.
+- Phases: BUILD (P0 only, in docs/prd/06-PRD-build-plan.md order) until I say "freeze". After "freeze": bug fixes only, no new features, no refactors.
 - Output complete, runnable files. No "rest of the code here" placeholders.
 
 ## Definition of done (per task)

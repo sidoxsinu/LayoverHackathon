@@ -47,11 +47,11 @@
 47: - [x] Trips management (saved departures table, Setup integration, offline cache, RLS)
 48: - [x] First-time onboarding spotlight tour, context tips, rank explainer, and printable passport
 49: - [x] Venue-relevant missions (single Groq call) and transit waiting types (flight, train, bus, other)
-50: - [ ] README with screenshots
+- [ ] README with screenshots
 
 
 ## Kickoff prompt for an AI coding agent
-> Build "GATE", a mobile-first Next.js + Tailwind v4 web app. Follow `docs/03-PRD-technical.md` exactly: epoch-ms time model, `useNow`, `alarm.js`, `pickMission`, localStorage persistence. Screens: Setup, Quest, Alarm, Safe Travels. Implement Demo Mode (triple-tap wordmark → returnBy = now + 60 s). Start with P0 items from `docs/02-PRD-features.md`, commit after each checkpoint, and ask before adding dependencies.
+> Build "GATE", a mobile-first Next.js + Tailwind v4 web app. Follow `docs/prd/03-PRD-technical.md` exactly: epoch-ms time model, `useNow`, `alarm.js`, `pickMission`, localStorage persistence. Screens: Setup, Quest, Alarm, Safe Travels. Implement Demo Mode (triple-tap wordmark → returnBy = now + 60 s). Start with P0 items from `docs/prd/02-PRD-features.md`, commit after each checkpoint, and ask before adding dependencies.
 
 ## Emergency scenarios
 | Situation | Action |

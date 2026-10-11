@@ -579,7 +579,7 @@ Run this at **6:45 AM**, 15 minutes before judges start.
 
 ## [05:01] — Demo Script Update: Dynamic Location Proof & `# ENV` Fallback Demo
 **What was done:**
-- Updated `docs/05-PRD-demo-script.md` with two critical sections for the live judging presentation:
+- Updated `docs/demo/05-PRD-demo-script.md` with two critical sections for the live judging presentation:
   1. **Proving Dynamic Location (4 Methods)**:
      - *In-App Manual Override*: Tap location input in Setup, enter any airport/venue (e.g. `Terminal 3, Dubai`), and tap Apply to show live badge shift to `[MANUAL]` and dynamic mission regeneration.
      - *Status Badges*: Highlight `[AUTO]` (active GPS granted), `[MANUAL]` (user override), and `[DEFAULT]` (GPS denied/fallback).

@@ -1,63 +1,41 @@
-# GATE — Layover Companion
+# GATE — Web Application (`gate-next`)
 
-A Next.js (App Router) mobile-first web app for navigating airport layovers. Built for the LAYOVER hackathon.
+This directory contains the Next.js (App Router) mobile-first web application for **GATE**, built for the **LAYOVER** hackathon at TinkerSpace Calicut.
 
-## Stack
-- **Framework:** Next.js (App Router) + TypeScript
-- **Styling:** Tailwind CSS v4 (no external UI libraries)
-- **Database & Auth:** Supabase (PostgreSQL + Google OAuth)
-- **AI Integration:** Google Gemini API
+> [!NOTE]
+> For the complete project documentation, architecture diagrams, judging guide, and live demo steps, see the root [README.md](../README.md).
 
-## Setup Instructions
+---
 
-### 1. Database & Authentication (Supabase)
+## Local Development Commands
 
-1. Create a new project on [Supabase](https://supabase.com).
-2. Go to the SQL Editor and run the migration files provided in this repository:
-   ```bash
-   # Run 0001 (initial tables, profiles, layovers, mission log)
-   cat supabase/migrations/0001_init.sql
-
-   # Run 0002 (trips table, triggers, and layovers trip integration)
-   cat supabase/migrations/0002_trips.sql
-   ```
-3. Enable Google Auth in Supabase:
-   - Go to **Authentication > Providers** and enable Google.
-   - You will need a Google Cloud OAuth Client ID and Secret (see below).
-
-
-### 2. Google Cloud OAuth
-
-1. Go to the [Google Cloud Console](https://console.cloud.google.com).
-2. Create a new project (or select an existing one).
-3. Go to **APIs & Services > Credentials** and create an **OAuth 2.0 Client ID** (Web application).
-4. Configure the **Authorized Redirect URIs**:
-   - For local development: `http://localhost:3000/auth/callback`
-   - For production (replace with your Vercel URL): `https://gate-next-cyan.vercel.app/auth/callback`
-   - **Also add the Supabase Auth URL:** `https://<YOUR_SUPABASE_PROJECT_ID>.supabase.co/auth/v1/callback`
-5. Copy the **Client ID** and **Client Secret** into the Supabase Google Provider settings.
-
-### 3. Environment Variables
-
-Create a `.env.local` file in the `gate-next` directory (copy from `.env.example`):
+All commands should be executed from within this directory (`gate-next/`):
 
 ```bash
-# Gemini API Key for AI Mission Generation
-GEMINI_API_KEY=AIzaSy_your_gemini_api_key_here
+# 1. Install dependencies
+npm ci
 
-# Supabase Auth & Database
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+# 2. Run local development server (http://localhost:3000)
+npm run dev
+
+# 3. Compile optimized production build (Turbopack)
+npm run build
+
+# 4. Start local production server
+npm start
+
+# 5. Run static lint check
+npm run lint
+
+# 6. Execute full automated Playwright test suite (61 tests)
+npm run test:e2e
 ```
 
-*Note: The app will run in "Guest Mode" if the Supabase keys are missing or invalid.*
+---
 
-### 4. Vercel Deployment
+## Database Migrations
 
-1. Connect your repository to Vercel.
-2. In the Vercel project settings, add the Environment Variables (`GEMINI_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
-3. Deploy!
-
-## Security Check (RLS)
-Row Level Security (RLS) is enabled on all tables (`profiles`, `layovers`, `mission_log`, `trips`). The policies explicitly use `auth.uid() = user_id`, meaning it is mathematically impossible for a user to read, update, or delete any rows belonging to another user. Furthermore, the `layovers` table verifies that any assigned `trip_id` must belong to the active authenticated user (`trips.user_id = auth.uid()`), preventing cross-user data tampering.
-
+SQL migrations for Supabase are located in `supabase/migrations/`:
+1. `0001_init.sql` — Profiles, layovers, and mission logs with Row Level Security.
+2. `0002_trips.sql` — Upcoming departures table, 50-trip cap trigger, and foreign key relations.
+3. `0003_proofs.sql` — Private storage bucket `proofs`, photo verification columns, and RLS storage policies.
