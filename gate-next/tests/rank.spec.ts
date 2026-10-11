@@ -7,12 +7,18 @@ test.describe('Rank System Unit Tests', () => {
     expect(PROOF_BONUS_XP).toBe(20);
   });
 
-  test('rank tier meanings match spec exactly', () => {
+  test('rank tier meanings match 10-level spec exactly', () => {
+    expect(RANKS.length).toBe(10);
     expect(RANKS[0].meaning).toBe('JUST LANDED. YOUR FIRST LAYOVER.');
     expect(RANKS[1].meaning).toBe('YOU KNOW HOW TO FILL AN AIRPORT HOUR.');
     expect(RANKS[2].meaning).toBe('YOU OWN THE CONCOURSE.');
     expect(RANKS[3].meaning).toBe('YOU NEVER MISS A BOARDING CALL.');
-    expect(RANKS[4].meaning).toBe('TOP RANK. THE TERMINAL KNOWS YOUR NAME.');
+    expect(RANKS[4].meaning).toBe('THE TERMINAL KNOWS YOUR NAME.');
+    expect(RANKS[5].meaning).toBe('STORMS AND DELAYS CANNOT SHAKE YOU.');
+    expect(RANKS[6].meaning).toBe('EVERY SHORTCUT AND CONCOURSE MAPPED.');
+    expect(RANKS[7].meaning).toBe('MASTER OF MULTI-LEG CONNECTIONS.');
+    expect(RANKS[8].meaning).toBe('THE GLOBAL AIR NETWORK IS YOUR BACKYARD.');
+    expect(RANKS[9].meaning).toBe('TOP RANK. AN IMMORTAL OF GLOBAL TRANSIT.');
   });
 
   test('boundary: 0 XP returns Gate Rookie (level 1)', () => {
@@ -24,7 +30,7 @@ test.describe('Rank System Unit Tests', () => {
 
     const prog = rankProgress(0);
     expect(prog.level).toBe(1);
-    expect(prog.totalLevels).toBe(5);
+    expect(prog.totalLevels).toBe(10);
     expect(prog.current.title).toBe('Gate Rookie');
     expect(prog.next?.title).toBe('Terminal Nomad');
     expect(prog.xpIntoRank).toBe(0);
@@ -138,15 +144,75 @@ test.describe('Rank System Unit Tests', () => {
     expect(getNextRank(499)?.title).toBe('Transit Legend');
   });
 
-  test('boundary: 500 XP returns Transit Legend (level 5 Max tier)', () => {
+  test('boundary: 500 XP returns Transit Legend (level 5)', () => {
     const rank = getRank(500);
     expect(rank.title).toBe('Transit Legend');
     expect(rank.level).toBe(5);
-    expect(getNextRank(500)).toBeNull();
+    expect(getNextRank(500)?.title).toBe('Tarmac Veteran');
 
     const prog = rankProgress(500);
     expect(prog.level).toBe(5);
     expect(prog.current.title).toBe('Transit Legend');
+    expect(prog.next?.title).toBe('Tarmac Veteran');
+    expect(prog.xpIntoRank).toBe(0);
+    expect(prog.xpForNext).toBe(500);
+    expect(prog.xpToNext).toBe(500);
+    expect(prog.pct).toBe(0);
+    expect(prog.missionsToNext).toBe(13); // ceil(500 / 40) = 13
+    expect(prog.missionsToNextWithProof).toBe(9); // ceil(500 / 60) = 9
+  });
+
+  test('boundary: 999 XP returns Transit Legend (level 5)', () => {
+    expect(getRank(999).title).toBe('Transit Legend');
+    expect(getRank(999).level).toBe(5);
+    expect(getNextRank(999)?.title).toBe('Tarmac Veteran');
+  });
+
+  test('boundary: 1000 XP returns Tarmac Veteran (level 6)', () => {
+    const rank = getRank(1000);
+    expect(rank.title).toBe('Tarmac Veteran');
+    expect(rank.level).toBe(6);
+    expect(getNextRank(1000)?.title).toBe('Airspace Navigator');
+
+    const prog = rankProgress(1000);
+    expect(prog.level).toBe(6);
+    expect(prog.current.title).toBe('Tarmac Veteran');
+    expect(prog.next?.title).toBe('Airspace Navigator');
+    expect(prog.xpIntoRank).toBe(0);
+    expect(prog.xpForNext).toBe(800);
+    expect(prog.xpToNext).toBe(800);
+  });
+
+  test('boundary: 1800 XP returns Airspace Navigator (level 7)', () => {
+    const rank = getRank(1800);
+    expect(rank.title).toBe('Airspace Navigator');
+    expect(rank.level).toBe(7);
+    expect(getNextRank(1800)?.title).toBe('Flight Commander');
+  });
+
+  test('boundary: 3000 XP returns Flight Commander (level 8)', () => {
+    const rank = getRank(3000);
+    expect(rank.title).toBe('Flight Commander');
+    expect(rank.level).toBe(8);
+    expect(getNextRank(3000)?.title).toBe('Stratosphere Elite');
+  });
+
+  test('boundary: 4600 XP returns Stratosphere Elite (level 9)', () => {
+    const rank = getRank(4600);
+    expect(rank.title).toBe('Stratosphere Elite');
+    expect(rank.level).toBe(9);
+    expect(getNextRank(4600)?.title).toBe('Apex Voyager');
+  });
+
+  test('boundary: 6500 XP returns Apex Voyager (level 10 Max tier)', () => {
+    const rank = getRank(6500);
+    expect(rank.title).toBe('Apex Voyager');
+    expect(rank.level).toBe(10);
+    expect(getNextRank(6500)).toBeNull();
+
+    const prog = rankProgress(6500);
+    expect(prog.level).toBe(10);
+    expect(prog.current.title).toBe('Apex Voyager');
     expect(prog.next).toBeNull();
     expect(prog.xpIntoRank).toBe(0);
     expect(prog.xpToNext).toBe(0);
@@ -155,14 +221,14 @@ test.describe('Rank System Unit Tests', () => {
     expect(prog.missionsToNextWithProof).toBe(0);
   });
 
-  test('boundary: 10000 XP returns Transit Legend', () => {
+  test('boundary: 10000 XP returns Apex Voyager (level 10 Max tier)', () => {
     const rank = getRank(10000);
-    expect(rank.title).toBe('Transit Legend');
-    expect(rank.level).toBe(5);
+    expect(rank.title).toBe('Apex Voyager');
+    expect(rank.level).toBe(10);
     expect(getNextRank(10000)).toBeNull();
 
     const prog = rankProgress(10000);
-    expect(prog.current.title).toBe('Transit Legend');
+    expect(prog.current.title).toBe('Apex Voyager');
     expect(prog.next).toBeNull();
     expect(prog.pct).toBe(100);
   });

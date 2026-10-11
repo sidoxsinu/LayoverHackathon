@@ -153,7 +153,7 @@ export const PASSPORT_STEPS: TourStep[] = [
   {
     targetId: 'passport-rank',
     title: 'RANKS AND XP',
-    description: 'TAP TO SEE ALL 5 RANKS AND HOW TO EARN XP.',
+    description: 'TAP TO SEE ALL 10 RANKS AND HOW TO EARN XP.',
   },
   {
     targetId: 'passport-history',

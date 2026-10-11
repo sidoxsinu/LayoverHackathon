@@ -363,7 +363,7 @@ function PrintPassportInner() {
                     {currentRank.title}
                   </div>
                   <div className="font-mono text-[10px] text-ink font-bold uppercase mt-0.5">
-                    LEVEL {currentRank.level} OF 5
+                    LEVEL {currentRank.level} OF {RANKS.length}
                   </div>
                   <div className="font-mono text-[8px] text-signal font-bold uppercase tracking-widest mt-1 border-t border-ink/30 pt-0.5">
                     CONCOURSE CLEARED

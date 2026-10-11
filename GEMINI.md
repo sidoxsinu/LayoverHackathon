@@ -125,7 +125,7 @@ Routes: `/` (AUTH, SETUP, QUEST, ALARM, SAFE TRAVELS) · `/passport` · `/passpo
 - "PRINT PASSPORT" button opens `/passport/print?layover={id}`.
 
 6. /PASSPORT
-- Signed in only. Traveler summary card shows LEVEL x OF 5, 10-block progress bar, and "WHAT IS THIS?" button opening Rank Explainer sheet.
+- Signed in only. Traveler summary card shows LEVEL x OF 10, 10-block progress bar, and "WHAT IS THIS?" button opening Rank Explainer sheet.
 - "HOW IT WORKS" button in header restarts tour.
 - Past layover cards show trip_name when present, PHOTOS count, and 64px photo thumbnails.
 - Empty state shows muted guidance: "NO LAYOVERS YET. COMPLETE ONE TO GET YOUR FIRST STAMP. RANKS START AT GATE ROOKIE."
@@ -133,7 +133,7 @@ Routes: `/` (AUTH, SETUP, QUEST, ALARM, SAFE TRAVELS) · `/passport` · `/passpo
 
 7. /PASSPORT/PRINT
 - Printable Completion Passport formatted for A4 and US Letter portrait via `@page { margin: 12mm }` with `print-color-adjust: exact` and paper `#E6E1D3` background.
-- Certificate header with traveler name, issue date, and square outlined rank stamp (`LEVEL x OF 5`).
+- Certificate header with traveler name, issue date, and square outlined rank stamp (`LEVEL x OF 10`).
 - Summary table: TOTAL XP, MISSION XP, PROOF XP, SURVIVED, MISSIONS, PHOTOS, LONGEST.
 - Rank ladder strip with REACHED, CURRENT, and LOCKED states.
 - Layover cards with non-breaking entries (`break-inside: avoid`), mission logs, XP split, and photo frames.

@@ -81,12 +81,17 @@ npx playwright test
 ### 2. Rank & Level Progression Model
 - **Centralized XP constants**: `MISSION_XP = 40`, `PROOF_BONUS_XP = 20`.
 - **Dynamic Rank Derivation**: Ranks are derived dynamically from total XP and never stored as a database enum or state variable.
-- **5 Canonical Tiers**:
+- **10 Progressive Tiers**:
   1. Level 1: `GATE ROOKIE` (0 XP) - "JUST LANDED. YOUR FIRST LAYOVER."
   2. Level 2: `TERMINAL NOMAD` (50 XP) - "YOU KNOW HOW TO FILL AN AIRPORT HOUR."
   3. Level 3: `CONCOURSE RUNNER` (150 XP) - "YOU OWN THE CONCOURSE."
   4. Level 4: `GATE GUARDIAN` (300 XP) - "YOU NEVER MISS A BOARDING CALL."
-  5. Level 5: `TRANSIT LEGEND` (500 XP) - "TOP RANK. THE TERMINAL KNOWS YOUR NAME."
+  5. Level 5: `TRANSIT LEGEND` (500 XP) - "THE TERMINAL KNOWS YOUR NAME."
+  6. Level 6: `TARMAC VETERAN` (1000 XP) - "STORMS AND DELAYS CANNOT SHAKE YOU."
+  7. Level 7: `AIRSPACE NAVIGATOR` (1800 XP) - "EVERY SHORTCUT AND CONCOURSE MAPPED."
+  8. Level 8: `FLIGHT COMMANDER` (3000 XP) - "MASTER OF MULTI-LEG CONNECTIONS."
+  9. Level 9: `STRATOSPHERE ELITE` (4600 XP) - "THE GLOBAL AIR NETWORK IS YOUR BACKYARD."
+  10. Level 10: `APEX VOYAGER` (6500 XP) - "TOP RANK. AN IMMORTAL OF GLOBAL TRANSIT."
 - **Rank Explainer Sheet**: Tap "WHAT IS THIS?" on Passport or "?" on Safe Travels to open the departure-board ladder showing reached, current, and locked tiers with calculated missions to next rank (with and without proof).
 
 ### 3. Printable Passport & Layover Certificate (`/passport/print`)

@@ -170,21 +170,26 @@ Visual photographic evidence for completed layover missions with client-side EXI
    - Attached to Safe Time, Walk Time, Vibe, Stats, Proof, Scheduled Trips, and Passport empty state.
 3. **Rank & Level Model (`lib/rank.ts`) & Explainer Sheet (`components/RankInfoSheet.tsx`)**:
    - Centralized XP constants: `MISSION_XP = 40`, `PROOF_BONUS_XP = 20`.
-   - 5 canonical tiers with exact spec meanings and levels 1–5:
+   - 10 progressive tiers scaling up to 6500 XP:
      1. Gate Rookie (0 XP)
      2. Terminal Nomad (50 XP)
      3. Concourse Runner (150 XP)
      4. Gate Guardian (300 XP)
      5. Transit Legend (500 XP)
+     6. Tarmac Veteran (1000 XP)
+     7. Airspace Navigator (1800 XP)
+     8. Flight Commander (3000 XP)
+     9. Stratosphere Elite (4600 XP)
+     10. Apex Voyager (6500 XP)
    - Rank is derived strictly from total XP at render time, never stored in state or database. Guard against NaN, negative, and undefined.
-   - Everywhere rank title appears, displays `LEVEL x OF 5` in muted mono.
+   - Everywhere rank title appears, displays `LEVEL x OF 10` in muted mono.
    - Accessible full-screen modal with departure-board table: `LV`, `TITLE`, `XP NEEDED`, `MEANING`. Current rank highlighted with `YOU ARE HERE`; reached ranks tagged `REACHED`.
    - Computes mission estimates to next rank both without proof (`ceil(xpToNext / 40)`) and with proof (`ceil(xpToNext / 60)`).
    - Triggered via "WHAT IS THIS?" in `/passport` and "?" button in `SafeTravels.tsx`.
 4. **Printable Completion Passport (`src/app/passport/print/page.tsx` & `lib/passport.ts`)**:
    - Dedicated print-ready route supporting full passport or single layover certificate (`?layover=<id>`).
    - Clean `@page { margin: 12mm }` styling with `print-color-adjust: exact` and `#E6E1D3` paper background.
-   - Certificate header with traveler name, issue date, and square outlined rank stamp (`LEVEL x OF 5`).
+   - Certificate header with traveler name, issue date, and square outlined rank stamp (`LEVEL x OF 10`).
    - Summary table: TOTAL XP, MISSION XP, PROOF XP, SURVIVED, MISSIONS, PHOTOS, LONGEST.
    - Rank ladder strip with REACHED, CURRENT, and LOCKED states.
    - Layover cards with non-breaking entries (`break-inside: avoid`), mission logs, XP split, and photo frames.

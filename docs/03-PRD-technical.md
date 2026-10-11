@@ -319,12 +319,18 @@ Adds mission photo proof tracking, cloud storage, and security policies:
   2. Level 2: `TERMINAL NOMAD` (50 XP) - "YOU KNOW HOW TO FILL AN AIRPORT HOUR."
   3. Level 3: `CONCOURSE RUNNER` (150 XP) - "YOU OWN THE CONCOURSE."
   4. Level 4: `GATE GUARDIAN` (300 XP) - "YOU NEVER MISS A BOARDING CALL."
-  5. Level 5: `TRANSIT LEGEND` (500 XP) - "TOP RANK. THE TERMINAL KNOWS YOUR NAME."
+  5. Level 5: `TRANSIT LEGEND` (500 XP) - "THE TERMINAL KNOWS YOUR NAME."
+  6. Level 6: `TARMAC VETERAN` (1000 XP) - "STORMS AND DELAYS CANNOT SHAKE YOU."
+  7. Level 7: `AIRSPACE NAVIGATOR` (1800 XP) - "EVERY SHORTCUT AND CONCOURSE MAPPED."
+  8. Level 8: `FLIGHT COMMANDER` (3000 XP) - "MASTER OF MULTI-LEG CONNECTIONS."
+  9. Level 9: `STRATOSPHERE ELITE` (4600 XP) - "THE GLOBAL AIR NETWORK IS YOUR BACKYARD."
+  10. Level 10: `APEX VOYAGER` (6500 XP) - "TOP RANK. AN IMMORTAL OF GLOBAL TRANSIT."
 - **Invariants**:
   - Rank is never stored in DB or session state. Derived dynamically from total XP at render time.
   - Total XP = sum of completed mission XP (40 per mission) + proof XP (20 per photo).
   - Negative XP, `NaN`, and `undefined` are guarded and clamped to 0 (`GATE ROOKIE`).
   - Estimates to next rank: `missionsToNext` = `Math.ceil(xpToNext / 40)` (without proof) and `Math.ceil(xpToNext / 60)` (with proof).
+  - High ceiling: Max level requires 6500 XP (~108 verified missions), ensuring endgame progression cannot be exhausted during initial layovers.
 
 ## Spotlight Tour Architecture (`components/Tour.tsx`, `lib/tour.ts`)
 - **Storage**: `gate.tour.v1` in `localStorage`.

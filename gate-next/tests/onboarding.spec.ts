@@ -140,7 +140,7 @@ test.describe('Onboarding, Tour, Rank Explainer & Printable Passport', () => {
 
     // Rank title and Level info displayed
     await expect(page.getByText('CONCOURSE RUNNER').first()).toBeVisible();
-    await expect(page.getByText('LEVEL 3 OF 5').first()).toBeVisible();
+    await expect(page.getByText('LEVEL 3 OF 10').first()).toBeVisible();
     await expect(page.getByText('140 XP TO GATE GUARDIAN')).toBeVisible();
 
     // Click "WHAT IS THIS?" button
@@ -168,7 +168,8 @@ test.describe('Onboarding, Tour, Rank Explainer & Printable Passport', () => {
     await expect(dialog.getByText('YOU KNOW HOW TO FILL AN AIRPORT HOUR.')).toBeVisible();
     await expect(dialog.getByText('YOU OWN THE CONCOURSE.')).toBeVisible();
     await expect(dialog.getByText('YOU NEVER MISS A BOARDING CALL.')).toBeVisible();
-    await expect(dialog.getByText('TOP RANK. THE TERMINAL KNOWS YOUR NAME.')).toBeVisible();
+    await expect(dialog.getByText('THE TERMINAL KNOWS YOUR NAME.')).toBeVisible();
+    await expect(dialog.getByText('TOP RANK. AN IMMORTAL OF GLOBAL TRANSIT.')).toBeVisible();
 
     // Current rank highlighted with YOU ARE HERE
     await expect(dialog.getByText('YOU ARE HERE')).toBeVisible();
@@ -244,7 +245,7 @@ test.describe('Onboarding, Tour, Rank Explainer & Printable Passport', () => {
     await expect(page.getByText('GATE LAYOVER PASSPORT')).toBeVisible();
     await expect(page.getByText('CONCOURSE CLEARED')).toBeVisible();
     await expect(page.getByText('CONCOURSE RUNNER').first()).toBeVisible();
-    await expect(page.getByText('LEVEL 3 OF 5')).toBeVisible();
+    await expect(page.getByText('LEVEL 3 OF 10')).toBeVisible();
     await expect(page.getByText('PASSPORT SUMMARY')).toBeVisible();
 
     // Stats table

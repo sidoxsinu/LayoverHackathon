@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { fmtDuration } from '@/lib/time';
 import GlobalMuteButton from './GlobalMuteButton';
-import { getRank } from '@/lib/rank';
+import { getRank, RANKS } from '@/lib/rank';
 import { useUser } from '@/hooks/useUser';
 import { queueLayoverForSave } from '@/lib/sync';
 import { load } from '@/lib/storage';
@@ -500,7 +500,7 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
                     marginTop: '2px',
                   }}
                 >
-                  LEVEL {rankTier.level} OF 5
+                  LEVEL {rankTier.level} OF {RANKS.length}
                 </div>
               </div>
               <button

@@ -47,11 +47,11 @@ This file is the **single source of truth** for where the project stands right n
 | Gate arrival completion | ✅ Done | Replaces mission slot with "ENJOY YOUR JOURNEY" airport signage card; prevents further tasks; allows direct safe return |
 | Photo proof (F8 mission proofs) | ✅ Done | Camera & upload, client resize (1280px, JPEG 0.7, EXIF stripped), IndexedDB queue, 5-min/phase guard, placeholder verifier |
 | Migration 0003_proofs.sql | ✅ Done | Written to supabase/migrations/0003_proofs.sql (manual run in SQL Editor) |
-| Rank & Level Model | ✅ Done | `src/lib/rank.ts`: MISSION_XP = 40, PROOF_BONUS_XP = 20, 5 tiers with spec meanings, mission estimates, 14 unit tests |
-| Rank Explainer | ✅ Done | Shared `RankInfoSheet.tsx` with departure-board ladder, reached/current/locked states, integrated into /passport & SafeTravels |
+| Rank & Level Model | ✅ Done | `src/lib/rank.ts`: MISSION_XP = 40, PROOF_BONUS_XP = 20, 10 progressive tiers scaling to 6500 XP, mission estimates, 20 unit tests |
+| Rank Explainer | ✅ Done | Shared `RankInfoSheet.tsx` with 10-tier departure-board ladder, reached/current/locked states, integrated into /passport & SafeTravels |
 | Spotlight Onboarding Tour | ✅ Done | `Tour.tsx` & `lib/tour.ts`: 4-box flat ink dimming, 2px amber frame, emergency unmount on urgent/alarm, HOW IT WORKS replay |
 | Context Hints | ✅ Done | `InfoTip.tsx`: 48px square "?" button, single-active listener, click-outside/escape dismiss across all primary screens |
-| Printable Completion Passport | ✅ Done | `/passport/print` & `lib/passport.ts`: A4/Letter print CSS, certificate stamp, aggregate metrics, photo gallery |
+| Printable Completion Passport | ✅ Done | `/passport/print` & `lib/passport.ts`: A4/Letter print CSS, certificate stamp, aggregate metrics, 10-tier ladder strip |
 
 **Status legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⚠️ Done with caveats · ❌ Broken
 
@@ -126,6 +126,35 @@ This file is the **single source of truth** for where the project stands right n
 ## Build Log
 
 > Add one entry per completed milestone. Include timestamp and what works/doesn't.
+
+---
+
+## [05:50] - 10-Tier Rank Progression Ladder & Endgame Difficulty Rebalance
+**What was done:**
+1. **Rank Expansion & Difficulty Curve (`src/lib/rank.ts`)**:
+   - Expanded progression system from 5 to 10 progressive tiers scaling up to 6,500 XP (~108 verified missions), solving the issue where users quickly hit max rank during initial layovers.
+   - 10 tiers with crisp airport-voice meanings:
+     - Level 1: Gate Rookie (0 XP)
+     - Level 2: Terminal Nomad (50 XP)
+     - Level 3: Concourse Runner (150 XP)
+     - Level 4: Gate Guardian (300 XP)
+     - Level 5: Transit Legend (500 XP)
+     - Level 6: Tarmac Veteran (1000 XP)
+     - Level 7: Airspace Navigator (1800 XP)
+     - Level 8: Flight Commander (3000 XP)
+     - Level 9: Stratosphere Elite (4600 XP)
+     - Level 10: Apex Voyager (6500 XP)
+   - Preserves 160 XP boundary as Level 3 Concourse Runner with 140 XP to Gate Guardian.
+2. **Dynamic UI Total Levels Binding**:
+   - Replaced hardcoded `LEVEL x OF 5` with dynamic `LEVEL {level} OF {totalLevels}` across `RankInfoSheet.tsx`, `SafeTravels.tsx`, `Passport/page.tsx`, and `passport/print/page.tsx`.
+   - Updated departure-board ladder in `RankInfoSheet.tsx` to 2-digit padded level indicators (`LV 01` to `LV 10`).
+   - Updated print layout ladder strip to render all 10 tiers symmetrically in 2 rows of 5 cards.
+   - Updated spotlight tour description to reference all 10 ranks.
+3. **Comprehensive Test Suite & Quality Verification**:
+   - Expanded unit tests in `tests/rank.spec.ts` from 12 to 20 boundary tests covering all 10 levels up to 10,000 XP.
+   - Updated E2E assertions in `tests/onboarding.spec.ts`.
+   - All 44 Playwright tests pass 100%. Production build clean. Zero banned elements (0 emojis, 0 gradients, 0 shadows, 0 blur, 0 rounded corners > 2px, 0 em dashes).
+**What works:** Clean build, 44/44 Playwright tests pass, dynamic level progression up to Level 10, alarm path 100% untouched.
 
 ---
 

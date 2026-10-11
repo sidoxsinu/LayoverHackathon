@@ -123,7 +123,7 @@ export default function RankInfoSheet({ isOpen, onClose, xp }: Props) {
                   {currentTier.title}
                 </div>
                 <div className="font-mono text-xs text-muted uppercase mt-0.5">
-                  LEVEL {currentTier.level} OF 5
+                  LEVEL {currentTier.level} OF {progress.totalLevels}
                 </div>
               </div>
               <div className="text-right">
@@ -229,7 +229,7 @@ export default function RankInfoSheet({ isOpen, onClose, xp }: Props) {
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs text-muted font-bold">
-                          LV {tier.level}
+                          LV {String(tier.level).padStart(2, '0')}
                         </span>
                         <span
                           className={`font-sans text-sm font-bold uppercase tracking-wider ${

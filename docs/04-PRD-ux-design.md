@@ -235,7 +235,7 @@ Departure-board table displaying real user trips only. Signed-in only.
 │ RANKS AND XP                 [CLOSE] │
 ├──────────────────────────────────────┤
 │ TRAVELER SUMMARY                     │
-│ CONCOURSE RUNNER        LEVEL 3 OF 5 │
+│ CONCOURSE RUNNER       LEVEL 03 OF 10│
 │ 160 XP · 140 XP TO GATE GUARDIAN     │
 │ [███░░░░░░░] 7% INTO RANK            │
 │ ABOUT 4 MISSIONS, OR 3 WITH PHOTO    │
@@ -254,11 +254,17 @@ Departure-board table displaying real user trips only. Signed-in only.
 │ 03  RUNNER      150     YOU ARE HERE │
 │ 04  GUARDIAN    300     LOCKED       │
 │ 05  LEGEND      500     LOCKED       │
+│ 06  VETERAN     1000    LOCKED       │
+│ 07  NAVIGATOR   1800    LOCKED       │
+│ 08  COMMANDER   3000    LOCKED       │
+│ 09  ELITE       4600    LOCKED       │
+│ 10  VOYAGER     6500    LOCKED       │
 ├──────────────────────────────────────┤
 │ [ CLOSE (48px)                     ] │
 └──────────────────────────────────────┘
 ```
 - Full-screen sheet with dense departure-board aesthetic.
+- 10 tiers scaling from Gate Rookie (0 XP) to Apex Voyager (6500 XP).
 - Ranks marked with `REACHED` (green), `YOU ARE HERE` (amber border), or muted text for locked.
 - Shows required missions to advance: calculated without proof (`ceil(xpToNext / 40)`) and with proof (`ceil(xpToNext / 60)`).
 

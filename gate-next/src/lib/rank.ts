@@ -13,7 +13,12 @@ export const RANKS: readonly RankTier[] = [
   { level: 2, title: 'Terminal Nomad', minXp: 50, meaning: 'YOU KNOW HOW TO FILL AN AIRPORT HOUR.' },
   { level: 3, title: 'Concourse Runner', minXp: 150, meaning: 'YOU OWN THE CONCOURSE.' },
   { level: 4, title: 'Gate Guardian', minXp: 300, meaning: 'YOU NEVER MISS A BOARDING CALL.' },
-  { level: 5, title: 'Transit Legend', minXp: 500, meaning: 'TOP RANK. THE TERMINAL KNOWS YOUR NAME.' },
+  { level: 5, title: 'Transit Legend', minXp: 500, meaning: 'THE TERMINAL KNOWS YOUR NAME.' },
+  { level: 6, title: 'Tarmac Veteran', minXp: 1000, meaning: 'STORMS AND DELAYS CANNOT SHAKE YOU.' },
+  { level: 7, title: 'Airspace Navigator', minXp: 1800, meaning: 'EVERY SHORTCUT AND CONCOURSE MAPPED.' },
+  { level: 8, title: 'Flight Commander', minXp: 3000, meaning: 'MASTER OF MULTI-LEG CONNECTIONS.' },
+  { level: 9, title: 'Stratosphere Elite', minXp: 4600, meaning: 'THE GLOBAL AIR NETWORK IS YOUR BACKYARD.' },
+  { level: 10, title: 'Apex Voyager', minXp: 6500, meaning: 'TOP RANK. AN IMMORTAL OF GLOBAL TRANSIT.' },
 ] as const;
 
 export function sanitizeXp(xp: unknown): number {

@@ -762,7 +762,7 @@ export default function PassportPage() {
                     {currentRank.title}
                   </div>
                   <div className="font-mono text-[10px] text-muted uppercase mt-0.5">
-                    LEVEL {currentRank.level} OF 5
+                    LEVEL {currentRank.level} OF {progress.totalLevels}
                   </div>
                 </div>
                 <span className="font-mono text-[11px] text-amber group-hover:underline uppercase mt-1 min-h-[48px] flex items-center">
