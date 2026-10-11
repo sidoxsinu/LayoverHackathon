@@ -177,7 +177,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. Extract building-level concise location name
+    // 2. Extract building-level concise location name and venue category
     const { conciseName, detailedLocation, isSpecificBuilding } = extractBuildingLevelLocation(
       geoData,
       lat,
@@ -185,99 +185,39 @@ export async function POST(req: Request) {
       locationOverride
     );
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.warn('GEMINI_API_KEY missing, returning building-level location directly');
-      return NextResponse.json({
-        airport: conciseName,
-        missions: [],
-      });
-    }
+    const address = geoData?.address || {};
+    const osmCategory =
+      geoData?.type ||
+      geoData?.class ||
+      geoData?.addresstype ||
+      address?.leisure ||
+      address?.amenity ||
+      address?.building ||
+      address?.tourism ||
+      address?.office ||
+      'transit hub';
 
-    // 3. Prompt Gemini with explicit instruction for concise building-level naming
-    const prompt = `
-You are an expert on global geography, transit hubs, and local venues.
-The user is currently at this exact building/venue location:
-"${detailedLocation}" ${lat && lon ? `(Coordinates: ${lat}, ${lon}).` : ''}
-
-CRITICAL LOCATION NAMING REQUIREMENT:
-- Identify the concise building or venue level name, formatted strictly as: "<BUILDING/VENUE>, <CITY>" (for example: "TINKERSPACE, CALICUT", "TERMINAL 2, KOCHI (COK)", "STARBUCKS, DUBAI").
-- NEVER reduce the location to just a broad city name (like "KOZHIKODE" or "CALICUT") alone if a building, hackerspace, mall, office, or amenity is indicated.
-- Suggested concise name: "${conciseName}".
-- Keep it concise, high-impact uppercase (2 to 5 words max).
-
-Generate 5 absurd but legal, achievable layover/waiting missions specific to this exact local building context or general waiting activities.
-Examples of absurd tasks: 'Find a plug point near the entrance and guard it with your life', 'Count how many people are wearing neck pillows', 'Take a selfie with the most expensive item in the nearest shop'.
-Make sure they are safe, legal, and require no purchase.
-
-Output exactly and only a JSON object in this format:
-{
-  "airport": "${conciseName}",
-  "missions": [
-    { "id": "M-AI-1", "text": "...", "need": "energy", "boost": 30, "mins": 10, "when": [0, 9999], "icon": "MOVE", "type": "LOCAL", "proof": "photo", "proofHint": "PHOTO OF..." }
-  ]
-}
-"need" must be one of: "hunger", "energy", "battery".
-"proofHint" must be a concise uppercase instruction describing what photo to take as proof (e.g. "PHOTO OF THE PLUG POINT", "PHOTO OF YOUR SURROUNDINGS").
-    `.trim();
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: AbortSignal.timeout(3500),
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            responseMimeType: 'application/json',
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!resultText) {
-      throw new Error('No valid response from Gemini');
-    }
-
-    const parsed = JSON.parse(resultText);
-
-    // Guard against Gemini returning an overly broad single-word city name (e.g. "KOZHIKODE") when we know the building
-    let finalAirport = parsed.airport?.trim().toUpperCase() || conciseName;
-    const isSingleCityWord = !finalAirport.includes(',') && !finalAirport.includes(' ') && (finalAirport === 'KOZHIKODE' || finalAirport === 'CALICUT');
-    if (isSingleCityWord || (isSpecificBuilding && !finalAirport.includes(','))) {
-      finalAirport = conciseName;
-    }
-
-    const validatedMissions = Array.isArray(parsed.missions)
-      ? parsed.missions.map((m: any, idx: number) => ({
-          ...m,
-          id: m.id || `M-AI-${idx + 1}`,
-          proof: 'photo' as const,
-          proofHint:
-            typeof m.proofHint === 'string' && m.proofHint.trim().length > 0
-              ? m.proofHint.trim().toUpperCase()
-              : 'PHOTO OF WHERE YOU ARE',
-        }))
-      : [];
+    const city =
+      address?.city ||
+      address?.town ||
+      address?.village ||
+      address?.municipality ||
+      address?.suburb ||
+      address?.county ||
+      'local area';
 
     return NextResponse.json({
-      airport: finalAirport,
-      missions: validatedMissions,
+      airport: conciseName,
+      osmCategory: String(osmCategory),
+      city: String(city),
+      missions: [],
     });
   } catch (error) {
     console.error('Setup API Error, falling back to building level location:', error);
     return NextResponse.json({
       airport: 'TINKERSPACE, CALICUT',
+      osmCategory: 'hackerspace',
+      city: 'CALICUT',
       missions: [],
     });
   }

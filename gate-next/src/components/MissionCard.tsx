@@ -22,6 +22,8 @@ interface Props {
   onSafeReturn?: () => void;
   isProofDisabled?: boolean;
   onRequestProof?: () => void;
+  placeLabel?: string;
+  arrivalCard?: string;
 }
 
 export default function MissionCard({
@@ -34,8 +36,12 @@ export default function MissionCard({
   onSafeReturn,
   isProofDisabled = false,
   onRequestProof,
+  placeLabel = 'GATE',
+  arrivalCard = 'ENJOY YOUR JOURNEY',
 }: Props) {
   const [flash, setFlash] = useState<'complete' | null>(null);
+  const place = placeLabel || 'GATE';
+  const arrival = arrivalCard || 'ENJOY YOUR JOURNEY';
 
   const handleComplete = () => {
     // If photo proof is available and not disabled by phase/time guard, trigger proof modal
@@ -85,7 +91,7 @@ export default function MissionCard({
               color: '#3F9B5B',
             }}
           >
-            GATE REACHED / FINAL
+            {place} REACHED / FINAL
           </span>
           <span
             style={{
@@ -95,7 +101,7 @@ export default function MissionCard({
               color: '#F2A900',
             }}
           >
-            GATE {gate || 'TBA'}
+            {place} {gate || 'TBA'}
           </span>
         </div>
 
@@ -124,7 +130,7 @@ export default function MissionCard({
               textTransform: 'uppercase',
             }}
           >
-            ENJOY YOUR JOURNEY
+            {arrival}
           </h2>
           <p
             style={{
@@ -136,7 +142,7 @@ export default function MissionCard({
               letterSpacing: '0.02em',
             }}
           >
-            STAND BY AT GATE FOR BOARDING ANNOUNCEMENT.
+            STAND BY AT {place} FOR DEPARTURE CALL.
           </p>
         </div>
 
@@ -229,7 +235,7 @@ export default function MissionCard({
                 gap: '8px',
               }}
             >
-              <span>CONFIRM AT GATE</span>
+              <span>CONFIRM AT {place}</span>
               <span style={{ color: '#F2A900' }}>[SAFE RETURN]</span>
             </button>
           </div>
@@ -312,16 +318,32 @@ export default function MissionCard({
           borderBottom: '1px solid #34322C',
         }}
       >
-        <span
-          style={{
-            fontFamily: 'var(--font-barlow), sans-serif',
-            fontSize: '10px',
-            letterSpacing: '0.2em',
-            color: '#8C887C',
-          }}
-        >
-          {mission.icon} / {mission.type}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-barlow), sans-serif',
+              fontSize: '10px',
+              letterSpacing: '0.2em',
+              color: '#8C887C',
+            }}
+          >
+            {mission.icon} / {mission.type}
+          </span>
+          {mission.venueTag && (
+            <span
+              style={{
+                fontFamily: 'var(--font-plex), monospace',
+                fontSize: '9px',
+                color: '#F2A900',
+                letterSpacing: '0.05em',
+                border: '1px solid #34322C',
+                padding: '1px 4px',
+              }}
+            >
+              {mission.venueTag}
+            </span>
+          )}
+        </div>
         <span
           style={{
             fontFamily: 'var(--font-plex), monospace',
@@ -348,6 +370,19 @@ export default function MissionCard({
         >
           {mission.text}
         </p>
+        {mission.privacyNotice && (
+          <div
+            style={{
+              marginTop: '6px',
+              fontFamily: 'var(--font-plex), monospace',
+              fontSize: '10px',
+              color: '#8C887C',
+              letterSpacing: '0.04em',
+            }}
+          >
+            {mission.privacyNotice}
+          </div>
+        )}
         <div
           style={{
             marginTop: '8px',

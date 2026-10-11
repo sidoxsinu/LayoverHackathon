@@ -15,6 +15,7 @@ import ThemeTimePicker from './ui/ThemeTimePicker';
 import InfoTip from './InfoTip';
 import Tour from './Tour';
 import { SETUP_STEPS, isTourCompleted } from '@/lib/tour';
+import { WaitType, getWaitLabels, normalizeWaitType } from '@/lib/labels';
 
 type InputMode = 'time' | 'duration';
 
@@ -31,6 +32,10 @@ interface Props {
     startedMs: number;
     tripId?: string | null;
     tripName?: string | null;
+    waitType: WaitType;
+    venue: string;
+    osmCategory?: string;
+    city?: string;
   }) => void;
   onDemo: () => void;
   tapCount: number;
@@ -78,6 +83,10 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
   const [timeValue, setTimeValue] = useState('');
   const [durH, setDurH] = useState('2');
   const [durM, setDurM] = useState('0');
+  const [waitType, setWaitType] = useState<WaitType>('flight');
+  const [venue, setVenue] = useState<string>('');
+  const [osmCategory, setOsmCategory] = useState<string>('transit hub');
+  const [city, setCity] = useState<string>('local area');
   const [gate, setGate] = useState('');
   const [walkMin, setWalkMin] = useState(10);
   const [vibe, setVibe] = useState('tired');
@@ -89,6 +98,8 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [locationStatus, setLocationStatus] = useState<'AUTO' | 'MANUAL' | 'DEFAULT'>('AUTO');
   const [showTour, setShowTour] = useState(false);
+
+  const waitLabels = getWaitLabels(waitType);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -197,13 +208,22 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         if (!res.ok) throw new Error('API failed');
         const data = await res.json();
         if (!active) return;
-        setAirportName(data.airport || 'UNKNOWN LOCATION');
+        const resolved = data.airport || 'UNKNOWN LOCATION';
+        setAirportName(resolved);
+        if (resolved && resolved !== 'UNKNOWN LOCATION') {
+          setVenue((prev) => (prev ? prev : resolved));
+        }
+        if (data.osmCategory) setOsmCategory(data.osmCategory);
+        if (data.city) setCity(data.city);
         setCustomMissions(data.missions || []);
         if (!data.airport) setLocationStatus('DEFAULT');
         else setLocationStatus('AUTO');
       } catch (e) {
         if (!active) return;
         setAirportName('TINKERSPACE, CALICUT');
+        setVenue((prev) => (prev ? prev : 'TINKERSPACE, CALICUT'));
+        setOsmCategory('hackerspace');
+        setCity('CALICUT');
         setLocationStatus('DEFAULT');
       }
     };
@@ -216,12 +236,18 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         () => {
           if (!active) return;
           setAirportName('TINKERSPACE, CALICUT');
+          setVenue((prev) => (prev ? prev : 'TINKERSPACE, CALICUT'));
+          setOsmCategory('hackerspace');
+          setCity('CALICUT');
           setLocationStatus('DEFAULT');
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
       setAirportName('TINKERSPACE, CALICUT');
+      setVenue((prev) => (prev ? prev : 'TINKERSPACE, CALICUT'));
+      setOsmCategory('hackerspace');
+      setCity('CALICUT');
       setLocationStatus('DEFAULT');
     }
 
@@ -242,14 +268,20 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
       });
       if (res.ok) {
         const data = await res.json();
-        setAirportName(data.airport || draftLocation);
+        const resolved = data.airport || draftLocation;
+        setAirportName(resolved);
+        setVenue(resolved);
+        if (data.osmCategory) setOsmCategory(data.osmCategory);
+        if (data.city) setCity(data.city);
         setCustomMissions(data.missions || []);
       } else {
         setAirportName(draftLocation);
+        setVenue(draftLocation);
       }
       setLocationStatus('MANUAL');
     } catch (e) {
       setAirportName(draftLocation);
+      setVenue(draftLocation);
       setLocationStatus('MANUAL');
     }
     setIsFetchingLocation(false);
@@ -314,7 +346,7 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
 
   const handleStart = async () => {
     if (!departureMs) { setError('SET A DEPARTURE TIME'); return; }
-    if (!safeOk) { setError('YOU NEED TO HEAD TO THE GATE NOW.'); return; }
+    if (!safeOk) { setError(`YOU NEED TO HEAD TO YOUR ${waitLabels.placeLabel} NOW.`); return; }
     setError('');
     await arm();
     onStart({
@@ -329,6 +361,10 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
       startedMs: now,
       tripId: selectedTripId || null,
       tripName: selectedTripName || null,
+      waitType,
+      venue: venue.trim(),
+      osmCategory,
+      city,
     });
   };
 
@@ -564,10 +600,59 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
           </Row>
         )}
 
+        {/* Waiting For Selector */}
+        <div data-tour="setup-waittype">
+          <Row>
+            <Label>WAITING FOR</Label>
+            <ThemeDropdown
+              value={waitType}
+              onChange={(val) => setWaitType(normalizeWaitType(val))}
+              options={[
+                { value: 'flight', label: 'FLIGHT', sublabel: 'AIRPORT CONCOURSE & GATES' },
+                { value: 'train', label: 'TRAIN', sublabel: 'RAILWAY STATION & PLATFORMS' },
+                { value: 'bus', label: 'BUS', sublabel: 'BUS INTERCHANGE & BAYS' },
+                { value: 'other', label: 'OTHER', sublabel: 'EVENT, LOUNGE OR MEETING POINT' },
+              ]}
+            />
+          </Row>
+        </div>
+
+        {/* Venue (Optional) Input */}
+        <div data-tour="setup-venue">
+          <Row>
+            <Label>VENUE (OPTIONAL)</Label>
+            <input
+              type="text"
+              value={venue}
+              maxLength={60}
+              onChange={(e) => setVenue(e.target.value.toUpperCase())}
+              placeholder="E.G. TINKERSPACE CALICUT, TERMINAL 2"
+              style={{
+                ...inputStyle,
+                height: '48px',
+                backgroundColor: '#101010',
+                borderColor: venue ? '#F2A900' : '#34322C',
+                fontSize: '15px',
+              }}
+            />
+            <div
+              style={{
+                marginTop: '6px',
+                fontFamily: 'var(--font-plex), monospace',
+                fontSize: '11px',
+                color: '#8C887C',
+                textTransform: 'uppercase',
+              }}
+            >
+              LEAVE EMPTY FOR STANDARD MISSIONS
+            </div>
+          </Row>
+        </div>
+
         {/* Departure input mode toggle */}
         <div data-tour="setup-departure">
           <Row>
-            <Label>DEPARTURE</Label>
+            <Label>{waitLabels.departureLabel}</Label>
             <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
               <button style={segBtnStyle(inputMode === 'time')} onClick={() => setInputMode('time')}>
                 TIME
@@ -626,7 +711,7 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
               <Label>SAFE TIME</Label>
               <InfoTip
-                text="MINUTES LEFT BEFORE YOU MUST HEAD TO THE GATE. EQUALS DEPARTURE MINUS WALK TIME MINUS 35 MIN BUFFER."
+                text={`MINUTES LEFT BEFORE YOU MUST HEAD TO THE ${waitLabels.placeLabel}. EQUALS DEPARTURE MINUS WALK TIME MINUS 35 MIN BUFFER.`}
                 label="Safe time information"
                 align="right"
               />
@@ -639,7 +724,7 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
                 color: departureMs === 0 ? '#8C887C' : safeOk ? '#3F9B5B' : '#C8201A',
               }}
             >
-              {departureMs === 0 ? '--' : safeOk ? fmtDuration(safeMs) : 'HEAD TO GATE NOW'}
+              {departureMs === 0 ? '--' : safeOk ? fmtDuration(safeMs) : `HEAD TO ${waitLabels.placeLabel} NOW`}
             </div>
             <div
               style={{
@@ -697,7 +782,7 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         {/* Gate */}
         <div data-tour="setup-gate">
           <Row>
-            <Label>GATE</Label>
+            <Label>{waitLabels.placeLabel}</Label>
             <input
               type="text"
               value={gate}
@@ -713,9 +798,9 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         <div data-tour="setup-walk">
           <Row>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <Label>WALK TO GATE</Label>
+              <Label>WALK TO {waitLabels.placeLabel}</Label>
               <InfoTip
-                text="HOW LONG IT TAKES TO REACH YOUR GATE FROM CONCOURSE."
+                text={`HOW LONG IT TAKES TO REACH YOUR ${waitLabels.placeLabel} FROM CONCOURSE OR WAITING AREA.`}
                 label="Walk time information"
                 align="right"
               />
@@ -796,7 +881,7 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
             textTransform: 'uppercase',
           }}
         >
-          START LAYOVER
+          {waitType === 'flight' ? 'START LAYOVER' : 'START WAIT'}
         </button>
 
         <div style={{ marginTop: '12px', textAlign: 'center' }}>

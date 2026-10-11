@@ -3,16 +3,19 @@ import { useState, useEffect } from 'react';
 import { startAlarm, stopAlarm, silenceAlarm } from '@/lib/alarm';
 import { fmt } from '@/lib/time';
 import GlobalMuteButton from './GlobalMuteButton';
+import { WaitType, getWaitLabels } from '@/lib/labels';
 
 interface Props {
   gate: string;
   departureMs: number;
   now: number;
   onDismiss: () => void;
+  waitType?: WaitType;
 }
 
-export default function GateAlarm({ gate, departureMs, now, onDismiss }: Props) {
+export default function GateAlarm({ gate, departureMs, now, onDismiss, waitType = 'flight' }: Props) {
   const [muted, setMuted] = useState(false);
+  const { placeLabel } = getWaitLabels(waitType);
 
   useEffect(() => {
     startAlarm();
@@ -54,7 +57,7 @@ export default function GateAlarm({ gate, departureMs, now, onDismiss }: Props) 
             color: 'rgba(255,255,255,0.8)',
           }}
         >
-          RETURN TO GATE
+          RETURN TO {placeLabel}
         </div>
 
         <div
@@ -127,7 +130,7 @@ export default function GateAlarm({ gate, departureMs, now, onDismiss }: Props) 
             textTransform: 'uppercase',
           }}
         >
-          I AM AT THE GATE
+          I AM AT THE {placeLabel}
         </button>
       </div>
     </div>

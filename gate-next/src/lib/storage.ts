@@ -1,9 +1,13 @@
+import { WaitType } from './labels';
+
 const KEY = 'gate.v3';
 
 export interface SavedState {
   departureMs: number;
   returnByMs: number;
   airportName?: string;
+  venue?: string;
+  waitType?: WaitType;
   gate: string;
   customMissions?: any[];
   vibe: string;

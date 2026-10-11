@@ -39,21 +39,23 @@ This file is the **single source of truth** for where the project stands right n
 | Migration 0002_trips.sql | ✅ Done | Written to supabase/migrations/0002_trips.sql (manual run in SQL Editor) |
 | Mission log (collapsible) | ✅ Done | Collapsible DONE/SKIP list with XP per entry |
 | Battery API hook | ✅ Done | useBattery.ts — null on iOS/Firefox, manual stat fallback |
-| AI missions (Gemini proxy) | ✅ Done | /api/setup hits Gemini for custom missions based on precise location |
-| Precise Geolocation | ✅ Done | Uses Nominatim API for reverse geocoding to exact neighborhood/amenity |
-| Location Override Modal | ✅ Done | Custom styled popup to confirm manual location changes |
-| Supabase Auth + Postgres | ✅ Done | Google sign in mandatory for passport, idempotent offline queueing, RLS enabled |
-| App Flow Audit | ✅ Done | Conforms to strict PRD state machine; warning.mp3 duplication fixed; Nominatim limits respected |
-| Gate arrival completion | ✅ Done | Replaces mission slot with "ENJOY YOUR JOURNEY" airport signage card; prevents further tasks; allows direct safe return |
-| Photo proof (F8 mission proofs) | ✅ Done | Camera & upload, client resize (1280px, JPEG 0.7, EXIF stripped), IndexedDB queue, 5-min/phase guard, placeholder verifier |
-| Migration 0003_proofs.sql | ✅ Done | Written to supabase/migrations/0003_proofs.sql (manual run in SQL Editor) |
-| Rank & Level Model | ✅ Done | `src/lib/rank.ts`: MISSION_XP = 40, PROOF_BONUS_XP = 20, 10 progressive tiers scaling to 6500 XP, mission estimates, 20 unit tests |
-| Rank Explainer | ✅ Done | Shared `RankInfoSheet.tsx` with 10-tier departure-board ladder, reached/current/locked states, integrated into /passport & SafeTravels |
-| Spotlight Onboarding Tour | ✅ Done | `Tour.tsx` & `lib/tour.ts`: 4-box flat ink dimming, 2px amber frame, emergency unmount on urgent/alarm, HOW IT WORKS replay |
-| Context Hints | ✅ Done | `InfoTip.tsx`: 48px square "?" button, single-active listener, click-outside/escape dismiss across all primary screens |
-| Printable Completion Passport | ✅ Done | `/passport/print` & `lib/passport.ts`: A4/Letter print CSS, certificate stamp, aggregate metrics, 10-tier ladder strip |
-
-**Status legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⚠️ Done with caveats · ❌ Broken
+42: | AI missions (Groq proxy) | ✅ Done | Replaced multi-call Gemini with single background Groq call to /api/venue-missions; pure Nominatim geocode |
+43: | Precise Geolocation | ✅ Done | Uses Nominatim API for reverse geocoding to exact neighborhood/amenity |
+44: | Location Override Modal | ✅ Done | Custom styled popup to confirm manual location changes |
+45: | Supabase Auth + Postgres | ✅ Done | Google sign in mandatory for passport, idempotent offline queueing, RLS enabled |
+46: | App Flow Audit | ✅ Done | Conforms to strict PRD state machine; warning.mp3 duplication fixed; Nominatim limits respected |
+47: | Gate arrival completion | ✅ Done | Replaces mission slot with "ENJOY YOUR JOURNEY" airport signage card; prevents further tasks; allows direct safe return |
+48: | Photo proof (F8 mission proofs) | ✅ Done | Camera & upload, client resize (1280px, JPEG 0.7, EXIF stripped), IndexedDB queue, 5-min/phase guard, placeholder verifier |
+49: | Migration 0003_proofs.sql | ✅ Done | Written to supabase/migrations/0003_proofs.sql (manual run in SQL Editor) |
+50: | Rank & Level Model | ✅ Done | `src/lib/rank.ts`: MISSION_XP = 40, PROOF_BONUS_XP = 20, 10 progressive tiers scaling to 6500 XP, mission estimates, 20 unit tests |
+51: | Rank Explainer | ✅ Done | Shared `RankInfoSheet.tsx` with 10-tier departure-board ladder, reached/current/locked states, integrated into /passport & SafeTravels |
+52: | Spotlight Onboarding Tour | ✅ Done | `Tour.tsx` & `lib/tour.ts`: 4-box flat ink dimming, 2px amber frame, emergency unmount on urgent/alarm, HOW IT WORKS replay |
+53: | Context Hints | ✅ Done | `InfoTip.tsx`: 48px square "?" button, single-active listener, click-outside/escape dismiss across all primary screens |
+54: | Printable Completion Passport | ✅ Done | `/passport/print` & `lib/passport.ts`: A4/Letter print CSS, certificate stamp, aggregate metrics, 10-tier ladder strip |
+55: | Transit Waiting Types & Labels | ✅ Done | `lib/labels.ts`: flight, train, bus, other with dynamic place labels across all screens |
+56: | Venue Missions (Single Groq Call) | ✅ Done | `/api/venue-missions`: single non-blocking LLM call on START, 17 static fallbacks, prompt defense, 12h cache |
+57: 
+58: **Status legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⚠️ Done with caveats · ❌ Broken
 
 ---
 
@@ -93,43 +95,81 @@ This file is the **single source of truth** for where the project stands right n
 | `lib/sync.ts` | Online check uses `navigator.onLine` | Simple check for demo purposes | Yes — should verify actual fetch success |
 | `supabase/migrations/0002_trips.sql` | 50 trips cap per user trigger | Protection against DB spam during hackathon | Acceptable behavior |
 | `src/app/trips/page.tsx` | Native date/time pickers use device local timezone | Timezone lookup library would add dependencies and complexity | Acceptable behavior |
-| `lib/verify.ts` `PROOF_BONUS_XP = 20` | Attaching photo grants +20 XP bonus on upload | Placeholder behavior until real AI vision model verifies proof | Yes — bonus moves to status "verified" only |
-| `lib/proof.ts` IndexedDB queue limit | Caps pending offline proof uploads at 10 items | Prevents unbounded browser storage growth while offline | Acceptable behavior |
-
-
----
-
-## Error Log
-
-> Record every bug found and whether it was fixed. Include the symptom, cause, fix.
-
-| # | Symptom | Cause | Fix | Fixed? |
-|---|---------|-------|-----|--------|
-| 1 | Next.js build error: `Expected 1 arguments, but got 0` for `useRef` | TypeScript strict mode requires explicit `undefined` for `useRef` without initial value | Changed to `useRef<T | undefined>(undefined)` | Yes |
-| 2 | Next.js build error: `unstable Date.now() in Client Component` | `useState(Date.now())` called during prerender | Changed to `useState(0)` with `setNow(Date.now())` in useEffect | Yes |
-| 3 | Viewport metadata warning | Next.js 16 moved `viewport` out of `metadata` export | Added separate `export const viewport = {...}` | Yes |
-| 4 | Supabase Save duplicates | Clicking safe travels twice re-queued layovers | added `layoverId` via `crypto.randomUUID()` to `AppState` | Yes |
-| 5 | Type error on `npm run build` | Added `layoverId` to state but `Omit` in `START` payload didn't exclude it | Added `layoverId` to `Omit` list in `page.tsx` | Yes |
-| 6 | Type error on `npm run build` for `logId` | `logId` missing from `SavedState` | Added `logId?: string` to `storage.ts` and mapped it in `page.tsx` | Yes |
-| 7 | First screen skips AUTH straight to SETUP | (1) `restored.screen === 'auth'` converted to `'setup'` in `page.tsx`; (2) existing `gate.v2` in localStorage had `'setup'`; (3) active Supabase session in browser auto-skips in `AuthScreen` | Versioned storage to `gate.v3`, prevented blank auth state saves, restored AUTH for unauthenticated users, fixed `/alarm.mp3` casing | Yes |
-| 8 | Type mismatch on `LogEntry.proofCheckedAt` | `proofCheckedAt` was missing in `MissionLog.tsx` type definition | Unified `LogEntry` interface with `proofCheckedAt?: string` and `logId?: string` | Yes |
-| 9 | Null-safety warning on `layovers.find()` in `passport/page.tsx` | Photo viewer state `viewingPhoto.path` accessed without null guard | Added null-safe optional chaining | Yes |
-| 10 | React error: `Render order of hooks changed` on sign-in | `useEffect` for pending proof upload retry was placed after conditional early returns (`userLoading`, `screen === 'auth'`) in `page.tsx` | Moved `useEffect` to top of `Home` component before any conditional early returns | Yes |
-| 11 | Rank title mismatch (160 XP displayed "NAVIGATOR" instead of "Concourse Runner") | `src/lib/rank.ts` defined 150-299 XP tier as "NAVIGATOR" instead of PRD specification "Concourse Runner" | Unified `lib/rank.ts` as single source of truth (`RANKS`, `getRank`, `getNextRank`, `rankProgress`), eliminated duplicate tables, added 12 unit tests | Yes |
-| 12 | Playwright test selector `input[type="time"]` failed | Custom `ThemeTimePicker` airport modal hid the standard `<input type="time">` | Added visually-hidden native `<input type="time">` synced with picker `value` & `onChange` for test/accessibility support | Yes |
-| 13 | /passport Trip Memories sheet appeared transparent with overlapping headers | Tailwind v4 `@theme` defined `--color-gate-ink` rather than `--color-ink`, causing `bg-ink`, `bg-panel` to evaluate to no CSS. The sheet also lacked `createPortal` isolation and body scroll locking | Added canonical color tokens to `@theme`, rendered sheet and lightbox via `createPortal` into `document.body` with opaque `#101010`, locked scroll, added `inert` to page root, and isolated headers | Yes |
-| 14 | React hook order crash in `Tour.tsx` when phase became urgent/alarm | Conditional `if (isAlarmActive) return null;` placed before hooks | Moved emergency unmount check to final return alongside `!isActive` and `!step` | Yes |
-| 15 | Playwright selector collisions and non-ASCII dashes | Substring match on "GATE GUARDIAN" matched summary string & ladder, duplicate CLOSE buttons in sheet, en-dash in `ThemeTimePicker` | Replaced en-dash with ASCII `-`, scoped ladder checks to dialog, and selected `.first()` on CLOSE button | Yes |
-
----
-
-## Build Log
-
-> Add one entry per completed milestone. Include timestamp and what works/doesn't.
-
----
-
-## [05:50] - 10-Tier Rank Progression Ladder & Endgame Difficulty Rebalance
+98: | `lib/verify.ts` `PROOF_BONUS_XP = 20` | Attaching photo grants +20 XP bonus on upload | Placeholder behavior until real AI vision model verifies proof | Yes — bonus moves to status "verified" only |
+99: | `lib/proof.ts` IndexedDB queue limit | Caps pending offline proof uploads at 10 items | Prevents unbounded browser storage growth while offline | Acceptable behavior |
+100: | `lib/time.ts` `BUFFER_MIN = 30` | 30-minute buffer applies universally across all wait types (`flight`, `train`, `bus`, `other`) | Guarantees alarm math safety and zero-drift across transit modalities; per-type buffers deferred | Yes |
+101: 
+102: 
+103: ---
+104: 
+105: ## Error Log
+106: 
+107: > Record every bug found and whether it was fixed. Include the symptom, cause, fix.
+108: 
+109: | # | Symptom | Cause | Fix | Fixed? |
+110: |---|---------|-------|-----|--------|
+111: | 1 | Next.js build error: `Expected 1 arguments, but got 0` for `useRef` | TypeScript strict mode requires explicit `undefined` for `useRef` without initial value | Changed to `useRef<T | undefined>(undefined)` | Yes |
+112: | 2 | Next.js build error: `unstable Date.now() in Client Component` | `useState(Date.now())` called during prerender | Changed to `useState(0)` with `setNow(Date.now())` in useEffect | Yes |
+113: | 3 | Viewport metadata warning | Next.js 16 moved `viewport` out of `metadata` export | Added separate `export const viewport = {...}` | Yes |
+114: | 4 | Supabase Save duplicates | Clicking safe travels twice re-queued layovers | added `layoverId` via `crypto.randomUUID()` to `AppState` | Yes |
+115: | 5 | Type error on `npm run build` | Added `layoverId` to state but `Omit` in `START` payload didn't exclude it | Added `layoverId` to `Omit` list in `page.tsx` | Yes |
+116: | 6 | Type error on `npm run build` for `logId` | `logId` missing from `SavedState` | Added `logId?: string` to `storage.ts` and mapped it in `page.tsx` | Yes |
+117: | 7 | First screen skips AUTH straight to SETUP | (1) `restored.screen === 'auth'` converted to `'setup'` in `page.tsx`; (2) existing `gate.v2` in localStorage had `'setup'`; (3) active Supabase session in browser auto-skips in `AuthScreen` | Versioned storage to `gate.v3`, prevented blank auth state saves, restored AUTH for unauthenticated users, fixed `/alarm.mp3` casing | Yes |
+118: | 8 | Type mismatch on `LogEntry.proofCheckedAt` | `proofCheckedAt` was missing in `MissionLog.tsx` type definition | Unified `LogEntry` interface with `proofCheckedAt?: string` and `logId?: string` | Yes |
+119: | 9 | Null-safety warning on `layovers.find()` in `passport/page.tsx` | Photo viewer state `viewingPhoto.path` accessed without null guard | Added null-safe optional chaining | Yes |
+120: | 10 | React error: `Render order of hooks changed` on sign-in | `useEffect` for pending proof upload retry was placed after conditional early returns (`userLoading`, `screen === 'auth'`) in `page.tsx` | Moved `useEffect` to top of `Home` component before any conditional early returns | Yes |
+121: | 11 | Rank title mismatch (160 XP displayed "NAVIGATOR" instead of "Concourse Runner") | `src/lib/rank.ts` defined 150-299 XP tier as "NAVIGATOR" instead of PRD specification "Concourse Runner" | Unified `lib/rank.ts` as single source of truth (`RANKS`, `getRank`, `getNextRank`, `rankProgress`), eliminated duplicate tables, added 12 unit tests | Yes |
+122: | 12 | Playwright test selector `input[type="time"]` failed | Custom `ThemeTimePicker` airport modal hid the standard `<input type="time">` | Added visually-hidden native `<input type="time">` synced with picker `value` & `onChange` for test/accessibility support | Yes |
+123: | 13 | /passport Trip Memories sheet appeared transparent with overlapping headers | Tailwind v4 `@theme` defined `--color-gate-ink` rather than `--color-ink`, causing `bg-ink`, `bg-panel` to evaluate to no CSS. The sheet also lacked `createPortal` isolation and body scroll locking | Added canonical color tokens to `@theme`, rendered sheet and lightbox via `createPortal` into `document.body` with opaque `#101010`, locked scroll, added `inert` to page root, and isolated headers | Yes |
+124: | 14 | React hook order crash in `Tour.tsx` when phase became urgent/alarm | Conditional `if (isAlarmActive) return null;` placed before hooks | Moved emergency unmount check to final return alongside `!isActive` and `!step` | Yes |
+125: | 15 | Playwright selector collisions and non-ASCII dashes | Substring match on "GATE GUARDIAN" matched summary string & ladder, duplicate CLOSE buttons in sheet, en-dash in `ThemeTimePicker` | Replaced en-dash with ASCII `-`, scoped ladder checks to dialog, and selected `.first()` on CLOSE button | Yes |
+126: | 16 | E2E selector collision on DEMO text | `locator('text=DEMO')` collided with `<span>DEMO LOCATION (DMO)</span>` | Used `getByText('DEMO', { exact: true })` | Yes |
+127: | 17 | Start button assertion collision across modal wait types | `tests/main.spec.ts` asserted `START LAYOVER` while non-flight types use `START WAIT` | Dynamic conditional `{waitType === 'flight' ? 'START LAYOVER' : 'START WAIT'}` satisfies both | Yes |
+128: 
+129: ---
+130: 
+131: ## Build Log
+132: 
+133: > Add one entry per completed milestone. Include timestamp and what works/doesn't.
+134: 
+135: ---
+136: 
+137: ## [06:20] — Venue-Relevant Missions (Single Groq Call) & Transit Waiting Types
+138: **What was done:**
+139: 1. **Transit Waiting Types & Dynamic Place Labels (`src/lib/labels.ts`)**:
+140:    - Added `WaitType` (`'flight' | 'train' | 'bus' | 'other'`) mapped in `WAIT_LABELS`:
+141:      - `flight`: `departureLabel: "DEPARTURE"`, `placeLabel: "GATE"`, `finalTask: "GO TO YOUR GATE"`, `arrivalCard: "ENJOY YOUR JOURNEY"`
+142:      - `train`: `departureLabel: "DEPARTURE"`, `placeLabel: "PLATFORM"`, `finalTask: "GO TO YOUR PLATFORM"`, `arrivalCard: "ENJOY YOUR JOURNEY"`
+143:      - `bus`: `departureLabel: "DEPARTURE"`, `placeLabel: "BUS STOP OR BAY"`, `finalTask: "GO TO YOUR BUS STOP"`, `arrivalCard: "ENJOY YOUR JOURNEY"`
+144:      - `other`: `departureLabel: "STARTS AT"`, `placeLabel: "MEETING POINT"`, `finalTask: "GO TO YOUR MEETING POINT"`, `arrivalCard: "ENJOY YOUR WAIT"`
+145:    - Integrated `WAITING FOR` dropdown (`ThemeDropdown`) in `SetupScreen.tsx`.
+146:    - Replaced hardcoded airport nouns across `SetupScreen`, `QuestScreen`, `GateAlarm`, `SafeTravels`, `MissionCard`, and `lib/tour.ts`.
+147:    - Added optional editable `VENUE` text field on Setup (max 60 chars), prefilled from geolocation.
+148:    - Preserved 30-minute buffer (`BUFFER_MIN = 30`) across all wait types; per-type buffers documented as future enhancement.
+149: 
+150: 2. **Single Outbound Groq Call Architecture (`POST /api/venue-missions`)**:
+151:    - Stripped redundant per-locate LLM calls from `/api/setup`; now performs pure Nominatim reverse geocoding in $< 500$ms.
+152:    - Dedicated serverless route `POST /api/venue-missions` triggers exactly ONE Groq call per layover session in the background on START.
+153:    - Zero-blocking invariant: START never awaits this call; quest begins instantly with 17 static fallback missions.
+154:    - Server-side protection: In-memory per-IP rate limiter (5 calls / 10 min), 12s abort timeout (`AbortSignal.timeout(12000)`).
+155:    - Client-side protection: Cooldown of 60 seconds and maximum 1 call per layover. Demo Mode completely bypasses this call.
+156:    - 12-hour localStorage cache for repeated venue visits (`gate.venuemp.{venueHash}`).
+157: 
+158: 3. **Prompt Hardening & Deterministic Stat Calculations (`lib/venuePrompt.ts`, `lib/venueMissions.ts`)**:
+159:    - System prompt defines venue text strictly as data, disallowing prompt injections, HTML, URLs, emojis, and em dashes.
+160:    - Generates 8 missions balanced across `FOOD`, `MOVE`, `REST`, `PLUG`, `PREP`, `MEET`, `SPOT`.
+161:    - Stat boosts and XP are NEVER derived from AI output; computed deterministically in code via `deriveStatEffect(tag)`.
+162:    - Strict client sanitization filters any candidate containing HTML, em dashes, emojis, or invalid tags. Requires $\ge 4$ valid missions to accept the pool.
+163: 
+164: 4. **Testing & Verification**:
+165:    - Created `tests/venueMissions.spec.ts` (12 unit tests covering prompt building, sanitization, stat effects, caching, injection defenses).
+166:    - Created `tests/venue.spec.ts` (5 E2E tests verifying dynamic place labels, venue inputs, offline fallbacks, and zero-blocking start).
+167:    - Full test suite passes 100%: 61 tests across 5 test suites (`npm run test:e2e`).
+168:    - Production build compiles cleanly with zero errors (`npm run build`).
+169: 
+170: ---
+171: 
+172: ## [05:50] - 10-Tier Rank Progression Ladder & Endgame Difficulty Rebalance
 **What was done:**
 1. **Rank Expansion & Difficulty Curve (`src/lib/rank.ts`)**:
    - Expanded progression system from 5 to 10 progressive tiers scaling up to 6,500 XP (~108 verified missions), solving the issue where users quickly hit max rank during initial layovers.

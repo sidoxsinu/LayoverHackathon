@@ -57,5 +57,20 @@
 - **Passport & Memories Suite (`tests/passport.spec.ts`)**: PASS (8/8 tests pass).
 - **Design System Audit**: PASS (0 emojis, 0 gradients, 0 shadows, 0 blur, 0 rounded corners > 2px, 0 em dashes).
 - **Production Build**: PASS (`npm run build` succeeds with zero errors in < 2s).
-- **Overall Suite**: 44/44 Playwright E2E and unit tests PASS. Production build clean.
+60: - **Overall Suite**: 44/44 Playwright E2E and unit tests PASS. Production build clean.
+61: 
+62: ## Iteration 8 (Venue-Relevant Missions & Transit Waiting Types)
+63: 
+64: - **Unit Test Suite (`tests/venueMissions.spec.ts`)**: PASS (12/12 unit tests pass covering prompt generation, prompt injection sanitization, tag-derived stat effects, deduplication, JSON clamping, and 12-hour localStorage caching).
+65: - **E2E Test Suite (`tests/venue.spec.ts`)**: PASS (5/5 E2E tests pass):
+66:   - `allows selecting transit wait type and displays dynamic labels`: PASS (verifies FLIGHT -> GATE, TRAIN -> PLATFORM, BUS -> BUS STOP OR BAY, OTHER -> MEETING POINT).
+67:   - `allows entering custom venue name and preserves it`: PASS (verifies custom 60-char venue input persists).
+68:   - `START button text adapts to wait type`: PASS (verifies START LAYOVER vs START WAIT).
+69:   - `starts layover immediately with offline fallbacks while API runs`: PASS (verifies zero-blocking START).
+70:   - `places label adapts dynamically in quest screen`: PASS (verifies RETURN TO PLATFORM IN / RETURN TO GATE IN).
+71: - **Full Regression Suite (`tests/main.spec.ts`, `tests/onboarding.spec.ts`, `tests/passport.spec.ts`, `tests/rank.spec.ts`, `tests/venue.spec.ts`, `tests/venueMissions.spec.ts`)**: PASS (61/61 tests pass in 34.7s).
+72: - **Design System Audit**: PASS (0 emojis, 0 gradients, 0 shadows, 0 blur, 0 rounded corners > 2px, 0 em dashes).
+73: - **Production Build**: PASS (`npm run build` succeeds with zero errors in Turbopack).
+74: - **Overall Suite**: 61/61 Playwright E2E and unit tests PASS. Production build clean.
+75: 
 

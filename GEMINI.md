@@ -96,22 +96,26 @@ Routes: `/` (AUTH, SETUP, QUEST, ALARM, SAFE TRAVELS) · `/passport` · `/passpo
 
 2. SETUP
 - Header links for signed-in users: TRIPS / PASSPORT / SIGN OUT.
+- WAITING FOR selector (ThemeDropdown): FLIGHT (default), TRAIN, BUS, OTHER. Maps to labels in `lib/labels.ts` (FLIGHT: DEPARTURE/GATE, TRAIN: DEPARTURE/PLATFORM, BUS: DEPARTURE/BUS STOP OR BAY, OTHER: STARTS AT/MEETING POINT). Note: the 30-minute buffer applies to all wait types; per-type buffers are a future task.
+- Optional editable VENUE text field (max 60 chars), prefilled from geolocation reverse geocoding when available, editable or clearable by the user. Saved with layover.
 - If signed in with upcoming trips: TRIP dropdown (native select, square, 48px) above departure fields. Options: "MANUAL ENTRY", then upcoming trips as "11 OCT 18:45 / NAME". Preselects nearest upcoming trip departing within next 24 hours.
 - Selecting a trip fills departure (absolute departureMs passed straight into schedule()), gate, and walk time. Fields stay editable and edits never change saved trip. Displays "FROM TRIP: NAME" and label "TRIP LOCATION: ...".
 - Context hints (48px square "?" buttons) on Safe Time, Walk Time, Vibe.
 - Spotlight tour (6 steps: welcome, departure, gate, walk, vibe, start) auto-starts on fresh session. Replay via "HOW IT WORKS" in footer.
 - If trips table does not exist or request fails: show muted line "TRIPS UNAVAILABLE" and continue manual flow.
-- START blocked if safe time <= 0. Passes tripId and tripName into state and saves to `layovers.trip_id` and `trip_name`.
+- START blocked if safe time <= 0. Button reads "START LAYOVER" for flights, "START WAIT" for other wait types. Passes tripId, tripName, waitType, and venue into state and saves to layover.
+- Background Groq Call: START triggers exactly ONE non-blocking outbound call to `/api/venue-missions` in the background (cooldown: max 1 per layover, min 60s cooldown; server rate-limit: 5/10min, 12s timeout). Never blocks or delays START, quest, or countdown. If call fails or is slow, quest runs on standard static missions. Demo Mode completely bypasses this call.
 
 3. QUEST
-- Countdown, draining stats, single mission card. Hidden from trips links.
+- Countdown, draining stats, single mission card. Hidden from trips links. Place labels dynamic based on waitType (e.g. "RETURN TO GATE IN", "RETURN TO PLATFORM IN").
+- Stat effects and XP are NEVER derived from AI output; derived deterministically in code via `deriveStatEffect(tag)`. Tag-based stat boosts (+20 to +30 hunger/sanity/battery). MISSION_XP = 40, PROOF_BONUS_XP = 20.
 - Context hints on vitals and stats.
 - Spotlight tour (8 steps) auto-starts if phase is "free" and > 15 min safe time; if <= 15 min, shows "TOUR SKIPPED, LESS THAN 15 MIN LEFT".
 - Mission card COMPLETE opens full-screen PROOF screen (TAKE PHOTO, UPLOAD PHOTO, SKIP PROOF), shown only while phase is "free" or "headsup" and more than 5 minutes remain.
 - If phase is "urgent" or "alarm", or minutes left is 5 or less: COMPLETE completes directly with no proof, displaying muted line "PROOF OFF, LESS THAN 5 MIN LEFT" (native camera moves page to background).
 - If alarm triggers while PROOF screen or tour is open: immediately unmounts PROOF screen/tour and shows alarm.
 - Attaching photo awards +20 PROOF bonus XP (stored per row in `proof_xp`).
-- Non-photographable missions (rest, nap, pack bag) have `proof: "none"` and complete directly.
+- Non-photographable missions (rest, nap, pack bag) have `proof: "none"` and complete directly. Final mission is local destination task (e.g. "GO TO YOUR GATE", "GO TO YOUR PLATFORM").
 
 4. ALARM
 - Immediate alarm screen takeover, zero network/auth/trip/camera dependency. No tour or tips, ever.

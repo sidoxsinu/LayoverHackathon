@@ -15,12 +15,14 @@ import PhotoViewerModal from './ui/PhotoViewerModal';
 import RankInfoSheet from './RankInfoSheet';
 import Tour from './Tour';
 import { SAFE_STEPS, isTourCompleted } from '@/lib/tour';
+import { WaitType, getWaitLabels } from '@/lib/labels';
 
 interface Props {
   survivedMs: number;
   missionsCompleted: number;
   xp: number;
   onNewLayover: () => void;
+  waitType?: WaitType;
 }
 
 function SafeTravelsPhotoThumb({
@@ -93,9 +95,10 @@ function SafeTravelsPhotoThumb({
   );
 }
 
-export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLayover }: Props) {
+export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLayover, waitType = 'flight' }: Props) {
   const router = useRouter();
   const rankTier = getRank(xp);
+  const waitLabels = getWaitLabels(waitType);
   const [showRankSheet, setShowRankSheet] = useState(false);
   const [showTour, setShowTour] = useState(false);
 
@@ -226,7 +229,7 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
             color: '#8C887C',
           }}
         >
-          GATE / LAYOVER COMPLETE
+          GATE / {waitType === 'flight' ? 'LAYOVER' : waitLabels.waitNoun} COMPLETE
         </div>
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -633,7 +636,7 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
             minHeight: '48px',
           }}
         >
-          START NEW LAYOVER
+          {waitType === 'flight' ? 'START NEW LAYOVER' : 'START NEW WAIT'}
         </button>
       </div>
 

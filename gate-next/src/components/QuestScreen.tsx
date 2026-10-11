@@ -12,6 +12,7 @@ import GlobalMuteButton from './GlobalMuteButton';
 import InfoTip from './InfoTip';
 import Tour from './Tour';
 import { QUEST_STEPS, isTourCompleted } from '@/lib/tour';
+import { WaitType, getWaitLabels } from '@/lib/labels';
 
 interface Stats {
   hunger: number;
@@ -37,6 +38,8 @@ interface Props {
   onStatChange?: (key: keyof Stats, value: number) => void;
   isGuest?: boolean;
   onUpdateLog?: (updated: LogEntry[]) => void;
+  waitType?: WaitType;
+  venue?: string;
 }
 
 export default function QuestScreen({
@@ -57,7 +60,10 @@ export default function QuestScreen({
   onStatChange,
   isGuest = false,
   onUpdateLog,
+  waitType = 'flight',
+  venue,
 }: Props) {
+  const waitLabels = getWaitLabels(waitType);
   const msLeft = returnByMs - now;
   const phase = phaseFor(msLeft, demo);
   const minsLeft = Math.max(0, Math.floor(msLeft / 60000));
@@ -257,7 +263,7 @@ export default function QuestScreen({
               color: 'white',
             }}
           >
-            {isGateComplete ? 'AT GATE · STANDING BY' : 'WALK TO GATE NOW'}
+            {isGateComplete ? `AT ${waitLabels.placeLabel} · STANDING BY` : `WALK TO ${waitLabels.placeLabel} NOW`}
           </span>
         </div>
       )}
@@ -295,6 +301,8 @@ export default function QuestScreen({
           onSafeReturn={onSafeReturn}
           isProofDisabled={isProofDisabled}
           onRequestProof={() => setIsProofModalOpen(true)}
+          placeLabel={waitLabels.placeLabel}
+          arrivalCard={waitLabels.arrivalCard}
         />
         <MissionLog log={log} xp={xp} onUpdateLog={onUpdateLog} />
       </div>
@@ -335,7 +343,7 @@ export default function QuestScreen({
             textTransform: 'uppercase',
           }}
         >
-          {isGateComplete ? 'I AM AT THE GATE (SAFE RETURN)' : 'I AM AT THE GATE (EARLY)'}
+          {isGateComplete ? `I AM AT THE ${waitLabels.placeLabel} (SAFE RETURN)` : `I AM AT THE ${waitLabels.placeLabel} (EARLY)`}
         </button>
       </div>
 

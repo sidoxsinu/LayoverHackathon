@@ -18,6 +18,72 @@ import { ProcessedPhoto, uploadProofBlob, retryPendingProofUploads } from '@/lib
 import { ProofStatus, PROOF_BONUS_XP, verifyProof } from '@/lib/verify';
 import { MISSION_XP } from '@/lib/rank';
 import { LogEntry } from '@/components/MissionLog';
+import { WaitType, normalizeWaitType } from '@/lib/labels';
+import { getCachedVenueMissions, setCachedVenueMissions, validateVenueMissions } from '@/lib/venueMissions';
+
+let lastVenueFetchTimestamp = 0;
+const fetchedLayoverIds = new Set<string>();
+
+async function triggerVenueMissionsBackground({
+  venue,
+  waitType,
+  osmCategory,
+  city,
+  safeMinutes,
+  vibe,
+  layoverId,
+  onLoaded,
+}: {
+  venue: string;
+  waitType: WaitType;
+  osmCategory?: string;
+  city?: string;
+  safeMinutes: number;
+  vibe: string;
+  layoverId: string;
+  onLoaded: (missions: Mission[]) => void;
+}) {
+  const now = Date.now();
+  if (fetchedLayoverIds.has(layoverId) || now - lastVenueFetchTimestamp < 60000) {
+    return;
+  }
+  fetchedLayoverIds.add(layoverId);
+  lastVenueFetchTimestamp = now;
+
+  try {
+    const res = await fetch('/api/venue-missions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        venue,
+        waitType,
+        osmCategory,
+        city,
+        safeMinutes,
+        vibe,
+        localHour: new Date().getHours(),
+      }),
+    });
+
+    if (!res.ok) {
+      console.warn('Venue missions fetch returned status:', res.status);
+      return;
+    }
+
+    const data = await res.json();
+    if (!data.success || !Array.isArray(data.missions)) {
+      return;
+    }
+
+    const validated = validateVenueMissions(data.missions, layoverId, venue);
+    if (validated.length >= 4) {
+      setCachedVenueMissions(venue, waitType, validated, data.venueSummary, data.venueKnown);
+      onLoaded(validated);
+    }
+  } catch (err) {
+    console.warn('Background venue missions fetch failed:', err);
+  }
+}
 
 type Screen = 'auth' | 'setup' | 'quest' | 'alarm' | 'safe';
 
@@ -41,6 +107,9 @@ interface AppState {
   layoverId: string;
   tripId?: string | null;
   tripName?: string | null;
+  waitType: WaitType;
+  venue: string;
+  venueMissionsLoaded?: boolean;
 }
 
 type Action =
@@ -59,6 +128,7 @@ type Action =
   | { type: 'SET_STAT'; key: keyof AppState['stats']; value: number }
   | { type: 'WORDMARK_TAP' }
   | { type: 'SKIP_AUTH' }
+  | { type: 'SET_VENUE_MISSIONS'; payload: Mission[] }
   | { type: 'RESTORE'; payload: AppState };
 
 const DEFAULT_STATE: AppState = {
@@ -81,6 +151,9 @@ const DEFAULT_STATE: AppState = {
   layoverId: '',
   tripId: null,
   tripName: null,
+  waitType: 'flight',
+  venue: '',
+  venueMissionsLoaded: false,
 };
 
 function clamp(v: number): number {
@@ -102,6 +175,13 @@ function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'RESTORE':
       return action.payload;
+
+    case 'SET_VENUE_MISSIONS':
+      return {
+        ...state,
+        customMissions: action.payload,
+        venueMissionsLoaded: true,
+      };
 
     case 'START': {
       const now = Date.now();
@@ -136,6 +216,9 @@ function reducer(state: AppState, action: Action): AppState {
         layoverId: crypto.randomUUID(),
         tripId: null,
         tripName: null,
+        waitType: 'flight',
+        venue: '',
+        venueMissionsLoaded: false,
       };
     }
 
@@ -358,6 +441,9 @@ export default function Home() {
       layoverId: saved.layoverId || crypto.randomUUID(),
       tripId: saved.tripId || null,
       tripName: saved.tripName || null,
+      waitType: normalizeWaitType(saved.waitType),
+      venue: saved.venue || '',
+      venueMissionsLoaded: false,
     };
 
     // If time already passed and was in quest, go straight to alarm
@@ -456,6 +542,8 @@ export default function Home() {
       layoverId: state.layoverId,
       tripId: state.tripId ?? null,
       tripName: state.tripName ?? null,
+      waitType: state.waitType,
+      venue: state.venue,
     };
     save(toSave);
   }, [state]);
@@ -551,6 +639,7 @@ export default function Home() {
         departureMs={state.departureMs}
         now={now}
         onDismiss={() => dispatch({ type: 'DISMISS_ALARM' })}
+        waitType={state.waitType}
       />
       <DebugOverlay onAction={handleDebugAction} />
       </>
@@ -572,6 +661,7 @@ export default function Home() {
         missionsCompleted={missionsCompleted}
         xp={state.xp}
         onNewLayover={() => dispatch({ type: 'NEW_LAYOVER' })}
+        waitType={state.waitType}
       />
       <DebugOverlay onAction={handleDebugAction} />
       </>
@@ -652,6 +742,8 @@ export default function Home() {
         onStatChange={(key, value) => dispatch({ type: 'SET_STAT', key, value })}
         isGuest={!user}
         onUpdateLog={(updated) => dispatch({ type: 'UPDATE_LOG', log: updated })}
+        waitType={state.waitType}
+        venue={state.venue}
       />
       <DebugOverlay onAction={handleDebugAction} />
       </>
@@ -664,13 +756,30 @@ export default function Home() {
     <SetupScreen
       onStart={async (data) => {
         await arm();
+        const venue = data.venue?.trim() || '';
+        const waitType = data.waitType || 'flight';
+        const layoverId = crypto.randomUUID();
+
+        // 1. Check local cache (12-hour TTL)
+        let preloadedMissions: Mission[] = [];
+        if (venue) {
+          const cached = getCachedVenueMissions(venue, waitType);
+          if (cached && cached.length >= 4) {
+            preloadedMissions = cached;
+          }
+        }
+
+        const effectiveMissions = preloadedMissions.length > 0
+          ? preloadedMissions
+          : (data.customMissions || []);
+
         dispatch({
           type: 'START',
           payload: {
             departureMs: data.departureMs,
             returnByMs: data.returnByMs,
             airportName: data.airportName,
-            customMissions: data.customMissions,
+            customMissions: effectiveMissions,
             gate: data.gate,
             walkMin: data.walkMin,
             vibe: data.vibe,
@@ -678,8 +787,28 @@ export default function Home() {
             startedMs: data.startedMs,
             tripId: data.tripId || null,
             tripName: data.tripName || null,
+            waitType,
+            venue,
+            venueMissionsLoaded: preloadedMissions.length > 0,
           },
         });
+
+        // 2. Non-blocking background fetch if no cache, venue exists, and online
+        if (venue && preloadedMissions.length === 0 && typeof navigator !== 'undefined' && navigator.onLine) {
+          const safeMinutes = Math.max(5, Math.round((data.returnByMs - data.startedMs) / 60000));
+          triggerVenueMissionsBackground({
+            venue,
+            waitType,
+            osmCategory: data.osmCategory,
+            city: data.city,
+            safeMinutes,
+            vibe: data.vibe,
+            layoverId,
+            onLoaded: (validated) => {
+              dispatch({ type: 'SET_VENUE_MISSIONS', payload: validated });
+            },
+          });
+        }
       }}
       onDemo={handleDemo}
       tapCount={state.wordmarkTaps}

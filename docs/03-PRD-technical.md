@@ -367,29 +367,62 @@ Adds mission photo proof tracking, cloud storage, and security policies:
   - Rank ladder strip showing all 5 ranks with `REACHED`, `CURRENT`, and `LOCKED` states.
   - Layover cards with mission logs, flight/gate details, and photo frames.
   - Empty state: "NO LAYOVERS TO PRINT." with disabled print button.
-  - Screen guidance: "THE BROWSER PRINT DIALOG DOUBLES AS 'SAVE AS PDF'."
-
-## Test checklist
-- [ ] Alarm fires within 1 s of returnBy
-- [ ] Refresh mid-session restores
-- [ ] Departure past midnight
-- [ ] Safe time <= 0 is blocked
-- [ ] Audio blocked -> fallback works
-- [ ] Background tab 60 s then return -> ladder catches up
-- [ ] Mission never exceeds remaining time
-- [ ] Trips RLS blocks cross-user reads/writes
-- [ ] Trips offline fallback displays cached departures
-- [ ] Unmigrated trips table gracefully falls back to "TRIPS UNAVAILABLE"
-- [ ] Photo proof compression resizes 4000px image to <= 1280px and strips EXIF
-- [ ] Storage RLS blocks cross-user proof folder access
-- [ ] Mission complete with <= 5 min left bypasses camera with "PROOF OFF, LESS THAN 5 MIN LEFT"
-- [ ] Alarm trigger while proof modal is open closes modal immediately
-- [ ] Offline proofs queue in IndexedDB and upload when back online
-- [ ] Placeholder verifier returns "unverified" with badge "PROOF SAVED, NOT CHECKED"
-- [ ] Guest photo proof stays in memory only and shows "GUEST PHOTOS ARE NOT SAVED"
-- [ ] Rank derives purely from XP (160 XP = level 3 Concourse Runner, 140 XP to Gate Guardian)
-- [ ] Tour dismisses instantly on urgent or alarm phase
-- [ ] Quest screen with <= 15 min left skips tour with "TOUR SKIPPED, LESS THAN 15 MIN LEFT"
-- [ ] InfoTips close on click outside or Escape
-- [ ] Printable passport prints single layover or full history with page-break-inside avoid
+370:   - Screen guidance: "THE BROWSER PRINT DIALOG DOUBLES AS 'SAVE AS PDF'."
+371: 
+372: ## Transit Waiting Types & Dynamic Place Labels (`lib/labels.ts`)
+373: - **Types**: `'flight' | 'train' | 'bus' | 'other'`. Default `'flight'`.
+374: - **Mappings**:
+375:   - `flight`: `departureLabel: "DEPARTURE"`, `placeLabel: "GATE"`, `finalTask: "GO TO YOUR GATE"`, `arrivalCard: "ENJOY YOUR JOURNEY"`, `waitNoun: "FLIGHT"`
+376:   - `train`: `departureLabel: "DEPARTURE"`, `placeLabel: "PLATFORM"`, `finalTask: "GO TO YOUR PLATFORM"`, `arrivalCard: "ENJOY YOUR JOURNEY"`, `waitNoun: "TRAIN"`
+377:   - `bus`: `departureLabel: "DEPARTURE"`, `placeLabel: "BUS STOP OR BAY"`, `finalTask: "GO TO YOUR BUS STOP"`, `arrivalCard: "ENJOY YOUR JOURNEY"`, `waitNoun: "BUS"`
+378:   - `other`: `departureLabel: "STARTS AT"`, `placeLabel: "MEETING POINT"`, `finalTask: "GO TO YOUR MEETING POINT"`, `arrivalCard: "ENJOY YOUR WAIT"`, `waitNoun: "EVENT"`
+379: - **Dynamic Start Button**: `START LAYOVER` for flight, `START WAIT` for other wait types.
+380: - **Buffer Math**: Same 30-minute buffer (`BUFFER_MIN = 30`) applied universally to ensure rock-solid alarm reliability across transit modalities.
+381: 
+382: ## Venue Mission Generation Architecture (`/api/venue-missions`, `lib/venueMissions.ts`, `lib/venuePrompt.ts`)
+383: - **Single Outbound Call**: Exactly ONE outbound Groq call per layover session triggered asynchronously on START click. START never awaits this call.
+384: - **Prompt & Injection Defense**:
+385:   - System prompt treats venue text as strict data, not instructions.
+386:   - Disallows HTML, URLs, emojis, and em dashes.
+387:   - Generates 8 venue-grounded missions with even tag distribution across `FOOD`, `MOVE`, `REST`, `PLUG`, `PREP`, `MEET`, `SPOT`.
+388: - **Sanitization & Derivations**:
+389:   - `deriveStatEffect(tag)` deterministically computes stat boosts based on mission tag:
+390:     - `FOOD`: +30 hunger
+391:     - `MOVE`: +25 sanity
+392:     - `REST`: +20 sanity
+393:     - `PLUG`: +30 battery
+394:     - `PREP`, `MEET`, `SPOT`: +20 sanity
+395:   - Minimum 4 valid missions required to accept candidate pool; otherwise falls back to static pool.
+396: - **Rate Limiting & Caching**:
+397:   - Server: in-memory IP map limited to 5 calls per 10 minutes (`429 TOO MANY REQUESTS`). 12-second abort timeout (`AbortSignal.timeout(12000)`).
+398:   - Client: 60-second cooldown and layover session guard (max 1 call per layover).
+399:   - 12-hour localStorage cache per venue (`gate.venuemp.{venueHash}`).
+400: - **Demo Mode**: Triple-tap wordmark bypasses all AI calls and runs entirely offline.
+401: 
+402: ## Test checklist
+403: - [ ] Alarm fires within 1 s of returnBy
+404: - [ ] Refresh mid-session restores
+405: - [ ] Departure past midnight
+406: - [ ] Safe time <= 0 is blocked
+407: - [ ] Audio blocked -> fallback works
+408: - [ ] Background tab 60 s then return -> ladder catches up
+409: - [ ] Mission never exceeds remaining time
+410: - [ ] Trips RLS blocks cross-user reads/writes
+411: - [ ] Trips offline fallback displays cached departures
+412: - [ ] Unmigrated trips table gracefully falls back to "TRIPS UNAVAILABLE"
+413: - [ ] Photo proof compression resizes 4000px image to <= 1280px and strips EXIF
+414: - [ ] Storage RLS blocks cross-user proof folder access
+415: - [ ] Mission complete with <= 5 min left bypasses camera with "PROOF OFF, LESS THAN 5 MIN LEFT"
+416: - [ ] Alarm trigger while proof modal is open closes modal immediately
+417: - [ ] Offline proofs queue in IndexedDB and upload when back online
+418: - [ ] Placeholder verifier returns "unverified" with badge "PROOF SAVED, NOT CHECKED"
+419: - [ ] Guest photo proof stays in memory only and shows "GUEST PHOTOS ARE NOT SAVED"
+420: - [ ] Rank derives purely from XP (160 XP = level 3 Concourse Runner, 140 XP to Gate Guardian)
+421: - [ ] Tour dismisses instantly on urgent or alarm phase
+422: - [ ] Quest screen with <= 15 min left skips tour with "TOUR SKIPPED, LESS THAN 15 MIN LEFT"
+423: - [ ] InfoTips close on click outside or Escape
+424: - [ ] Printable passport prints single layover or full history with page-break-inside avoid
+425: - [ ] Waiting type updates place labels dynamically across Setup, Quest, Alarm, and Safe Travels
+426: - [ ] Single Groq call never blocks START or alarm path
+427: - [ ] Groq failure degrades silently to 17 static fallback missions
 

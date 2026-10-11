@@ -196,26 +196,50 @@ Visual photographic evidence for completed layover missions with client-side EXI
    - Empty state: `NO LAYOVERS TO PRINT.` with disabled print button.
    - On-screen muted line: `THE BROWSER PRINT DIALOG DOUBLES AS "SAVE AS PDF".`
 
-## Out of scope
-Maps, lounge data, push notifications, native app, multi-leg flights, social feeds.
-
-## Guest Statement
-Guests can run full layovers with complete countdown, missions, alarm, and local persistence. Sign in with Google is required only to save upcoming trips, store mission photo proofs to cloud storage, and access the multi-session Layover Passport.
-
-## Edge cases
-| Case | Behavior |
-|---|---|
-| Departure passed / safe time ≤ 0 | Block START with message |
-| Past midnight | Roll to next day, show date in preview |
-| Refresh mid-session | Restore from storage |
-| Tab backgrounded then returns | Clock recomputes from timestamps; ladder catches up instantly |
-| Audio blocked | Oscillator fallback + vibration + visual |
-| Battery API missing (iOS/Firefox) | Manual battery stat |
-| Trips table missing or unmigrated | Hide dropdown, show TRIPS UNAVAILABLE, app runs manual entry normally |
-| Offline on /trips | Read from local cache with warning; block writes with error line |
-| Less than 5 min left on mission | Proof bypassed, shows PROOF OFF, LESS THAN 5 MIN LEFT |
-| Alarm fires while taking photo | Proof modal unmounts immediately, alarm screen takes over |
-| Unsupported image / over 10 MB | Muted error line, falls back cleanly without blocking flow |
-| Storage offline or upload fails | Queued in IndexedDB (signed in), mission still completes, shows PROOF NOT SAVED if unqueued |
-| Migration 0003 unrun | Mission log sync degrades gracefully without crashing |
+198: 
+199: ## F10. Venue-Relevant Missions (Single Groq Call) & Transit Waiting Types (P1)
+200: 1. **Transit Waiting Types (`lib/labels.ts`)**:
+201:    - Waiting types supported: `flight` (default), `train`, `bus`, `other`. Stored as `waitType` in `gate.v3` session state.
+202:    - Dynamic airport/transit vocabulary across all UI surfaces:
+203:      - `flight`: DEPARTURE, GATE, GO TO YOUR GATE, ENJOY YOUR JOURNEY, FLIGHT
+204:      - `train`: DEPARTURE, PLATFORM, GO TO YOUR PLATFORM, ENJOY YOUR JOURNEY, TRAIN
+205:      - `bus`: DEPARTURE, BUS STOP OR BAY, GO TO YOUR BUS STOP, ENJOY YOUR JOURNEY, BUS
+206:      - `other`: STARTS AT, MEETING POINT, GO TO YOUR MEETING POINT, ENJOY YOUR WAIT, EVENT
+207:    - Start button reads `START LAYOVER` for flight, `START WAIT` for other wait types.
+208:    - Buffer rule: 30-minute buffer applies to all wait types; per-type buffers are a future task.
+209:    - Optional editable VENUE text field on Setup (max 60 chars), prefilled from geolocation reverse geocoding when permission is granted.
+210: 2. **Single Groq LLM Call (`/api/venue-missions`)**:
+211:    - Exactly ONE outbound LLM call per layover session, triggered non-blockingly upon tapping START.
+212:    - Start is zero-blocking: START, countdown, and quest loop start immediately with 17 static fallback missions.
+213:    - Generates 8 venue-specific missions balanced across tags (`FOOD`, `MOVE`, `REST`, `PLUG`, `PREP`, `MEET`, `SPOT`).
+214:    - Deterministic stat effects: Stat boosts and XP are NEVER derived from AI output; computed via `deriveStatEffect(tag)`. Tag-based boosts: +20 to +30 hunger/sanity/battery. Constants `MISSION_XP = 40`, `PROOF_BONUS_XP = 20`.
+215:    - Server-side rate limiter: in-memory per-IP limit (5 calls per 10 minutes) returning 429, with 12s abort timeout (`AbortSignal.timeout(12000)`).
+216:    - Client-side cooldown: max 1 call per layover session, min 60s cooldown.
+217:    - 12-hour localStorage cache for repeated visits to the same venue (`gate.venuemp.{venueHash}`).
+218:    - Demo Mode triple-tap completely bypasses Groq API calls.
+219: 
+220: ## Out of scope
+221: Maps, lounge data, push notifications, native app, multi-leg flights, social feeds.
+222: 
+223: ## Guest Statement
+224: Guests can run full layovers with complete countdown, missions, alarm, and local persistence. Sign in with Google is required only to save upcoming trips, store mission photo proofs to cloud storage, and access the multi-session Layover Passport.
+225: 
+226: ## Edge cases
+227: | Case | Behavior |
+228: |---|---|
+229: | Departure passed / safe time ≤ 0 | Block START with message |
+230: | Past midnight | Roll to next day, show date in preview |
+231: | Refresh mid-session | Restore from storage |
+232: | Tab backgrounded then returns | Clock recomputes from timestamps; ladder catches up instantly |
+233: | Audio blocked | Oscillator fallback + vibration + visual |
+234: | Battery API missing (iOS/Firefox) | Manual battery stat |
+235: | Trips table missing or unmigrated | Hide dropdown, show TRIPS UNAVAILABLE, app runs manual entry normally |
+236: | Offline on /trips | Read from local cache with warning; block writes with error line |
+237: | Less than 5 min left on mission | Proof bypassed, shows PROOF OFF, LESS THAN 5 MIN LEFT |
+238: | Alarm fires while taking photo | Proof modal unmounts immediately, alarm screen takes over |
+239: | Unsupported image / over 10 MB | Muted error line, falls back cleanly without blocking flow |
+240: | Storage offline or upload fails | Queued in IndexedDB (signed in), mission still completes, shows PROOF NOT SAVED if unqueued |
+241: | Migration 0003 unrun | Mission log sync degrades gracefully without crashing |
+242: | Groq API slow, offline or 429 | Quest runs on static fallback missions with zero disruption |
+243: | Malformed LLM JSON or prompt injection | Strict sanitization strips injected instructions, validates tag, and falls back to static pool if < 4 missions valid |
 

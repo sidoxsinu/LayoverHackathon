@@ -44,9 +44,10 @@
 - [ ] Demo Mode alarm fires at 60 s on the demo phone, three times in a row
 - [ ] Works offline after first load
 - [ ] Passport card looks good in a screenshot
-- [x] Trips management (saved departures table, Setup integration, offline cache, RLS)
-- [x] First-time onboarding spotlight tour, context tips, rank explainer, and printable passport
-- [ ] README with screenshots
+47: - [x] Trips management (saved departures table, Setup integration, offline cache, RLS)
+48: - [x] First-time onboarding spotlight tour, context tips, rank explainer, and printable passport
+49: - [x] Venue-relevant missions (single Groq call) and transit waiting types (flight, train, bus, other)
+50: - [ ] README with screenshots
 
 
 ## Kickoff prompt for an AI coding agent

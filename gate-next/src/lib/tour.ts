@@ -54,22 +54,22 @@ export const SETUP_STEPS: TourStep[] = [
   {
     targetId: '',
     title: 'WELCOME TO GATE',
-    description: 'GATE TURNS YOUR LAYOVER INTO A QUEST AND MAKES SURE YOU NEVER MISS YOUR FLIGHT. 6 QUICK STEPS.',
+    description: 'GATE TURNS YOUR WAITING TIME INTO A QUEST AND MAKES SURE YOU NEVER MISS DEPARTURE. 6 QUICK STEPS.',
   },
   {
     targetId: 'setup-departure',
     title: 'DEPARTURE TIME',
-    description: 'WHEN YOUR FLIGHT LEAVES. GATE COUNTS BACKWARDS FROM THIS.',
+    description: 'WHEN YOU MUST DEPART. GATE COUNTS BACKWARDS FROM THIS.',
   },
   {
     targetId: 'setup-gate',
-    title: 'ASSIGNED GATE',
-    description: 'YOUR GATE. IT SHOWS ON THE ALARM SO YOU KNOW WHERE TO GO.',
+    title: 'DEPARTURE POINT',
+    description: 'YOUR GATE, PLATFORM OR MEETING POINT. IT SHOWS ON THE ALARM SO YOU KNOW WHERE TO GO.',
   },
   {
     targetId: 'setup-walk',
     title: 'WALK TIME',
-    description: 'HOW LONG IT TAKES YOU TO WALK BACK TO THE GATE.',
+    description: 'HOW LONG IT TAKES YOU TO WALK BACK TO YOUR DEPARTURE POINT.',
   },
   {
     targetId: 'setup-vibe',
@@ -78,8 +78,8 @@ export const SETUP_STEPS: TourStep[] = [
   },
   {
     targetId: 'setup-start',
-    title: 'START LAYOVER',
-    description: 'SAFE TIME = DEPARTURE MINUS 30 MIN BOARDING, MINUS YOUR WALK, MINUS 5 MIN BUFFER. AT ZERO THE ALARM FIRES. TAP START AND KEEP YOUR VOLUME UP.',
+    title: 'START WAIT',
+    description: 'SAFE TIME = DEPARTURE MINUS BUFFER, MINUS YOUR WALK. AT ZERO THE ALARM FIRES. TAP START AND KEEP YOUR VOLUME UP.',
   },
 ];
 
@@ -111,8 +111,8 @@ export const QUEST_STEPS: TourStep[] = [
   },
   {
     targetId: 'quest-gate-arrival',
-    title: 'GATE ARRIVAL',
-    description: 'TAP WHEN YOU REACH THE GATE. YOU CAN RETURN EARLY.',
+    title: 'DEPARTURE ARRIVAL',
+    description: 'TAP WHEN YOU REACH YOUR DEPARTURE POINT. YOU CAN RETURN EARLY.',
   },
   {
     targetId: 'quest-mute',
@@ -122,20 +122,20 @@ export const QUEST_STEPS: TourStep[] = [
   {
     targetId: '',
     title: 'XP & RANK',
-    description: 'XP BUILDS YOUR RANK. SEE IT IN PASSPORT AFTER YOUR FLIGHT.',
+    description: 'XP BUILDS YOUR RANK. SEE IT IN PASSPORT AFTER YOUR JOURNEY.',
   },
 ];
 
 export const SAFE_STEPS: TourStep[] = [
   {
     targetId: 'safe-stamp',
-    title: 'LAYOVER STAMP',
-    description: 'YOUR STAMP FOR THIS LAYOVER.',
+    title: 'COMPLETION STAMP',
+    description: 'YOUR STAMP FOR THIS WAIT SESSION.',
   },
   {
     targetId: 'safe-summary',
     title: 'XP AND MISSIONS',
-    description: 'XP EARNED THIS LAYOVER. IT ADDS TO YOUR TOTAL AND YOUR RANK.',
+    description: 'XP EARNED THIS TIME. IT ADDS TO YOUR TOTAL AND YOUR RANK.',
   },
   {
     targetId: 'safe-print',
@@ -157,8 +157,8 @@ export const PASSPORT_STEPS: TourStep[] = [
   },
   {
     targetId: 'passport-history',
-    title: 'PAST LAYOVERS',
-    description: 'EVERY LAYOVER YOU SURVIVED. TAP ONE FOR ITS PHOTO MEMORIES.',
+    title: 'PAST SESSIONS',
+    description: 'EVERY WAIT SESSION YOU SURVIVED. TAP ONE FOR ITS PHOTO MEMORIES.',
   },
   {
     targetId: 'passport-print',
