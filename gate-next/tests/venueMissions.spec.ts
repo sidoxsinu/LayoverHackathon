@@ -1,12 +1,11 @@
 import { test, expect } from '@playwright/test';
 import {
-  VALID_MISSION_TAGS,
   sanitizeMissionText,
   deriveStatEffect,
   validateVenueMissions,
   normalizeVenueKey,
 } from '../src/lib/venueMissions';
-import { getWaitLabels, normalizeWaitType, WAIT_LABELS } from '../src/lib/labels';
+import { getWaitLabels, normalizeWaitType } from '../src/lib/labels';
 import { MISSIONS } from '../src/lib/missions';
 
 test.describe('Labels and Wait Types Unit Tests', () => {

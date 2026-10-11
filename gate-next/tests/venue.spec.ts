@@ -86,6 +86,7 @@ test.describe('Venue and Waiting Type E2E Tests', () => {
     await expect(page.locator('[data-tour="quest-countdown"]')).toBeVisible({ timeout: 1500 });
     const elapsed = Date.now() - startTs;
     expect(elapsed).toBeLessThan(2000);
+    expect(apiCalled).toBe(true);
   });
 
   test('failed /api/venue-missions falls back gracefully without popup errors', async ({ page }) => {

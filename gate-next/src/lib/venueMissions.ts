@@ -1,6 +1,5 @@
 // src/lib/venueMissions.ts
 import { Mission } from './missions';
-import { MISSION_XP, PROOF_BONUS_XP } from './rank';
 import { WaitType } from './labels';
 
 export type MissionTag = 'FOOD' | 'MOVE' | 'REST' | 'PLUG' | 'PREP' | 'MEET' | 'SPOT';

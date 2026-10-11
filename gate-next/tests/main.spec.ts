@@ -1,14 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-
-
-function getOffsetTimeStr(now, offsetMins) {
-  const d = new Date(now.getTime() + offsetMins * 60000);
-  const h = d.getUTCHours().toString().padStart(2, '0');
-  const m = d.getUTCMinutes().toString().padStart(2, '0');
-  return `${h}:${m}`;
-}
-
 test.describe('GATE Layover Hackathon Tests', () => {
   
 
