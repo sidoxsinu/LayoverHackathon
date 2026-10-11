@@ -29,7 +29,7 @@ npx playwright test tests/rank.spec.ts
 
 ---
 
-## 3. Test Suite Breakdown (61 Tests Total)
+## 3. Test Suite Breakdown (72 Tests Total)
 
 | Suite File | Tests | Coverage Scope |
 |---|---|---|
@@ -39,10 +39,25 @@ npx playwright test tests/rank.spec.ts
 | `tests/rank.spec.ts` | 20 | Complete unit tests for all 10 rank tiers: boundary values (0, 49, 50, 149, 150, 160, 299, 300, 499, 500, 999, 1000, 1800, 3000, 4600, 6500, 10000 XP), negative inputs, NaN, and undefined guarding |
 | `tests/venue.spec.ts` | 5 | Transit waiting type selector, dynamic place labels (GATE, PLATFORM, BUS STOP, MEETING POINT), custom venue persistence, zero-blocking START, graceful offline fallback |
 | `tests/venueMissions.spec.ts` | 12 | Prompt injection sanitization, tag-derived stat boosts (+20 to +30), JSON validation, title clamping, deduplication, 12h localStorage caching, SPOT/MEET offline fallbacks |
+| `tests/leaderboard.spec.ts` | 11 | Opt-in membership flow, departure board rendering, top-3 amber highlight, YOU tag, anti-farming duration cap, outside-cutoff separator, empty/error fallbacks, offline caching, active quest/alarm redirect, zero PII audit |
 
 ---
 
-## 4. Design System Compliance Grep
+## 4. SQL Verification Test Suite (`supabase/tests/leaderboard_tests.sql`)
+
+Includes 8 verified PostgreSQL test queries:
+1. Handle uniqueness across case variations (`LOWER(handle)`).
+2. Reserved and inappropriate word rejection (`is_handle_blocked`).
+3. Multi-tenant RLS isolation on `leaderboard_members`.
+4. Anon privilege revocation.
+5. Zero user identifier leakage in RPC results.
+6. Exclusion of hidden accounts.
+7. Anti-farming duration capping formula.
+8. 1-hour handle change cooldown trigger verification.
+
+---
+
+## 5. Design System Compliance Grep
 
 In addition to functional tests, GATE enforces strict automated audits to guarantee no banned UI elements exist in source code:
 - **Zero Emojis**: Enforced via regex grep; pure alphanumeric codes only (`FOOD`, `MOVE`, `REST`, `PLUG`, `PREP`, `MEET`, `SPOT`).

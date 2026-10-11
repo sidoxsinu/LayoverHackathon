@@ -698,7 +698,7 @@ export default function PassportPage() {
           >
             ← RETURN
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 resetTourState();
@@ -708,6 +708,14 @@ export default function PassportPage() {
               className="min-h-[48px] px-2 text-muted hover:text-amber font-mono text-xs tracking-wider uppercase flex items-center focus:outline-none focus:ring-1 focus:ring-paper rounded-[2px]"
             >
               HOW IT WORKS
+            </button>
+            <button
+              data-tour="passport-leaderboard"
+              onClick={() => router.push('/leaderboard')}
+              style={{ minHeight: '48px' }}
+              className="min-h-[48px] px-2 text-amber hover:text-paper font-mono text-xs tracking-wider uppercase flex items-center focus:outline-none focus:ring-1 focus:ring-paper rounded-[2px]"
+            >
+              LEADERBOARD
             </button>
             <span className="font-mono text-xs tracking-widest text-muted uppercase">PASSPORT</span>
           </div>

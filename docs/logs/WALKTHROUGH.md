@@ -54,8 +54,11 @@ This file is the **single source of truth** for where the project stands right n
 | Printable Completion Passport | ✅ Done | `/passport/print` & `lib/passport.ts`: A4/Letter print CSS, certificate stamp, aggregate metrics, 10-tier ladder strip |
 | Transit Waiting Types & Labels | ✅ Done | `lib/labels.ts`: flight, train, bus, other with dynamic place labels across all screens |
 | Venue Missions (Single Groq Call) | ✅ Done | `/api/venue-missions`: single non-blocking LLM call on START, 36 static fallbacks, prompt defense, 12h cache |
-| Clean Repo & Judging Structure | ✅ Done | Organized into `docs/{prd,engineering,demo,logs,archive}`, dead files safely removed, 61/61 tests |
+| Clean Repo & Judging Structure | ✅ Done | Organized into `docs/{prd,engineering,demo,logs,archive}`, dead files safely removed, 72/72 tests |
 | Master Visual README | ✅ Done | 13 judge-focused sections, 7 Mermaid diagrams, real screenshots, rubric alignment |
+| Leaderboard (Opt-In & Scoped) | ✅ Done | `/leaderboard` route, 3 tabs (ALL TIME, THIS WEEK, THIS VENUE), anti-farming duration cap, 0 PII leak, 1-hr handle cooldown, 11/11 tests |
+| Migration 0004_leaderboard.sql | ✅ Done | Written to `supabase/migrations/0004_leaderboard.sql` with RPCs join/leave/get_leaderboard and security definer |
+| Concourse Navigation Strip | ✅ Done | Two-tier mobile header with 48px touch targets and 3-segment concourse sub-navigation ribbon |
 
 **Status legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⚠️ Done with caveats · ❌ Broken
 
@@ -97,13 +100,13 @@ This file is the **single source of truth** for where the project stands right n
 | `lib/sync.ts` | Online check uses `navigator.onLine` | Simple check for demo purposes | Yes — should verify actual fetch success |
 | `supabase/migrations/0002_trips.sql` | 50 trips cap per user trigger | Protection against DB spam during hackathon | Acceptable behavior |
 | `src/app/trips/page.tsx` | Native date/time pickers use device local timezone | Timezone lookup library would add dependencies and complexity | Acceptable behavior |
-98: | `lib/verify.ts` `PROOF_BONUS_XP = 20` | Attaching photo grants +20 XP bonus on upload | Placeholder behavior until real AI vision model verifies proof | Yes — bonus moves to status "verified" only |
-99: | `lib/proof.ts` IndexedDB queue limit | Caps pending offline proof uploads at 10 items | Prevents unbounded browser storage growth while offline | Acceptable behavior |
-100: | `lib/time.ts` `BUFFER_MIN = 30` | 30-minute buffer applies universally across all wait types (`flight`, `train`, `bus`, `other`) | Guarantees alarm math safety and zero-drift across transit modalities; per-type buffers deferred | Yes |
-101: 
-102: 
-103: ---
-104: 
+| `lib/verify.ts` `PROOF_BONUS_XP = 20` | Attaching photo grants +20 XP bonus on upload | Placeholder behavior until real AI vision model verifies proof | Yes — bonus moves to status "verified" only |
+| `lib/proof.ts` IndexedDB queue limit | Caps pending offline proof uploads at 10 items | Prevents unbounded browser storage growth while offline | Acceptable behavior |
+| `lib/time.ts` `BUFFER_MIN = 30` | 30-minute buffer applies universally across all wait types (`flight`, `train`, `bus`, `other`) | Guarantees alarm math safety and zero-drift across transit modalities; per-type buffers deferred | Yes |
+| `supabase/migrations/0004_leaderboard.sql` `get_leaderboard()` | Anti-farming duration cap: `ceil(duration / 3.0)` missions max, 60 XP per layover cap | Prevents demo users or cheaters from spamming 100 missions in a 5-minute layover | Acceptable behavior / Production rule |
+| `supabase/migrations/0004_leaderboard.sql` trigger | 1-hour cooldown on handle changes (`handle_changed_at > now() - interval '1 hour'`) | Prevents spamming handle changes or gaming unique names | Acceptable behavior |
+
+---
 105: ## Error Log
 106: 
 107: > Record every bug found and whether it was fixed. Include the symptom, cause, fix.
@@ -125,18 +128,71 @@ This file is the **single source of truth** for where the project stands right n
 123: | 13 | /passport Trip Memories sheet appeared transparent with overlapping headers | Tailwind v4 `@theme` defined `--color-gate-ink` rather than `--color-ink`, causing `bg-ink`, `bg-panel` to evaluate to no CSS. The sheet also lacked `createPortal` isolation and body scroll locking | Added canonical color tokens to `@theme`, rendered sheet and lightbox via `createPortal` into `document.body` with opaque `#101010`, locked scroll, added `inert` to page root, and isolated headers | Yes |
 124: | 14 | React hook order crash in `Tour.tsx` when phase became urgent/alarm | Conditional `if (isAlarmActive) return null;` placed before hooks | Moved emergency unmount check to final return alongside `!isActive` and `!step` | Yes |
 125: | 15 | Playwright selector collisions and non-ASCII dashes | Substring match on "GATE GUARDIAN" matched summary string & ladder, duplicate CLOSE buttons in sheet, en-dash in `ThemeTimePicker` | Replaced en-dash with ASCII `-`, scoped ladder checks to dialog, and selected `.first()` on CLOSE button | Yes |
-126: | 16 | E2E selector collision on DEMO text | `locator('text=DEMO')` collided with `<span>DEMO LOCATION (DMO)</span>` | Used `getByText('DEMO', { exact: true })` | Yes |
-127: | 17 | Start button assertion collision across modal wait types | `tests/main.spec.ts` asserted `START LAYOVER` while non-flight types use `START WAIT` | Dynamic conditional `{waitType === 'flight' ? 'START LAYOVER' : 'START WAIT'}` satisfies both | Yes |
-128: 
-129: ---
-130: 
-131: ## Build Log
-132: 
-133: > Add one entry per completed milestone. Include timestamp and what works/doesn't.
-134: 
-135: ---
-136: 
-137: ## [06:20] — Venue-Relevant Missions (Single Groq Call) & Transit Waiting Types
+| 16 | E2E selector collision on DEMO text | `locator('text=DEMO')` collided with `<span>DEMO LOCATION (DMO)</span>` | Used `getByText('DEMO', { exact: true })` | Yes |
+| 17 | Start button assertion collision across modal wait types | `tests/main.spec.ts` asserted `START LAYOVER` while non-flight types use `START WAIT` | Dynamic conditional `{waitType === 'flight' ? 'START LAYOVER' : 'START WAIT'}` satisfies both | Yes |
+| 18 | GlobalMuteButton height 40px violating >= 48px touch target rule | Dimensions set to 40x40px | Updated to 48x48px minHeight/minWidth across all screens | Yes |
+| 19 | Leaderboard offline fallback error handling | Supabase JS returns error object instead of throwing on fetch failure | Added fetch failure detection in `leaderboard.ts` to trigger offline cache fallback | Yes |
+| 20 | Supabase migration 0004 syntax error 42601 at "position" | `position` is an ANSI SQL and PostgreSQL reserved keyword (for `position(substr in str)`) | Escaped as quoted identifier `"position" int` in `returns table`, ordered by column index `1 asc`, and supported alias fallback in client | Yes |
+| 21 | Mobile header link collision & wrapping: `GATETRIPS` smash and `SIGN OUT` vertical wrapping on $\le 390$px screens | 5 buttons (`TRIPS`, `PASSPORT`, `LEADERBOARD`, `SIGN OUT`, `GlobalMuteButton`) crammed into single flex row alongside 40px `GATE` wordmark on `SetupScreen` ($> 420$px needed in 358px mobile space) | Separated header into brand bar (`GATE` + `SIGN OUT` + `GlobalMuteButton`) and dedicated airport departure Concourse sub-navigation strip (`repeat(3, 1fr)` grid, 48px touch targets, 1px solid dividers); applied matching spacious two-tier layout in `SafeTravels` | Yes |
+
+---
+
+## Build Log
+
+> Add one entry per completed milestone. Include timestamp and what works/doesn't.
+
+---
+
+## [08:15] — Mobile Header Layout & Concourse Navigation Spacing Polish
+**What was done:**
+1. **Header Layout Restructuring (`SetupScreen.tsx`)**:
+   - Resolved mobile header crowding where `GATE` wordmark and navigation links collided (`GATETRIPS`) and `SIGN OUT` vertically wrapped into two lines on $\le 390$px mobile screens.
+   - Restructured into two distinct airport-departure visual tiers:
+     - **Top Brand & Utility Bar**: Left has `GATE` (bold amber wordmark with triple-tap Demo Mode trigger); Right has `SIGN OUT` (red text, single-line `whiteSpace: nowrap`, 48px touch target) and `GlobalMuteButton` (48px square). Guest mode preserves `LAYOVER COMPANION`.
+     - **Concourse Sub-Navigation Strip**: Dedicated 1px solid `#34322C` bordered navigation ribbon directly below the header. 3 equal-width columns (`repeat(3, 1fr)`) for `TRIPS`, `PASSPORT`, and `LEADERBOARD`, with 48px minimum touch height and airport divider lines.
+2. **Safe Travels Header Polish (`SafeTravels.tsx`)**:
+   - Applied matching two-tier layout: Top bar holds `GATE / LAYOVER COMPLETE` status and `SIGN OUT` + `GlobalMuteButton`; lower nav ribbon houses `TRIPS`, `PASSPORT`, and `LEADERBOARD` (or 2-column for guests).
+   - Preserved `data-tour="safe-passport"` on the Passport navigation target for spotlight onboarding tour.
+3. **Trips Header Touch Targets (`src/app/trips/page.tsx`)**:
+   - Ensured all header action targets (`← SETUP`, `PASSPORT`, `SIGN OUT`) have `minHeight: 48px`, `display: flex`, `alignItems: center`, and `whiteSpace: nowrap` to prevent layout collapse.
+4. **Verification**:
+   - 72/72 Playwright end-to-end tests pass (`npm run test:e2e`).
+   - Clean Next.js production build (`npm run build`).
+
+---
+
+## [07:45] — Opt-In Global & Venue Leaderboard Architecture
+**What was done:**
+1. **Database Schema & Server-Computed Anti-Farming Security (`0004_leaderboard.sql`)**:
+   - `public.leaderboard_members` table: user_id PK referencing `auth.users(id)` ON DELETE CASCADE, unique case-insensitive handle (`^[A-Za-z0-9_]{3,16}$`), `hidden` moderation flag locked to service-role.
+   - Reserved handles blocklist (`GATE`, `ADMIN`, `MOD`, `SUPPORT`, `STAFF`, `ANONYMOUS`, `YOU`) and leetspeak substitution profanity filter.
+   - 1-hour handle change cooldown trigger (`handle_leaderboard_member_guard()`).
+   - Anti-farming duration cap in `get_leaderboard(p_scope, p_venue, p_limit)`: max 1 mission per 3 minutes of layover duration (`ceil(duration / 3.0)`), max 60 XP per layover. Zero PII leakage (no user_id, uuid, or email returned).
+   - Appended caller's own true position below a separator (`· · ·`) if outside the top 50 cutoff.
+2. **Client Data Layer (`src/lib/leaderboard.ts`)**:
+   - `fetchLeaderboard()`, `checkMembership()`, `joinLeaderboard()`, `leaveLeaderboard()`.
+   - 60-second in-memory cache, 6-second network timeout, localStorage offline caching (`gate.lb.v1.{scope}.{venueKey}`).
+   - Graceful offline fallback: "OFFLINE, SHOWING SAVED BOARD" and relative time ("UPDATED 2M AGO").
+   - Graceful unmigrated / error fallback: "LEADERBOARD NOT AVAILABLE" with zero crashes.
+3. **Leaderboard Route (`src/app/leaderboard/page.tsx`)**:
+   - Strict active session lockdown: redirects to `/` if quest or alarm is active.
+   - Sticky header with RETURN, LEADERBOARD (h1), REFRESH (10s cooldown), and 48px GlobalMuteButton.
+   - 3-segment scope tabs (`ALL TIME`, `THIS WEEK`, `THIS VENUE`).
+   - "YOUR POSITION" card for opted-in member, non-member, and guest ("SIGN IN WITH GOOGLE TO JOIN").
+   - Departure board table with positions 1–3 highlighted in amber `#F2A900`, `YOU` badge for current user.
+   - Full-screen Join / Change Handle modal sheet and Leave confirmation modal sheet.
+4. **Integration & Navigation**:
+   - Entry points in `/passport` (`LEADERBOARD` button + tour step), `SafeTravels`, and `SetupScreen`.
+5. **Testing & Verification**:
+   - Created `gate-next/supabase/tests/leaderboard_tests.sql` documenting 8 SQL verification test cases.
+   - Created `gate-next/tests/leaderboard.spec.ts` with 11 comprehensive Playwright tests (guest, top 3, empty, error, offline cache, outside top 50 cutoff, venue tab, lockdown check, zero leakage, banned UI audit).
+   - Full test suite passes 100%: 72/72 tests passing (`npm run test:e2e`).
+   - Production build compiles cleanly with zero errors (`npm run build`).
+**What works:** Clean build, 72/72 tests passing, opt-in leaderboard fully functional across all scopes, zero PII leakage, alarm path completely isolated and untouched.
+
+---
+
+## [06:20] — Venue-Relevant Missions (Single Groq Call) & Transit Waiting Types
 138: **What was done:**
 139: 1. **Transit Waiting Types & Dynamic Place Labels (`src/lib/labels.ts`)**:
 140:    - Added `WaitType` (`'flight' | 'train' | 'bus' | 'other'`) mapped in `WAIT_LABELS`:

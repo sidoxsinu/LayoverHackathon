@@ -13,7 +13,9 @@ A layover companion: enter your flight → get time-fitted survival missions →
   5. **Safe Travels** — Layover Passport card, return to gate, photo proof gallery
 - **Dedicated Routes**:
   - `/passport` — saved layover history & photo proofs (signed-in only)
+  - `/passport/print` — printable A4/Letter completion passport certificate & stats
   - `/trips` — departure board table of upcoming trips, add/edit/delete (signed-in only)
+  - `/leaderboard` — opt-in global & venue departure board with anti-farming protection
 - **Guest Statement**: Guests can run layovers. Sign in to save trips, cloud photo proofs, and your Passport.
 
 ## Core math (all in epoch ms, never Date objects in state)

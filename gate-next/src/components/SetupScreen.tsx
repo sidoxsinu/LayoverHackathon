@@ -410,12 +410,13 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
       }}
     >
       {/* Header */}
+      {/* Header Bar */}
       <div
         style={{
-          padding: '24px 16px 16px',
+          padding: '16px 16px',
           borderBottom: '1px solid #34322C',
           display: 'flex',
-          alignItems: 'baseline',
+          alignItems: 'center',
           justifyContent: 'space-between',
         }}
       >
@@ -426,54 +427,27 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
             border: 'none',
             cursor: 'pointer',
             padding: 0,
+            display: 'flex',
+            alignItems: 'center',
           }}
+          aria-label="GATE (triple tap for demo mode)"
         >
           <span
             style={{
               fontFamily: 'var(--font-barlow), sans-serif',
-              fontSize: '40px',
+              fontSize: '36px',
               fontWeight: '700',
               color: '#F2A900',
               letterSpacing: '-0.01em',
+              lineHeight: 1,
             }}
           >
             GATE
           </span>
         </button>
-        {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button
-              onClick={() => router.push('/trips')}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-barlow), sans-serif',
-                fontSize: '13px',
-                color: '#8C887C',
-                letterSpacing: '0.15em',
-                padding: 0,
-                textTransform: 'uppercase',
-              }}
-            >
-              TRIPS
-            </button>
-            <button
-              onClick={() => router.push('/passport')}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-barlow), sans-serif',
-                fontSize: '13px',
-                color: '#8C887C',
-                letterSpacing: '0.15em',
-                padding: 0,
-                textTransform: 'uppercase',
-              }}
-            >
-              PASSPORT
-            </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {user ? (
             <button
               onClick={handleSignOut}
               style={{
@@ -482,33 +456,114 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
                 cursor: 'pointer',
                 fontFamily: 'var(--font-barlow), sans-serif',
                 fontSize: '13px',
+                fontWeight: '700',
                 color: '#C8201A',
                 letterSpacing: '0.15em',
-                padding: 0,
+                padding: '8px 4px',
+                minHeight: '48px',
+                whiteSpace: 'nowrap',
                 textTransform: 'uppercase',
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
               SIGN OUT
             </button>
-            <GlobalMuteButton />
-          </div>
-        ) : (
-          <span
+          ) : (
+            <span
+              style={{
+                fontFamily: 'var(--font-barlow), sans-serif',
+                fontSize: '11px',
+                color: '#8C887C',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+              }}
+            >
+              LAYOVER COMPANION
+            </span>
+          )}
+          <GlobalMuteButton />
+        </div>
+      </div>
+
+      {/* Concourse Sub-Navigation Strip (signed-in) */}
+      {user && (
+        <nav
+          aria-label="Concourse Navigation"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            backgroundColor: '#181816',
+            borderBottom: '1px solid #34322C',
+          }}
+        >
+          <button
+            onClick={() => router.push('/trips')}
             style={{
+              background: 'none',
+              border: 'none',
+              borderRight: '1px solid #34322C',
+              cursor: 'pointer',
               fontFamily: 'var(--font-barlow), sans-serif',
-              fontSize: '11px',
+              fontSize: '13px',
+              fontWeight: '700',
               color: '#8C887C',
               letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              minHeight: '48px',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
+              justifyContent: 'center',
+              padding: '0 8px',
             }}
           >
-            LAYOVER COMPANION
-            <GlobalMuteButton />
-          </span>
-        )}
-      </div>
+            TRIPS
+          </button>
+          <button
+            onClick={() => router.push('/passport')}
+            style={{
+              background: 'none',
+              border: 'none',
+              borderRight: '1px solid #34322C',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-barlow), sans-serif',
+              fontSize: '13px',
+              fontWeight: '700',
+              color: '#8C887C',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              minHeight: '48px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 8px',
+            }}
+          >
+            PASSPORT
+          </button>
+          <button
+            onClick={() => router.push('/leaderboard')}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-barlow), sans-serif',
+              fontSize: '13px',
+              fontWeight: '700',
+              color: '#8C887C',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              minHeight: '48px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 8px',
+            }}
+          >
+            LEADERBOARD
+          </button>
+        </nav>
+      )}
 
       {/* Demo mode hint */}
       {tapCount > 0 && tapCount < 3 && (
@@ -885,6 +940,24 @@ export default function SetupScreen({ onStart, onDemo, tapCount, onWordmarkTap }
         </button>
 
         <div style={{ marginTop: '12px', textAlign: 'center' }}>
+          <button
+            type="button"
+            onClick={() => router.push('/leaderboard')}
+            style={{
+              minHeight: '48px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-barlow), sans-serif',
+              fontSize: '13px',
+              color: '#8C887C',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              padding: '0 16px',
+            }}
+          >
+            LEADERBOARD
+          </button>
           <button
             type="button"
             onClick={() => setShowTour(true)}

@@ -212,13 +212,14 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
       }}
     >
       {/* Header */}
+      {/* Header Bar */}
       <div
         style={{
           width: '100%',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '32px',
+          marginBottom: '16px',
         }}
       >
         <div
@@ -227,51 +228,13 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
             fontSize: '12px',
             letterSpacing: '0.25em',
             color: '#8C887C',
+            textTransform: 'uppercase',
           }}
         >
           GATE / {waitType === 'flight' ? 'LAYOVER' : waitLabels.waitNoun} COMPLETE
         </div>
-        {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button
-              onClick={() => router.push('/trips')}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-barlow), sans-serif',
-                fontSize: '13px',
-                color: '#8C887C',
-                letterSpacing: '0.15em',
-                padding: 0,
-                textTransform: 'uppercase',
-                minHeight: '48px',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              TRIPS
-            </button>
-            <button
-              data-tour="safe-passport"
-              onClick={() => router.push('/passport')}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-barlow), sans-serif',
-                fontSize: '13px',
-                color: '#8C887C',
-                letterSpacing: '0.15em',
-                padding: 0,
-                textTransform: 'uppercase',
-                minHeight: '48px',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              PASSPORT
-            </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {user && (
             <button
               onClick={handleSignOut}
               style={{
@@ -280,45 +243,106 @@ export default function SafeTravels({ survivedMs, missionsCompleted, xp, onNewLa
                 cursor: 'pointer',
                 fontFamily: 'var(--font-barlow), sans-serif',
                 fontSize: '13px',
+                fontWeight: '700',
                 color: '#C8201A',
                 letterSpacing: '0.15em',
-                padding: 0,
+                padding: '8px 4px',
                 textTransform: 'uppercase',
                 minHeight: '48px',
                 display: 'flex',
                 alignItems: 'center',
+                whiteSpace: 'nowrap',
               }}
             >
               SIGN OUT
             </button>
-            <GlobalMuteButton />
-          </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button
-              data-tour="safe-passport"
-              onClick={() => router.push('/passport')}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-barlow), sans-serif',
-                fontSize: '13px',
-                color: '#8C887C',
-                letterSpacing: '0.15em',
-                padding: 0,
-                textTransform: 'uppercase',
-                minHeight: '48px',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              PASSPORT
-            </button>
-            <GlobalMuteButton />
-          </div>
-        )}
+          )}
+          <GlobalMuteButton />
+        </div>
       </div>
+
+      {/* Navigation Strip (Airport Concourse Sub-nav) */}
+      <nav
+        aria-label="Layover Navigation"
+        style={{
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: user ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)',
+          backgroundColor: '#181816',
+          border: '1px solid #34322C',
+          borderRadius: '2px',
+          marginBottom: '24px',
+        }}
+      >
+        {user && (
+          <button
+            onClick={() => router.push('/trips')}
+            style={{
+              background: 'none',
+              border: 'none',
+              borderRight: '1px solid #34322C',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-barlow), sans-serif',
+              fontSize: '13px',
+              fontWeight: '700',
+              color: '#8C887C',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              minHeight: '48px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 8px',
+            }}
+          >
+            TRIPS
+          </button>
+        )}
+        <button
+          data-tour="safe-passport"
+          onClick={() => router.push('/passport')}
+          style={{
+            background: 'none',
+            border: 'none',
+            borderRight: '1px solid #34322C',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-barlow), sans-serif',
+            fontSize: '13px',
+            fontWeight: '700',
+            color: '#8C887C',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            minHeight: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0 8px',
+          }}
+        >
+          PASSPORT
+        </button>
+        <button
+          onClick={() => router.push('/leaderboard')}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-barlow), sans-serif',
+            fontSize: '13px',
+            fontWeight: '700',
+            color: '#8C887C',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            minHeight: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0 8px',
+          }}
+        >
+          LEADERBOARD
+        </button>
+      </nav>
 
       {/* Stamp block */}
       <div

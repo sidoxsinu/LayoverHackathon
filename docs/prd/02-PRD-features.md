@@ -218,28 +218,40 @@ Visual photographic evidence for completed layover missions with client-side EXI
 217:    - 12-hour localStorage cache for repeated visits to the same venue (`gate.venuemp.{venueHash}`).
 218:    - Demo Mode triple-tap completely bypasses Groq API calls.
 219: 
-220: ## Out of scope
-221: Maps, lounge data, push notifications, native app, multi-leg flights, social feeds.
-222: 
-223: ## Guest Statement
-224: Guests can run full layovers with complete countdown, missions, alarm, and local persistence. Sign in with Google is required only to save upcoming trips, store mission photo proofs to cloud storage, and access the multi-session Layover Passport.
-225: 
-226: ## Edge cases
-227: | Case | Behavior |
-228: |---|---|
-229: | Departure passed / safe time ≤ 0 | Block START with message |
-230: | Past midnight | Roll to next day, show date in preview |
-231: | Refresh mid-session | Restore from storage |
-232: | Tab backgrounded then returns | Clock recomputes from timestamps; ladder catches up instantly |
-233: | Audio blocked | Oscillator fallback + vibration + visual |
-234: | Battery API missing (iOS/Firefox) | Manual battery stat |
-235: | Trips table missing or unmigrated | Hide dropdown, show TRIPS UNAVAILABLE, app runs manual entry normally |
-236: | Offline on /trips | Read from local cache with warning; block writes with error line |
-237: | Less than 5 min left on mission | Proof bypassed, shows PROOF OFF, LESS THAN 5 MIN LEFT |
-238: | Alarm fires while taking photo | Proof modal unmounts immediately, alarm screen takes over |
-239: | Unsupported image / over 10 MB | Muted error line, falls back cleanly without blocking flow |
-240: | Storage offline or upload fails | Queued in IndexedDB (signed in), mission still completes, shows PROOF NOT SAVED if unqueued |
-241: | Migration 0003 unrun | Mission log sync degrades gracefully without crashing |
-242: | Groq API slow, offline or 429 | Quest runs on static fallback missions with zero disruption |
-243: | Malformed LLM JSON or prompt injection | Strict sanitization strips injected instructions, validates tag, and falls back to static pool if < 4 missions valid |
+220: ### F13 · Leaderboard (Opt-In & Scoped)
+221: - Opt-in, handle-based global departure board comparing total layover XP.
+222: - Three scope tabs: `ALL TIME`, `THIS WEEK`, `THIS VENUE` (derived from layover location/venue).
+223: - Anti-farming protection enforced strictly on server: max 1 mission per 3 minutes of layover duration (`ceil(duration / 3.0)`), max 60 XP per layover. Rank title is derived client-side from XP via `getRank()`.
+224: - Zero PII leakage: no user_id, uuid, or email in DOM or client cache. Handles sanitized (3-16 alphanumeric/underscore, uppercase, reserved name blocklist, 1-hour change cooldown).
+225: - Resilient & guest-safe: guests can view board and are prompted to sign in with Google to join.
+226: - 60s in-memory cache, 6s network timeout, localStorage offline caching (`gate.lb.v1.{scope}.{venueKey}`). Displays `OFFLINE, SHOWING SAVED BOARD` or `LEADERBOARD NOT AVAILABLE` if missing/error.
+227: - Active quest/alarm session lock: redirects immediately to `/` so the alarm path is never delayed or blocked.
+228: 
+229: ## Out of scope
+230: Maps, lounge data, push notifications, native app, multi-leg flights, social feeds.
+231: 
+232: ## Guest Statement
+233: Guests can run full layovers with complete countdown, missions, alarm, and local persistence. Sign in with Google is required only to save upcoming trips, store mission photo proofs to cloud storage, and access the multi-session Layover Passport.
+234: 
+235: ## Edge cases
+236: | Case | Behavior |
+237: |---|---|
+238: | Departure passed / safe time ≤ 0 | Block START with message |
+239: | Past midnight | Roll to next day, show date in preview |
+240: | Refresh mid-session | Restore from storage |
+241: | Tab backgrounded then returns | Clock recomputes from timestamps; ladder catches up instantly |
+242: | Audio blocked | Oscillator fallback + vibration + visual |
+243: | Battery API missing (iOS/Firefox) | Manual battery stat |
+244: | Trips table missing or unmigrated | Hide dropdown, show TRIPS UNAVAILABLE, app runs manual entry normally |
+245: | Offline on /trips | Read from local cache with warning; block writes with error line |
+246: | Less than 5 min left on mission | Proof bypassed, shows PROOF OFF, LESS THAN 5 MIN LEFT |
+247: | Alarm fires while taking photo | Proof modal unmounts immediately, alarm screen takes over |
+248: | Unsupported image / over 10 MB | Muted error line, falls back cleanly without blocking flow |
+249: | Storage offline or upload fails | Queued in IndexedDB (signed in), mission still completes, shows PROOF NOT SAVED if unqueued |
+250: | Migration 0003 unrun | Mission log sync degrades gracefully without crashing |
+251: | Groq API slow, offline or 429 | Quest runs on static fallback missions with zero disruption |
+252: | Malformed LLM JSON or prompt injection | Strict sanitization strips injected instructions, validates tag, and falls back to static pool if < 4 missions valid |
+253: | Migration 0004 unrun / RPC error | Shows muted line "LEADERBOARD NOT AVAILABLE", rest of app unaffected |
+254: | Offline on /leaderboard | Shows cached board with "OFFLINE, SHOWING SAVED BOARD" or "OFFLINE, NO SAVED BOARD" |
+255: | Quest or alarm active | Redirects /leaderboard immediately to / to prevent alarm delays |
 

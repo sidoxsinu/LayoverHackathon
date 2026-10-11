@@ -112,3 +112,35 @@ Serverless verification endpoint for photo proof checking.
 OAuth callback handler exchanging the Google OAuth authentication code for a persistent Supabase session cookie.
 
 - **Response:** `307 Temporary Redirect` navigating back to `/` or requested redirect path.
+
+---
+
+## 3. Database RPC Endpoints (Supabase REST)
+
+### 1. `POST /rest/v1/rpc/get_leaderboard`
+Security Definer RPC returning ranked departure board entries without exposing PII.
+
+- **Parameters:**
+  ```json
+  {
+    "p_scope": "all",
+    "p_venue": null,
+    "p_limit": 50
+  }
+  ```
+- **Response:** Array of tuples `(position int, handle text, total_xp int, layovers int, missions int, is_me boolean)`.
+- **Anti-Farming Security:** Computes mission cap $\text{ceil}(\text{duration} / 3)$ and $60$ XP max per layover on server.
+- **Client Cache:** 60s in-memory, 6s network timeout, localStorage offline fallback (`gate.lb.v1.{scope}.{venueKey}`).
+
+### 2. `POST /rest/v1/rpc/join_leaderboard`
+Registers or updates the authenticated traveler's handle.
+
+- **Parameters:** `{ "p_handle": "TRAVELER_99" }`
+- **Returns:** Status code string (`OK`, `HANDLE TAKEN`, `HANDLE NOT ALLOWED`, `HANDLE INVALID`, `HANDLE CHANGE TOO SOON`, `NOT SIGNED IN`).
+- **Trigger Guard:** Enforces 1-hour cooldown between handle updates.
+
+### 3. `POST /rest/v1/rpc/leave_leaderboard`
+Removes the authenticated traveler from `leaderboard_members`.
+
+- **Returns:** `'OK'`. Instant removal with cascade from board queries.
+

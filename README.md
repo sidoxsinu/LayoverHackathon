@@ -3,7 +3,7 @@
 > **Turns transit waiting time into a structured survival quest, backed by a zero-network deterministic gate alarm.**
 
 [![Hackathon: LAYOVER @ TinkerSpace Calicut](https://img.shields.io/badge/HACKATHON-LAYOVER%20%40%20TinkerSpace%20Calicut-F2A900?style=flat-square&labelColor=101010)](https://tinkerhub.org)
-[![Tests: 61/61 Passing](https://img.shields.io/badge/TESTS-61%2F61%20PASSING-3F9B5B?style=flat-square&labelColor=101010)](docs/engineering/TESTING.md)
+[![Tests: 72/72 Passing](https://img.shields.io/badge/TESTS-72%2F72%20PASSING-3F9B5B?style=flat-square&labelColor=101010)](docs/engineering/TESTING.md)
 [![Zero Network Alarm](https://img.shields.io/badge/ALARM-ZERO--NETWORK%20GUARANTEE-C8201A?style=flat-square&labelColor=101010)](docs/engineering/ALARM-DESIGN.md)
 [![Design: Airport Signage System](https://img.shields.io/badge/DESIGN-AIRPORT%20SIGNAGE-E6E1D3?style=flat-square&labelColor=101010)](docs/prd/00-QUICKREF.md)
 
@@ -63,7 +63,7 @@ npm run dev
 
 | Rubric Criteria | Score | What GATE Delivers | Proof / Links |
 |:----------------|:-----:|:-------------------|:--------------|
-| **What was built** | **20 / 20** | 4 primary screens (`Auth`, `Setup`, `Quest`, `SafeTravels`) + 2 dedicated routes (`/passport`, `/trips`) + 1 print engine (`/passport/print`). Web Audio dual-engine siren, Nominatim building-level geocoder, Groq LLaMA 3.3 background mission generator, Supabase PostgreSQL RLS schema (3 migrations), 61 automated Playwright E2E tests. | [Architecture](docs/engineering/ARCHITECTURE.md) · [API Routes](docs/engineering/API-ROUTES.md) · [Database & RLS](docs/engineering/DATABASE-AND-RLS.md) |
+| **What was built** | **20 / 20** | 4 primary screens (`Auth`, `Setup`, `Quest`, `SafeTravels`) + 3 dedicated routes (`/passport`, `/trips`, `/leaderboard`) + 1 print engine (`/passport/print`). Web Audio dual-engine siren, Nominatim building-level geocoder, Groq LLaMA 3.3 background mission generator, Supabase PostgreSQL RLS schema (4 migrations), 72 automated Playwright E2E tests. | [Architecture](docs/engineering/ARCHITECTURE.md) · [API Routes](docs/engineering/API-ROUTES.md) · [Database & RLS](docs/engineering/DATABASE-AND-RLS.md) |
 | **Creativity and idea** | **10 / 10** | Departure-board survival game loop that converts waiting anxiety into structured exploration; physical photo verification mechanics; **Zero-Network Alarm Guarantee** that strictly decouples life safety from AI and cloud dependencies. | [Alarm Design](docs/engineering/ALARM-DESIGN.md) · [PRD Features](docs/prd/02-PRD-features.md) |
 | **Travel connection** | **10 / 10** | **100% focused on transit waiting.** Solves the universal physical bottleneck of air, rail, and bus transit terminals. (See dedicated section below). | [Judge Guide](docs/demo/JUDGE-GUIDE.md) |
 | **Execution** | **5 / 5** | Strict TypeScript, Next.js 16 App Router, Tailwind v4, zero stock UI libraries, zero audio race conditions, deterministic integer epoch math, 100% automated test pass rate. | [Test Suite](docs/engineering/TESTING.md) |
@@ -109,8 +109,11 @@ stateDiagram-v2
     Quest --> Alarm: Safe Time <= 0s (Instant Screen Takeover)
     Alarm --> SafeTravels: Tap "I AM AT THE GATE"
     SafeTravels --> Passport: View Lifetime XP & Past Layovers
+    SafeTravels --> Leaderboard: View Global Rankings
     SafeTravels --> Setup: Start New Layover
     Passport --> Setup: Return
+    Setup --> Leaderboard: Check Departure Board
+    Leaderboard --> Setup: Tap Return
 ```
 
 ### B. Alert Ladder & Phase Transitions
@@ -246,7 +249,7 @@ flowchart TD
 | Feature | Status | Verification & Implementation Details | Fallback / Offline Behavior |
 |:---|:---:|:---|:---|
 | **Deterministic Clock** | ✅ Verified | Pure epoch millisecond math in `src/lib/time.ts`. Zero tick counting; derives directly from `Date.now()`. | Runs 100% locally with zero drift. |
-| **Alert Ladder** | ✅ Verified | 3 stages: Heads-up (15m/20s demo), Urgent (5m/10s demo), Alarm takeover (0s). Tested across 61 test specs. | Pure client-side comparison against current time. |
+| **Alert Ladder** | ✅ Verified | 3 stages: Heads-up (15m/20s demo), Urgent (5m/10s demo), Alarm takeover (0s). Tested across 72 test specs. | Pure client-side comparison against current time. |
 | **Dual Audio Alarm** | ✅ Verified | Pre-armed Web Audio buffer + HTML5 Audio element (`/alarm.mp3`) with Web Audio oscillator fallback. | Synthesizes 880Hz / 440Hz dual square wave if sound file fails. |
 | **Demo Mode** | ✅ Verified | Triple-tap header wordmark "GATE". Sets `returnBy = now + 60s`. Bypasses external network calls. | Works anytime, anywhere without configuration. |
 | **Venue Reverse Geocoding** | ✅ Verified | Building-level Nominatim reverse geocode in `src/app/api/setup/route.ts` with custom user override modal. | Falls back to "TINKERSPACE, CALICUT" if denied or offline. |
@@ -259,6 +262,8 @@ flowchart TD
 | **Context InfoTips** | ✅ Verified | 48px square `?` buttons beside critical controls with auto-close and click-outside listeners. | Fully client-side without layout shifts. |
 | **Printable Passport** | ✅ Verified | Print-optimized route (`/passport/print`) formatted for A4 & US Letter (`@page { margin: 12mm }`). | Browser print preview doubles as "Save as PDF". |
 | **Trip Departure Board** | ✅ Verified | Saved departures table (`/trips`) with upcoming/past toggle, device timezone handling, and RLS. | Cached in localStorage (`gate.trips.v1.{userId}`). |
+| **Opt-In Leaderboard** | ✅ Verified | Server-computed departure board (`/leaderboard`) with 3 scopes (All Time, Week, Venue), anti-farming duration cap, 0 PII leak. | Offline cache (`gate.lb.v1`) and graceful "LEADERBOARD NOT AVAILABLE" fallback. |
+| **Concourse Navigation Strip** | ✅ Verified | Two-tier mobile header layout with 48px touch targets and 3-column sub-navigation ribbon (`TRIPS`, `PASSPORT`, `LEADERBOARD`). | Fully responsive down to 360px with zero text overlap or wrapping. |
 
 ---
 
@@ -322,26 +327,33 @@ npm run test:e2e
 ```
 
 ```text
-Running 61 tests using 1 worker
-  ✓  1 [Mobile Chrome] › main.spec.ts:16:5 › core layover flow › completes full layover loop with alarm (2.8s)
-  ✓  2 [Mobile Chrome] › main.spec.ts:40:5 › alert ladder › transitions through free, headsup, urgent, alarm (2.1s)
-  ✓  3 [Mobile Chrome] › main.spec.ts:63:5 › missions › complete and skip missions update stats (1.9s)
-  ✓  4 [Mobile Chrome] › main.spec.ts:85:5 › resilience › survives page refresh in quest screen (1.8s)
-  ✓  5 [Mobile Chrome] › main.spec.ts:104:5 › edge cases › midnight rollover sets correct departure date (1.4s)
+Running 72 tests using 1 worker
+  ✓  1 [Mobile Chrome] › main.spec.ts:33:7 › setup validation (679ms)
+  ✓  2 [Mobile Chrome] › main.spec.ts:52:7 › demo mode (722ms)
+  ✓  3 [Mobile Chrome] › main.spec.ts:87:7 › alarm takeover (738ms)
+  ✓  4 [Mobile Chrome] › main.spec.ts:114:7 › normal mode ladder (537ms)
   ...
-  ✓ 58 [Mobile Chrome] › venueMissions.spec.ts:88:5 › offline venue missions fallback (1.5s)
-  ✓ 59 [Mobile Chrome] › venueMissions.spec.ts:104:5 › venue missions rate limiting (1.4s)
-  ✓ 60 [Mobile Chrome] › venueMissions.spec.ts:121:5 › prompt injection defense (1.3s)
-  ✓ 61 [Mobile Chrome] › venueMissions.spec.ts:139:5 › venue missions schema validation (1.2s)
+  ✓ 25 [Mobile Chrome] › onboarding.spec.ts:15:7 › spotlight tour step transitions (436ms)
+  ✓ 28 [Mobile Chrome] › passport.spec.ts:25:7 › empty passport prompt (298ms)
+  ✓ 36 [Mobile Chrome] › rank.spec.ts:15:7 › constants: MISSION_XP 40 and PROOF_BONUS_XP 20 (0ms)
+  ✓ 56 [Mobile Chrome] › venue.spec.ts:15:7 › setup screen displays WAITING FOR and VENUE (333ms)
+  ✓ 61 [Mobile Chrome] › leaderboard.spec.ts:18:7 › guest mode renders board & sign-in prompt (350ms)
+  ✓ 62 [Mobile Chrome] › leaderboard.spec.ts:62:7 › top 3 highlight amber & own row shows YOU (320ms)
+  ✓ 63 [Mobile Chrome] › leaderboard.spec.ts:106:7 › unmigrated DB falls back to LEADERBOARD NOT AVAILABLE (310ms)
+  ✓ 64 [Mobile Chrome] › leaderboard.spec.ts:122:7 › offline cached board displays relative age (330ms)
+  ...
+  ✓ 72 [Mobile Chrome] › venueMissions.spec.ts:139:7 › fallback missions pool contains SPOT and MEET (0ms)
 
-  61 passed (37.1s)
+  72 passed (39.8s)
 ```
 
-- **Core Flows (`main.spec.ts`):** Full layover lifecycle, alert ladder phase transitions, stat depletion, midnight rollover, safe-time boundary constraints.
-- **Rank Model (`rank.spec.ts`):** 20 unit tests verifying all 10 tiers (0 XP, 49 XP, 50 XP, 149 XP, 150 XP, 300 XP, 500 XP, 1000 XP, 1800 XP, 3000 XP, 4600 XP, 6500 XP, and 10000 XP max clamp).
-- **Photo Proofs (`proof.spec.ts`):** Image compression, canvas resizing, 5-minute cutoff guard, IndexedDB offline queuing.
-- **Onboarding & Print (`tour.spec.ts`, `print.spec.ts`):** Spotlight tour step transitions, emergency alarm unmount, print stylesheet verification.
-- **Venue Missions (`venueMissions.spec.ts`):** Single background call verification, offline fallback, prompt injection sanitation, 12-hour client cache.
+- **Core Flows (`main.spec.ts`):** 10 tests covering full layover lifecycle, alert ladder phase transitions, stat depletion, midnight rollover, safe-time boundary constraints.
+- **Onboarding & Tour (`onboarding.spec.ts`):** 6 tests covering 4-box spotlight onboarding tour, emergency alarm unmount, InfoTip popovers, outside-click and escape dismiss.
+- **Passport & Memories (`passport.spec.ts`):** 8 tests covering passport empty state, 160 XP rank evaluation, layover cards, Trip Memories sheet, photo lightbox, scroll locking, and zero horizontal overflow.
+- **Rank Model (`rank.spec.ts`):** 20 unit tests verifying all 10 tiers (0, 49, 50, 149, 150, 160, 299, 300, 499, 500, 999, 1000, 1800, 3000, 4600, 6500, and 10000 XP max clamp).
+- **Transit Types & Place Labels (`venue.spec.ts`):** 5 tests covering transit modal types (Flight, Train, Bus, Other), dynamic place labels, custom venue persistence, and zero-blocking start.
+- **Venue Missions (`venueMissions.spec.ts`):** 12 tests covering single background call verification, prompt injection defense, tag-derived stat boosts (+20 to +30), offline fallbacks, and 12-hour client cache.
+- **Leaderboard (`leaderboard.spec.ts`):** 11 tests verifying opt-in membership, 3 scope tabs (All Time, Week, Venue), anti-farming duration cap, outside-cutoff separator, empty/error fallbacks, offline caching, active quest lockdown, and zero PII leakage.
 
 ---
 
@@ -398,6 +410,7 @@ LayoverHackathon/
 │   │   │   │   ├── setup/           # Reverse geocoding & airport detection
 │   │   │   │   └── venue-missions/  # Single-call Groq background proxy
 │   │   │   ├── auth/callback/       # Supabase OAuth redirect handler
+│   │   │   ├── leaderboard/         # Opt-in global & venue departure board
 │   │   │   ├── passport/            # Traveler Passport & Rank Explainer
 │   │   │   │   └── print/           # A4/Letter print-optimized certificate route
 │   │   │   ├── trips/               # Personal transit departure board
@@ -416,14 +429,18 @@ LayoverHackathon/
 │   │       ├── alarm.ts             # Web Audio dual-engine siren synthesizer
 │   │       ├── time.ts              # Epoch integer math & alert ladder thresholds
 │   │       ├── rank.ts              # 10-tier progression model & XP constants
+│   │       ├── leaderboard.ts       # Server-computed rankings, cache & offline fallback
 │   │       ├── labels.ts            # Transit signage vocabulary (Flight, Train, Bus)
 │   │       ├── proof.ts             # Canvas photo resize & IndexedDB queue
 │   │       └── storage.ts           # LocalStorage serialization & hydration
-│   └── supabase/
-│       └── migrations/              # PostgreSQL schema & RLS policies
-│           ├── 0001_init.sql        # Profiles, layovers, and mission_log
-│           ├── 0002_trips.sql       # Trips departure board & 50-trip cap trigger
-│           └── 0003_proofs.sql      # Private storage bucket & user-folder RLS
+│   ├── supabase/
+│   │   ├── migrations/              # PostgreSQL schema & RLS policies
+│   │   │   ├── 0001_init.sql        # Profiles, layovers, and mission_log
+│   │   │   ├── 0002_trips.sql       # Trips departure board & 50-trip cap trigger
+│   │   │   ├── 0003_proofs.sql      # Private storage bucket & user-folder RLS
+│   │   │   └── 0004_leaderboard.sql # Opt-in members, anti-farming RPC & security definer
+│   │   └── tests/                   # 8 verified PostgreSQL test queries
+│   └── tests/                       # 72 automated Playwright E2E & unit test specs
 ├── docs/                            # Comprehensive Project Documentation
 │   ├── assets/                      # Real screenshots & composite hero image
 │   ├── engineering/                 # Architecture, Alarm, Database, and API specs

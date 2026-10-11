@@ -86,7 +86,7 @@ No external UI kit, no animation library. Do not add any dependency without aski
 - XP constants live in one place: `MISSION_XP = 40`, `PROOF_BONUS_XP = 20`. Nothing else may hardcode these numbers.
 
 ## APP FLOW & Routes
-Routes: `/` (AUTH, SETUP, QUEST, ALARM, SAFE TRAVELS) · `/passport` · `/passport/print` · `/trips`.
+Routes: `/` (AUTH, SETUP, QUEST, ALARM, SAFE TRAVELS) · `/passport` · `/passport/print` · `/trips` · `/leaderboard`.
 
 1. AUTH (fresh session)
 - Wordmark GATE vertically centered in free space.
@@ -151,6 +151,15 @@ Routes: `/` (AUTH, SETUP, QUEST, ALARM, SAFE TRAVELS) · `/passport` · `/passpo
 - Selected row reveals square 48px buttons: USE, EDIT, DELETE (with popup confirmation).
 - Full screen ADD/EDIT form with device time zone label, validation, and idempotent client-generated UUID upsert.
 - Cached in `gate.trips.v1.{userId}`. Cache cleared on sign-out. Offline displays "OFFLINE, SHOWING SAVED TRIPS". Writes require connection. If table missing, shows "TRIPS UNAVAILABLE".
+
+9. /LEADERBOARD
+- Opt-in, handle-based, server-computed global departure board.
+- Scope tabs: ALL TIME, THIS WEEK, THIS VENUE (derived from layover location/venue).
+- Anti-farming duration cap enforced on server: max 1 mission per 3 min of layover duration, max 60 XP per layover. Rank title is derived client-side via getRank().
+- Zero PII leakage: no user_id, uuid, or email in DOM or client cache. Handles sanitized (3-16 alphanumeric/underscore, uppercase, reserved name blocklist, 1-hour change cooldown).
+- Resilient & guest-safe: guests can view board and are prompted to sign in with Google to join.
+- 60s in-memory cache, 6s timeout, localStorage offline caching (`gate.lb.v1.{scope}.{venueKey}`). Displays "OFFLINE, SHOWING SAVED BOARD" or "LEADERBOARD NOT AVAILABLE" if missing/error.
+- Active quest/alarm session lock: redirects immediately to `/` so the alarm path is never delayed or blocked.
 
 ## Priorities
 P0 clock + alarm + Demo Mode → deploy → quest (stats, missions) → setup validation → P1 alert ladder + passport + trips → P2 AI.

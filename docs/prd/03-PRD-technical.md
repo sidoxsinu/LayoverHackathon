@@ -399,30 +399,55 @@ Adds mission photo proof tracking, cloud storage, and security policies:
 399:   - 12-hour localStorage cache per venue (`gate.venuemp.{venueHash}`).
 400: - **Demo Mode**: Triple-tap wordmark bypasses all AI calls and runs entirely offline.
 401: 
-402: ## Test checklist
-403: - [ ] Alarm fires within 1 s of returnBy
-404: - [ ] Refresh mid-session restores
-405: - [ ] Departure past midnight
-406: - [ ] Safe time <= 0 is blocked
-407: - [ ] Audio blocked -> fallback works
-408: - [ ] Background tab 60 s then return -> ladder catches up
-409: - [ ] Mission never exceeds remaining time
-410: - [ ] Trips RLS blocks cross-user reads/writes
-411: - [ ] Trips offline fallback displays cached departures
-412: - [ ] Unmigrated trips table gracefully falls back to "TRIPS UNAVAILABLE"
-413: - [ ] Photo proof compression resizes 4000px image to <= 1280px and strips EXIF
-414: - [ ] Storage RLS blocks cross-user proof folder access
-415: - [ ] Mission complete with <= 5 min left bypasses camera with "PROOF OFF, LESS THAN 5 MIN LEFT"
-416: - [ ] Alarm trigger while proof modal is open closes modal immediately
-417: - [ ] Offline proofs queue in IndexedDB and upload when back online
-418: - [ ] Placeholder verifier returns "unverified" with badge "PROOF SAVED, NOT CHECKED"
-419: - [ ] Guest photo proof stays in memory only and shows "GUEST PHOTOS ARE NOT SAVED"
-420: - [ ] Rank derives purely from XP (160 XP = level 3 Concourse Runner, 140 XP to Gate Guardian)
-421: - [ ] Tour dismisses instantly on urgent or alarm phase
-422: - [ ] Quest screen with <= 15 min left skips tour with "TOUR SKIPPED, LESS THAN 15 MIN LEFT"
-423: - [ ] InfoTips close on click outside or Escape
-424: - [ ] Printable passport prints single layover or full history with page-break-inside avoid
-425: - [ ] Waiting type updates place labels dynamically across Setup, Quest, Alarm, and Safe Travels
-426: - [ ] Single Groq call never blocks START or alarm path
-427: - [ ] Groq failure degrades silently to 17 static fallback missions
+402: ### 14. Leaderboard Architecture & Anti-Farming Security
+403: - **Database Schema (`0004_leaderboard.sql`)**:
+404:   - `public.leaderboard_members` table: `user_id uuid primary key references auth.users(id) on delete cascade`, `handle text not null`, `hidden boolean not null default false`, `joined_at timestamptz default now()`, `handle_changed_at timestamptz default now()`.
+405:   - Unique index: `unique (lower(handle))`.
+406:   - Regex constraint: `handle ~ '^[A-Za-z0-9_]{3,16}$'`.
+407:   - RLS strictly enforced: users can only select, insert, update, or delete their own row. Hidden column locked to service-role. Anon access revoked.
+408:   - Reserved words blocklist (`GATE`, `ADMIN`, `MOD`, `SUPPORT`, `STAFF`, `ANONYMOUS`, `YOU`) and leetspeak substitution profanity filter (`public.is_handle_blocked`).
+409:   - 1-hour handle change cooldown trigger (`handle_leaderboard_member_guard()`).
+410: - **Stored Function (`public.get_leaderboard`)**:
+411:   - Security Definer RPC returning `(position int, handle text, total_xp int, layovers int, missions int, is_me boolean)`.
+412:   - Anti-farming duration cap: $\text{ceil}(\text{duration} / 3.0)$ missions max, 60 XP per layover cap.
+413:   - Scopes: `all` (all time), `week` (ended in last 7 days), `venue` (matches upper trim location).
+414:   - Returns top $N$ plus caller's row if outside the top cutoff. Zero PII leakage (no user_id or email).
+415: - **Client Data Layer (`src/lib/leaderboard.ts`)**:
+416:   - 60s in-memory cache, 6s timeout, localStorage cache under `gate.lb.v1.{scope}.{venueKey}`.
+417:   - Graceful offline fallback: "OFFLINE, SHOWING SAVED BOARD" and relative time.
+418:   - Unmigrated or RPC error fallback: "LEADERBOARD NOT AVAILABLE" with zero crashes.
+419: - **Isolation & Safety**:
+420:   - Redirects to `/` if quest or alarm is active; zero dependencies in alarm path.
+421: 
+422: ## Test checklist
+423: - [ ] Alarm fires within 1 s of returnBy
+424: - [ ] Refresh mid-session restores
+425: - [ ] Departure past midnight
+426: - [ ] Safe time <= 0 is blocked
+427: - [ ] Audio blocked -> fallback works
+428: - [ ] Background tab 60 s then return -> ladder catches up
+429: - [ ] Mission never exceeds remaining time
+430: - [ ] Trips RLS blocks cross-user reads/writes
+431: - [ ] Trips offline fallback displays cached departures
+432: - [ ] Unmigrated trips table gracefully falls back to "TRIPS UNAVAILABLE"
+433: - [ ] Photo proof compression resizes 4000px image to <= 1280px and strips EXIF
+434: - [ ] Storage RLS blocks cross-user proof folder access
+435: - [ ] Mission complete with <= 5 min left bypasses camera with "PROOF OFF, LESS THAN 5 MIN LEFT"
+436: - [ ] Alarm trigger while proof modal is open closes modal immediately
+437: - [ ] Offline proofs queue in IndexedDB and upload when back online
+438: - [ ] Placeholder verifier returns "unverified" with badge "PROOF SAVED, NOT CHECKED"
+439: - [ ] Guest photo proof stays in memory only and shows "GUEST PHOTOS ARE NOT SAVED"
+440: - [ ] Rank derives purely from XP (160 XP = level 3 Concourse Runner, 140 XP to Gate Guardian)
+441: - [ ] Tour dismisses instantly on urgent or alarm phase
+442: - [ ] Quest screen with <= 15 min left skips tour with "TOUR SKIPPED, LESS THAN 15 MIN LEFT"
+443: - [ ] InfoTips close on click outside or Escape
+444: - [ ] Printable passport prints single layover or full history with page-break-inside avoid
+445: - [ ] Waiting type updates place labels dynamically across Setup, Quest, Alarm, and Safe Travels
+446: - [ ] Single Groq call never blocks START or alarm path
+447: - [ ] Groq failure degrades silently to 17 static fallback missions
+448: - [ ] Leaderboard active quest/alarm session lock redirects to /
+449: - [ ] Leaderboard anti-farming duration cap caps missions at ceil(duration / 3)
+450: - [ ] Leaderboard zero PII leakage: no user_id, uuid or email in DOM or cache
+451: - [ ] Leaderboard offline fallback renders cached board with relative timestamp
+452: - [ ] Leaderboard unmigrated/RPC error degrades silently to "LEADERBOARD NOT AVAILABLE"
 

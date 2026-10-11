@@ -35,6 +35,7 @@ graph TD
         A -.->|On Finish| M[Safe Travels Screen]
         M -.->|Optional Auth| N[(Supabase Postgres)]
         M -.->|Photo Attachments| O[(Supabase Storage)]
+        M -.->|View Leaderboard| P[/leaderboard Departure Board]
     end
 ```
 
@@ -42,6 +43,7 @@ graph TD
 1. **Zero-Blocking START**: The client START click handler records epoch milliseconds directly from `Date.now()`, arms the audio context synchronously, and transitions to the quest screen in $< 16$ms. It never `await`s the network.
 2. **Deterministic Stat Calculations**: Mission stat boosts (+20 to +30 hunger/sanity/battery) and XP rewards (`MISSION_XP = 40`, `PROOF_BONUS_XP = 20`) are computed deterministically in application code via `deriveStatEffect(tag)`, never derived from AI output.
 3. **Emergency Unmount**: If the alert ladder reaches `urgent` ($\le 5$ min) or `alarm` ($\le 0$ min), all non-essential UI (onboarding tours, context tips, photo modals) unmounts immediately. The alarm layer has `z-index: 100`, superseding every other interface surface.
+4. **Active Quest & Alarm Lockdown**: Both `/trips`, `/passport`, and `/leaderboard` enforce strict active session redirection to `/` if a quest or alarm is currently running, guaranteeing the alarm path is never delayed or circumvented.
 
 ---
 
@@ -57,8 +59,11 @@ stateDiagram-v2
     ALARM --> SAFE_TRAVELS : Tap "I'M AT THE GATE"
     SAFE_TRAVELS --> SETUP : START NEW LAYOVER
     SAFE_TRAVELS --> PASSPORT : View Full Passport
+    SAFE_TRAVELS --> LEADERBOARD : View Global Rankings
     SETUP --> TRIPS : Manage Upcoming Departures
+    SETUP --> LEADERBOARD : Check Departure Board
     TRIPS --> SETUP : Select Departure to Use
+    LEADERBOARD --> SETUP : Tap RETURN
 ```
 
 ---

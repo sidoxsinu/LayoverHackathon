@@ -394,6 +394,10 @@ export default function TripsPage() {
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
             padding: 0,
+            minHeight: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            whiteSpace: 'nowrap',
           }}
         >
           ← SETUP
@@ -411,6 +415,10 @@ export default function TripsPage() {
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
               padding: 0,
+              minHeight: '48px',
+              display: 'flex',
+              alignItems: 'center',
+              whiteSpace: 'nowrap',
             }}
           >
             PASSPORT
@@ -427,6 +435,10 @@ export default function TripsPage() {
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
               padding: 0,
+              minHeight: '48px',
+              display: 'flex',
+              alignItems: 'center',
+              whiteSpace: 'nowrap',
             }}
           >
             SIGN OUT

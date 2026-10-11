@@ -165,4 +165,9 @@ export const PASSPORT_STEPS: TourStep[] = [
     title: 'PRINT FULL PASSPORT',
     description: 'PRINT YOUR FULL PASSPORT.',
   },
+  {
+    targetId: 'passport-leaderboard',
+    title: 'LEADERBOARD',
+    description: 'OPT IN TO SEE HOW YOUR XP COMPARES ACROSS ALL TRAVELERS.',
+  },
 ];

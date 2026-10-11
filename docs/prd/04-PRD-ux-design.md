@@ -358,3 +358,33 @@
 - Cards prevent page break cuts via `break-inside: avoid; page-break-inside: avoid;`.
 - Query param support: `/passport/print` prints all layovers; `/passport/print?layover=<id>` prints single certificate.
 - On-screen helper text: "THE BROWSER PRINT DIALOG DOUBLES AS 'SAVE AS PDF'."
+
+---
+
+## Screen 11: Leaderboard Route (`/leaderboard`)
+```
+┌──────────────────────────────────────┐
+│ [RETURN]        LEADERBOARD [REFRESH]│
+├──────────────────────────────────────┤
+│ [ ALL TIME ] [ THIS WEEK ] [VENUE]   │
+├──────────────────────────────────────┤
+│ YOUR POSITION                        │
+│ #2                 MY_HANDLE         │
+│                    LV 3 · CONCOURSE  │
+│ [ CHANGE HANDLE ] [ LEAVE ]          │
+├──────────────────────────────────────┤
+│ POS  TRAVELER                    XP ?│
+├──────────────────────────────────────┤
+│  1   PILOT_ONE (LV 4)             320│
+│  2   MY_HANDLE [YOU] (LV 3)       240│
+│  3   NOMAD_99 (LV 2)              180│
+│  4   GATE_CHASER (LV 1)            40│
+└──────────────────────────────────────┘
+```
+- Departure board styling on ink `#101010` and panel `#181816`.
+- 3 scope tabs (`ALL TIME`, `THIS WEEK`, `THIS VENUE`) with amber underlines.
+- Positions 1–3 highlighted in amber `#F2A900`.
+- User row tagged with `YOU` border badge.
+- Appended outside-top-50 user row with `· · ·` dashed separator.
+- Full-screen modal sheets for Join / Change Handle (with consent notice) and Leave Leaderboard.
+- 100% accessible: 48px touch targets, zero emojis, zero gradients, zero shadows.

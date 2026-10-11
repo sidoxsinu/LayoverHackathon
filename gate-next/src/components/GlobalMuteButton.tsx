@@ -16,8 +16,10 @@ export default function GlobalMuteButton() {
       aria-label={muted ? 'Unmute Audio' : 'Mute Audio'}
       title={muted ? 'SOUND OFF' : 'SOUND ON'}
       style={{
-        width: '40px',
-        height: '40px',
+        width: '48px',
+        height: '48px',
+        minWidth: '48px',
+        minHeight: '48px',
         backgroundColor: muted ? '#181816' : 'transparent',
         color: muted ? '#8C887C' : '#E6E1D3',
         border: `1px solid ${muted ? '#34322C' : '#8C887C'}`,

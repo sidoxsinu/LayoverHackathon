@@ -134,3 +134,55 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 ```
+
+---
+
+## 5. Leaderboard Architecture & Anti-Farming Security (`0004_leaderboard.sql`)
+
+### 1. `leaderboard_members` Table Schema
+```sql
+CREATE TABLE IF NOT EXISTS public.leaderboard_members (
+    user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    handle text NOT NULL,
+    hidden boolean NOT NULL DEFAULT false,
+    joined_at timestamptz DEFAULT now(),
+    handle_changed_at timestamptz DEFAULT now(),
+    CONSTRAINT leaderboard_handle_format CHECK (handle ~ '^[A-Za-z0-9_]{3,16}$')
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS leaderboard_members_handle_lower_idx 
+ON public.leaderboard_members (lower(handle));
+```
+
+### 2. Multi-Tenant RLS Policies
+```sql
+ALTER TABLE public.leaderboard_members ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own leaderboard membership"
+ON public.leaderboard_members FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own leaderboard membership"
+ON public.leaderboard_members FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own leaderboard membership"
+ON public.leaderboard_members FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own leaderboard membership"
+ON public.leaderboard_members FOR DELETE USING (auth.uid() = user_id);
+```
+Anon role is explicitly REVOKED from all direct operations. No traveler can ever read another user's row directly through table SELECT.
+
+### 3. Moderation & Anti-Spam Protections
+- **Trigger `handle_leaderboard_member_guard`**:
+  - Enforces 1-hour cooldown on handle modification (`NEW.handle_changed_at > now() - interval '1 hour'`).
+  - Protects `hidden` column from client tampering: only service-role can modify `hidden`.
+- **Reserved Handles & Profanity Filter (`is_handle_blocked`)**:
+  - Blocks reserved names (`GATE`, `ADMIN`, `MOD`, `SUPPORT`, `STAFF`, `ANONYMOUS`, `YOU`).
+  - Leetspeak profanity detection (`@` -> `a`, `$` -> `s`, `0` -> `o`, `1` -> `i`).
+
+### 4. Anti-Farming Security Definer RPC (`public.get_leaderboard`)
+Computes rankings entirely on the database with anti-farming protection:
+- **Duration Cap**: Max 1 mission per 3 minutes of layover duration (`ceil(duration_minutes / 3.0)`).
+- **Max XP Cap**: Max 60 XP per layover.
+- **Zero PII**: Returns `(position, handle, total_xp, layovers, missions, is_me)`. Never exposes `user_id`, uuid, or email.
+- **Top N + Own Row**: Appends caller's own true ranking below cutoff if ranked outside the top 50.
